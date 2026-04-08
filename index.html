@@ -670,10 +670,10 @@
             }
 
             #eyepiece {
-                width: 50vh;
-                height: 50vh;
-                max-width: 400px;
-                max-height: 400px;
+                width: 52vw;
+                height: 52vw;
+                max-width: 500px;
+                max-height: 500px;
                 border-width: 8px;
                 touch-action: none;
             }
@@ -737,10 +737,10 @@
             .viewport-section { height: 50vh; min-height: 260px; }
             
             #eyepiece {
-                width: 42vh;
-                height: 42vh;
-                max-width: 300px;
-                max-height: 300px;
+                width: 80vw;
+                height: 80vw;
+                max-width: 380px;
+                max-height: 380px;
                 border-width: 6px;
             }
 
@@ -864,6 +864,12 @@
             <div>Y: <span id="pos-y">0</span></div>
             <div><span id="stat-lamp">LAMP</span>: <span id="status-lamp">ON</span></div>
             <div><span id="stat-foc">FOCUS</span>: <span id="focus-status">--</span></div>
+        </div>
+
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <button type="button" id="btn-export-data" class="action-btn secondary" style="width: 100%; font-size: 0.75rem;">
+                📋 Export Specimen Data (for cross-device sync)
+            </button>
         </div>
     </div>
 
@@ -1723,6 +1729,40 @@
                 closeModal();
             });
 
+            // ==========================================
+            // Export Data (for cross-device sync)
+            // ==========================================
+            document.getElementById('btn-export-data').addEventListener('click', () => {
+                // Build clean export (strip base64 image data for built-in slides to keep it small)
+                const exportData = samples.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    desc: s.desc,
+                    markers: s.markers
+                }));
+                const json = JSON.stringify(exportData, null, 2);
+                
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(json).then(() => {
+                        alert(currentLang === 'ar' 
+                            ? '✅ تم نسخ بيانات العينات إلى الحافظة! أرسلها لي لتحديث الكود.' 
+                            : '✅ Specimen data copied to clipboard! Send it to me to update the source code.');
+                    });
+                } else {
+                    // Fallback for mobile
+                    const ta = document.createElement('textarea');
+                    ta.value = json;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    alert(currentLang === 'ar' 
+                        ? '✅ تم نسخ بيانات العينات! أرسلها لي لتحديث الكود.' 
+                        : '✅ Specimen data copied! Send it to me to update the source code.');
+                }
+            });
 
             // ==========================================
             // Boot
