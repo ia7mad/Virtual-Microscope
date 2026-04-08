@@ -646,27 +646,73 @@
         }
         .add-slide-btn:hover { border-color: var(--medical-cyan); color: var(--medical-cyan); }
 
-        /* ====== Mobile & Tablet Responsiveness ====== */
+        /* ====== Mobile & Tablet Responsiveness Overhaul ====== */
         @media (max-width: 1024px) {
-            body { flex-direction: column; overflow: auto; height: auto; }
-            .viewport-section { height: 75vh; min-height: 500px; position: sticky; top: 0; background: #000; z-index: 5; }
-            .controls-section { width: 100%; min-width: 100%; border-left: none; border-top: 1px solid var(--border-color); height: auto; padding: 1.5rem; }
-            .microscope-assembly { transform: scale(0.85); }
-            .modal-content { width: 95vw; height: 95vh; }
-            .modal-body { flex-direction: column; overflow-y: auto; }
-            .modal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-            .modal-preview-area { min-height: 400px; }
-            .modal-zoom-controls { bottom: 10px; right: 10px; }
+            body { flex-direction: column; overflow-x: hidden; height: 100vh; display: block; }
+            
+            .viewport-section { 
+                height: 55vh; 
+                width: 100%; 
+                position: relative; 
+                background: #000; 
+                z-index: 5; 
+                border-bottom: 2px solid var(--border-color);
+            }
+            .eyepiece { width: 320px; height: 320px; touch-action: none; }
+            .microscope-assembly { transform: scale(0.7); }
+            
+            .controls-section { 
+                width: 100%; 
+                min-width: 100%; 
+                border-left: none; 
+                height: 45vh; 
+                padding: 1rem; 
+                overflow-y: auto;
+                box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+            }
+
+            .lang-switch { top: 10px; left: 10px; scale: 0.9; }
+            
+            #slide-tray {
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 12px;
+                padding-bottom: 5px;
+                height: 100px;
+                scroll-snap-type: x mandatory;
+            }
+            .slide-item {
+                flex: 0 0 120px;
+                height: 80px;
+                border-bottom: none;
+                scroll-snap-align: center;
+            }
+            .slide-item img { width: 60px; height: 35px; }
+            
+            .objective-lenses { 
+                justify-content: center;
+                gap: 8px;
+                padding: 0;
+                transform: scale(0.9);
+            }
+            .lens-btn { min-width: 80px; }
+
+            .modal-content { width: 100vw; height: 100vh; border-radius: 0; }
+            .modal-body { flex-direction: column; height: calc(100vh - 60px); overflow-y: auto; }
+            .modal-sidebar { width: 100%; border-right: none; padding: 1rem; }
+            .modal-preview-area { min-height: 350px; flex: none; }
+            
+            .control-group { margin-bottom: 1.2rem; }
+            header { margin-bottom: 1rem; padding-bottom: 1rem; }
+            header h1 { font-size: 1.2rem; }
         }
 
-        @media (max-width: 600px) {
-            .microscope-assembly { transform: scale(0.6); }
-            .lang-switch { top: 10px; left: 10px; }
-            .controls-section { padding: 1rem; }
-            header h1 { font-size: 1.3rem; }
-            .objective-lenses { transform: scale(0.9); transform-origin: center; }
+        @media (max-width: 480px) {
+            .eyepiece { width: 280px; height: 280px; }
+            .microscope-assembly { transform: scale(0.55); }
         }
-
     </style>
 </head>
 <body>
@@ -1171,7 +1217,8 @@
                     item.dataset.id = sample.id;
                     const shortName = sample.name[currentLang].split(' ').slice(0,2).join(' ');
                     item.innerHTML = `<img src="${sample.imgUrl}" alt="thumb"><span>${shortName}</span>`;
-                    item.addEventListener('click', () => {
+                    item.addEventListener('click', (e) => {
+                        e.preventDefault();
                         if (currentSample.id !== sample.id) loadSample(sample);
                     });
                     slideTray.appendChild(item);
