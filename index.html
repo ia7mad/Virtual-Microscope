@@ -1104,8 +1104,22 @@
                     focusStatusEl.textContent = DICT[lang].status_blur;
                 }
 
-                // Re-render dynamic content
-                loadSample(currentSample, false);
+                // Update current labels without a full re-load loop
+                titleEl.textContent = currentSample.name[currentLang];
+                descEl.textContent = currentSample.desc[currentLang];
+                
+                // Refresh markers with new language
+                markersLayer.innerHTML = '';
+                currentSample.markers.forEach(mark => {
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.top = mark.top;
+                    el.style.left = mark.left;
+                    el.style.setProperty('--inv-scale', 1 / currentMagnification);
+                    el.dataset.label = mark.label[currentLang];
+                    if (isIdentifyActive) el.classList.add('visible');
+                    markersLayer.appendChild(el);
+                });
                 
                 // Rebuild tray labels
                 slideTray.innerHTML = '';
