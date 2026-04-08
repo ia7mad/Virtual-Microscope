@@ -1270,14 +1270,21 @@
             window.addEventListener('mousemove', (e) => panMove(e.clientX, e.clientY));
             window.addEventListener('mouseup', endPan);
 
-            eyepiece.addEventListener('touchstart', (e) => startPan(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+            eyepiece.addEventListener('touchstart', (e) => {
+                if (e.touches && e.touches[0]) {
+                    startPan(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+            
             window.addEventListener('touchmove', (e) => {
-                if (isDragging) {
+                if (isDragging && e.touches && e.touches[0]) {
                     e.preventDefault();
                     panMove(e.touches[0].clientX, e.touches[0].clientY);
                 }
             }, { passive: false });
+            
             window.addEventListener('touchend', endPan);
+            window.addEventListener('touchcancel', endPan);
 
             // ==========================================
             // Lens Switching (Zoom)
