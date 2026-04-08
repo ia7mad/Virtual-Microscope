@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Laboratory - Advanced Microscope Simulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: rgba(15, 18, 24, 0.85);
+            --medical-cyan: #00d4ff;
+            --medical-cyan-glow: rgba(0, 212, 255, 0.5);
+            --text-main: #f0f4f8;
+            --text-muted: #8b9bb4;
+            --border-color: rgba(0, 212, 255, 0.2);
+            --font-en: 'Inter', sans-serif;
+            --font-ar: 'Tajawal', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-en);
+            display: flex;
+            flex-direction: row; /* Always LTR layout: viewport left, sidebar right */
+            height: 100vh;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #11151a 0%, #000000 100%);
+        }
+
+        body.lang-ar {
+            font-family: var(--font-ar);
+        }
+
+        /* Language Switcher — always top-left of viewport */
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            background: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+        
+        .lang-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 18px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .lang-switch button.active {
+            background: var(--medical-cyan);
+            color: #000;
+        }
+
+        /* ====== Main Layout ====== */
+        .viewport-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            order: 1; /* Always first (left) */
+        }
+
+        .controls-section {
+            width: 440px;
+            min-width: 440px;
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.6);
+            z-index: 10;
+            overflow-y: auto;
+            order: 2; /* Always second (right) */
+        }
+
+        .controls-section::-webkit-scrollbar { width: 6px; }
+        .controls-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+        /* RTL text alignment for Arabic — layout stays fixed */
+        body.lang-ar .controls-section {
+            direction: rtl;
+            text-align: right;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        header h1 span {
+            color: var(--medical-cyan);
+            text-shadow: 0 0 12px var(--medical-cyan-glow);
+        }
+
+        #sample-title {
+            color: var(--medical-cyan);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        /* Case Info */
+        .case-info {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-left: 3px solid var(--medical-cyan);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        body.lang-ar .case-info {
+            border-left: 1px solid rgba(255,255,255,0.05);
+            border-right: 3px solid var(--medical-cyan);
+        }
+
+        .case-info strong {
+            color: var(--text-main);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        #case-desc {
+            color: var(--text-muted);
+        }
+
+        body.lang-ar #case-desc {
+            color: #d1d9e2;
+            font-size: 0.95rem;
+            line-height: 1.8;
+        }
+
+        /* Slide Drawer / Tray */
+        .slide-drawer { margin-top: 1.5rem; margin-bottom: 2rem; }
+        .slide-drawer label {
+            display: block; font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); margin-bottom: 0.75rem; font-weight: 600;
+        }
+        .tray {
+            display: flex;
+            direction: ltr; /* Tray always scrolls left-to-right */
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+        }
+        .tray::-webkit-scrollbar { height: 4px; }
+        .tray::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.4); border-radius: 2px; }
+        
+        .slide-item {
+            flex: 0 0 90px;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            background: #000;
+        }
+        .slide-item:hover { border-color: rgba(0, 212, 255, 0.5); transform: translateY(-2px); }
+        .slide-item.active { border-color: var(--medical-cyan); box-shadow: 0 0 15px var(--medical-cyan-glow); }
+        .slide-item img {
+            width: 100%; height: 55px; object-fit: cover; opacity: 0.8; transition: opacity 0.3s;
+        }
+        .slide-item.active img { opacity: 1; }
+        .slide-item span {
+            display: block; font-size: 10px; text-align: center;
+            padding: 6px 4px; background: rgba(10, 15, 20, 0.95);
+            font-weight: 600; color: #fff; border-top: 1px solid rgba(255,255,255,0.1);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            direction: ltr;
+        }
+
+        /* ====== Microscope Viewport ====== */
+        .microscope-assembly { position: relative; }
+        
+        .assembly-ring {
+            position: absolute;
+            top: -24px; left: -24px; right: -24px; bottom: -24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.03);
+            pointer-events: none;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.1), inset 0 0 30px rgba(0,0,0,1);
+            z-index: 2;
+        }
+
+        #eyepiece {
+            width: 85vh; height: 85vh;
+            max-width: 850px; max-height: 850px;
+            border-radius: 50%;
+            border: 12px solid #0a0a0a;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.95) inset, 0 0 0 100vw rgba(0, 0, 0, 0.95);
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            cursor: grab;
+            z-index: 1;
+        }
+
+        #eyepiece:active { cursor: grabbing; }
+
+        /* Slide container — NO default transition. Transitions are added via JS classes only. */
+        #slide-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 4000px; height: 4000px;
+            margin-top: -2000px; margin-left: -2000px;
+            will-change: transform;
+        }
+
+        /* Smooth zoom animation — applied by JS only during lens changes */
+        #slide-container.zoom-anim {
+            transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Smooth recenter animation */
+        #slide-container.recenter-anim {
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        #sample-image {
+            width: 100%; height: 100%;
+            object-fit: cover; pointer-events: none;
+            will-change: filter;
+        }
+
+        .lens-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,1);
+            z-index: 5;
+        }
+
+        .crosshair {
+            position: absolute; background: rgba(0, 212, 255, 0.15);
+            z-index: 4; pointer-events: none;
+        }
+        .crosshair-v { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
+        .crosshair-h { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+
+        /* Mini-Map — always bottom-left of viewport */
+        #mini-map-container {
+            position: absolute;
+            bottom: -30px; left: -80px;
+            width: 160px; height: 120px;
+            background: #050505;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 50;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+        
+        #mini-map-img {
+            width: 100%; height: 100%;
+            object-fit: cover; opacity: 0.6;
+        }
+        #mini-map-viewport {
+            position: absolute;
+            border: 1px solid var(--medical-cyan);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 10px rgba(0,212,255,0.3) inset;
+            transition: all 0.1s;
+        }
+
+        /* ====== Markers (Identify Feature) ====== */
+        #markers-layer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        }
+        
+        .marker {
+            position: absolute;
+            width: 22px; height: 22px;
+            border: 2px solid var(--medical-cyan);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(calc(var(--inv-scale, 1) * 0.5));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            box-shadow: 0 0 12px var(--medical-cyan-glow), inset 0 0 8px rgba(0,212,255,0.2);
+            z-index: 10;
+        }
+
+        .marker::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 28px; top: 50%; transform: translateY(-50%);
+            background: rgba(8, 12, 18, 0.95);
+            color: #fff; padding: 5px 10px; border-radius: 5px;
+            white-space: nowrap; border: 1px solid var(--border-color);
+            font-size: 12px; font-weight: 600; letter-spacing: 0.3px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            opacity: 0; transition: opacity 0.3s;
+        }
+
+        body.lang-ar .marker::after {
+            left: auto; right: 28px;
+            font-size: 13px;
+            font-family: var(--font-ar);
+            direction: rtl;
+        }
+        
+        .marker::before {
+            content:''; position: absolute;
+            top: 50%; left: 18px; width: 8px; height: 1px;
+            background: var(--medical-cyan); transform: translateY(-50%);
+        }
+        body.lang-ar .marker::before {
+            left: auto; right: 18px;
+        }
+
+        .marker.visible { opacity: 1; transform: translate(-50%, -50%) scale(var(--inv-scale, 1)); }
+        .marker.visible::after { opacity: 1; }
+
+        /* ====== Scale Bar — always bottom-right of viewport ====== */
+        #scale-bar {
+            position: absolute; bottom: -20px; right: -50px; z-index: 50;
+            display: flex; flex-direction: column; align-items: flex-end;
+            pointer-events: none; background: rgba(0,0,0,0.8);
+            padding: 8px 12px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        #scale-bar .bar {
+            width: 100px; height: 4px; background: var(--text-main);
+            border-left: 2px solid var(--text-main); border-right: 2px solid var(--text-main);
+            position: relative; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #scale-bar .bar::before, #scale-bar .bar::after {
+            content: ''; position: absolute; width: 2px; height: 10px; background: var(--text-main); bottom: 0;
+        }
+        #scale-bar .bar::before { left: 0; }
+        #scale-bar .bar::after { right: 0; }
+        #scale-bar .text { font-size: 12px; font-weight: 600; margin-top: 6px; letter-spacing: 1px; font-family: 'Inter', sans-serif; }
+
+        /* ====== Controls Area ====== */
+        .control-group { margin-bottom: 1.8rem; }
+        .control-group > label {
+            display: flex; justify-content: space-between;
+            font-size: 0.8rem; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted);
+            margin-bottom: 0.75rem; font-weight: 600;
+        }
+
+        .range-wrapper { position: relative; padding: 10px 0; }
+        .sweet-spot {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            width: 4px; height: 24px; background: var(--medical-cyan);
+            border-radius: 2px; pointer-events: none;
+            box-shadow: 0 0 10px var(--medical-cyan); z-index: 0;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%; background: transparent; position: relative; z-index: 1;
+            direction: ltr; /* Sliders always operate left-to-right */
+        }
+        input[type="range"]:focus { outline: none; }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%;
+            background: #fff; margin-top: -8px; cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8); transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); background: var(--medical-cyan); }
+
+        /* ====== Realistic Objective Lens Buttons ====== */
+        .objective-lenses {
+            display: flex;
+            gap: 10px;
+            direction: ltr;
+            align-items: flex-end; /* Bottom-align like a real nosepiece turret */
+            padding: 10px 0 5px;
+        }
+
+        .lens-btn {
+            flex: 1;
+            position: relative;
+            /* Metallic cylindrical barrel using side-to-side gradient */
+            background: 
+                linear-gradient(90deg, #1a1a1a 0%, #3a3a3a 20%, #555 50%, #3a3a3a 80%, #1a1a1a 100%);
+            border: 1.5px solid #444;
+            border-bottom: 3px solid #222;
+            border-radius: 8px 8px 16px 16px;
+            color: #ccc;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.9),
+                inset 0 1px 0 rgba(255,255,255,0.2),
+                inset 0 -3px 6px rgba(0,0,0,0.6),
+                inset 2px 0 4px rgba(255,255,255,0.05),
+                inset -2px 0 4px rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        /* Different Heights — shorter = lower magnification, taller = higher */
+        .lens-10x  { height: 65px; padding: 8px 4px 6px; }
+        .lens-40x  { height: 85px; padding: 10px 4px 8px; }
+        .lens-100x { height: 110px; padding: 14px 4px 10px; }
+
+        /* Colored identification ring band at top */
+        .lens-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: var(--lens-color);
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* Metallic groove rings on the barrel body */
+        .lens-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 12px; left: 6px; right: 6px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.15) 30%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.15) 70%, transparent 95%);
+        }
+
+        .lens-btn .lens-label {
+            font-size: 0.55rem;
+            color: #888;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .lens-btn:hover {
+            transform: translateY(3px);
+            box-shadow: 
+                0 4px 8px rgba(0,0,0,0.9),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .lens-btn.active {
+            background: 
+                linear-gradient(90deg, #0d1520 0%, #1a2a40 20%, #2a3d5a 50%, #1a2a40 80%, #0d1520 100%);
+            border-color: var(--medical-cyan);
+            color: #fff;
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 0.2),
+                0 8px 20px rgba(0,0,0,0.9),
+                inset 0 1px 0 rgba(0,212,255,0.3),
+                inset 2px 0 6px rgba(0,212,255,0.05),
+                inset -2px 0 6px rgba(0,212,255,0.05);
+        }
+        
+        .lens-btn.active::before {
+            box-shadow: 0 0 10px var(--lens-color);
+        }
+
+        .lens-btn.active .lens-label {
+            color: var(--medical-cyan);
+        }
+
+        /* Standard laboratory color codes */
+        .lens-10x  { --lens-color: #ffd700; }  /* Yellow = 10x */
+        .lens-40x  { --lens-color: #4488ff; }  /* Blue = 40x */
+        .lens-100x { --lens-color: #ffffff; }   /* White = 100x Oil */
+
+        /* ====== Action Buttons ====== */
+        .action-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px; font-family: inherit; font-weight: 600;
+            font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 8px; transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .action-btn.primary {
+            background: rgba(0, 212, 255, 0.1); color: var(--medical-cyan); border: 1px solid var(--medical-cyan);
+        }
+        .action-btn.primary svg { fill: var(--medical-cyan); transition: transform 0.3s; }
+        .action-btn.primary:hover { background: rgba(0, 212, 255, 0.2); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+        .action-btn.primary.active { background: var(--medical-cyan); color: #000; }
+        .action-btn.primary.active svg { fill: #000; transform: scale(1.1); }
+        
+        .action-btn.secondary {
+            background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); margin-top: 12px;
+        }
+        .action-btn.secondary:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        /* Focus metrics footer */
+        .metrics {
+            margin-top: auto; border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 1.5rem; font-family: 'Courier New', Courier, monospace; font-size: 0.8rem;
+            color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            direction: ltr; /* Metrics always LTR for readability */
+        }
+        .metrics span { color: var(--medical-cyan); font-weight: bold; }
+
+        /* ====== Builder Modal ====== */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        
+        .modal-content {
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            border-radius: 12px; width: 90vw; max-width: 1000px; max-height: 90vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+        
+        .modal-header {
+            padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-header h2 { font-size: 1.2rem; color: var(--medical-cyan); margin: 0; }
+        .close-btn { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+        
+        .modal-body {
+            display: flex; flex: 1; overflow: hidden; direction: ltr;
+        }
+        body.lang-ar .modal-body { direction: rtl; }
+        
+        .modal-sidebar {
+            width: 350px; padding: 1.5rem; border-right: 1px solid rgba(255,255,255,0.05);
+            overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;
+        }
+        body.lang-ar .modal-sidebar { border-right: none; border-left: 1px solid rgba(255,255,255,0.05); }
+        
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .form-group input, .form-group textarea {
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; padding: 10px; border-radius: 6px; font-family: inherit;
+        }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--medical-cyan); }
+        .file-upload-btn {
+            background: rgba(255,255,255,0.05); border: 2px dashed rgba(255,255,255,0.2);
+            padding: 1.5rem; text-align: center; border-radius: 8px; cursor: pointer;
+            transition: border-color 0.2s; color: var(--medical-cyan); font-weight: 600;
+        }
+        .file-upload-btn:hover { border-color: var(--medical-cyan); }
+        .file-upload-btn input { display: none; }
+        
+        .modal-preview-area {
+            flex: 1; padding: 1.5rem; display: flex; flex-direction: column;
+            background: #000; position: relative;
+        }
+        .preview-instruction {
+            color: var(--text-muted); text-align: center; margin-bottom: 10px; font-size: 0.9rem;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .preview-instruction span { font-size: 0.75rem; opacity: 0.7; }
+        .preview-container {
+            flex: 1; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .preview-container img {
+            max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: none;
+        }
+        
+        .temp-marker {
+            position: absolute; width: 18px; height: 18px; border-radius: 50%;
+            background: var(--medical-cyan); transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--medical-cyan-glow); cursor: grab;
+            z-index: 10; border: 2px solid #fff; pointer-events: auto;
+            transition: box-shadow 0.2s;
+        }
+        .temp-marker:hover { box-shadow: 0 0 15px #fff; border-color: var(--medical-cyan); }
+        .temp-marker:active { cursor: grabbing; }
+        
+        .temp-marker-label {
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: #fff; padding: 2px 6px;
+            border-radius: 4px; font-size: 10px; white-space: nowrap;
+            pointer-events: none; border: 1px solid var(--medical-cyan-glow);
+        }
+
+        .modal-zoom-controls {
+            position: absolute; bottom: 20px; right: 20px; display: flex; gap: 8px; z-index: 20;
+        }
+        .modal-zoom-btn {
+            width: 32px; height: 32px; background: rgba(0,0,0,0.6); border: 1px solid var(--border-color);
+            color: #fff; border-radius: 4px; cursor: pointer; backdrop-filter: blur(4px);
+            font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-zoom-btn:hover { background: var(--medical-cyan); color: #000; }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: flex-end; gap: 10px;
+        }
+        
+        .add-slide-wrap { display: flex; padding-top: 10px; justify-content: center; gap: 8px; }
+        .add-slide-btn {
+            background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2);
+            color: var(--text-muted); border-radius: 8px; flex: 1; padding: 8px;
+            cursor: pointer; font-size: 0.8rem; font-family: inherit; font-weight: 600; transition: all 0.2s;
+        }
+        .add-slide-btn:hover { border-color: var(--medical-cyan); color: var(--medical-cyan); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Language Switch -->
+    <div class="lang-switch">
+        <button id="btn-en" class="active">EN</button>
+        <button id="btn-ar">العربية</button>
+    </div>
+
+    <div class="viewport-section">
+        <div class="microscope-assembly">
+            <div class="assembly-ring"></div>
+            <div id="eyepiece">
+                <div id="slide-container">
+                    <img id="sample-image" src="" alt="Microscope Sample" draggable="false">
+                    <div id="markers-layer"></div>
+                </div>
+                <div class="crosshair crosshair-v"></div>
+                <div class="crosshair crosshair-h"></div>
+                <div class="lens-overlay"></div>
+            </div>
+            
+            <div id="mini-map-container">
+                <img id="mini-map-img" src="" alt="Full Slide">
+                <div id="mini-map-viewport"></div>
+            </div>
+
+            <div id="scale-bar">
+                <div class="bar"></div>
+                <div class="text">100 µm</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-section">
+        <header>
+            <h1 id="app-title">Virtual <span>Microscope</span></h1>
+            <div id="sample-title">Loading...</div>
+            
+            <div class="case-info">
+                <strong id="case-header">Case Note:</strong> 
+                <span id="case-desc">Please select a sample.</span>
+            </div>
+        </header>
+
+        <div class="slide-drawer">
+            <label id="lbl-tray">Specimen Slide Tray</label>
+            <div class="tray" id="slide-tray"></div>
+            <div class="add-slide-wrap">
+                <button type="button" id="btn-open-modal" class="add-slide-btn">+ <span id="lbl-add-slide">Add Custom Slide</span></button>
+                <button type="button" id="btn-edit-specimen" class="add-slide-btn">✎ <span id="lbl-edit-specimen">Edit Specimen</span></button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label><span id="lbl-focus">Fine Focus Dial</span> <span id="focus-readout">--</span></label>
+            <div class="range-wrapper">
+                <div class="sweet-spot"></div>
+                <input type="range" id="focus-slider" min="0" max="100" value="20">
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label><span id="lbl-lamp">Lamp Brightness</span> <span id="light-readout">100%</span></label>
+            <div class="range-wrapper">
+                <input type="range" id="light-slider" min="20" max="200" value="100">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label id="lbl-lenses">Microscope Objective Lenses</label>
+            <div class="objective-lenses">
+                <button type="button" id="btn-10x" class="lens-btn lens-10x active" data-zoom="0.25" data-scale="100 µm" data-bar="80px">
+                    10x <span class="lens-label lbl-pow-low">Low Power</span>
+                </button>
+                <button type="button" id="btn-40x" class="lens-btn lens-40x" data-zoom="0.7" data-scale="25 µm" data-bar="150px">
+                    40x <span class="lens-label lbl-pow-high">High Power</span>
+                </button>
+                <button type="button" id="btn-100x" class="lens-btn lens-100x" data-zoom="1.8" data-scale="10 µm" data-bar="250px">
+                    100x <span class="lens-label lbl-pow-oil">Oil Immersion</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label id="lbl-edu">Educational Tools</label>
+            <button type="button" id="btn-identify" class="action-btn primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <span id="lbl-btn-id">Identify Structures</span>
+            </button>
+            <button type="button" id="btn-reset" class="action-btn secondary">
+                <span id="lbl-btn-reset">Recenter Stage</span>
+            </button>
+        </div>
+
+        <div class="metrics">
+            <div>X: <span id="pos-x">0</span></div>
+            <div>Y: <span id="pos-y">0</span></div>
+            <div><span id="stat-lamp">LAMP</span>: <span id="status-lamp">ON</span></div>
+            <div><span id="stat-foc">FOCUS</span>: <span id="focus-status">--</span></div>
+        </div>
+    </div>
+
+    <!-- Builder Modal -->
+    <div id="builder-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="lbl-modal-title">Create Custom Specimen</h2>
+                <button type="button" class="close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-sidebar">
+                    <label class="file-upload-btn">
+                        <span id="lbl-upload">Upload Image</span>
+                        <input type="file" id="modal-file" accept="image/png, image/jpeg">
+                    </label>
+                    <div class="form-group">
+                        <label id="lbl-name-en">Name (English)</label>
+                        <input type="text" id="modal-name-en" placeholder="e.g. Skin Tissue">
+                    </div>
+                    <div class="form-group">
+                        <label id="lbl-name-ar">Name (Arabic)</label>
+                        <input type="text" id="modal-name-ar" placeholder="مثال: نسيج الجلد">
+                    </div>
+                    <div class="form-group">
+                        <label id="lbl-desc-en">Description (English)</label>
+                        <textarea id="modal-desc-en" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label id="lbl-desc-ar">Description (Arabic)</label>
+                        <textarea id="modal-desc-ar" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-preview-area">
+                    <div class="preview-instruction" id="lbl-instruction">Click on the image to place a marker.</div>
+                    <div class="preview-container" id="preview-container">
+                        <div id="modal-image-wrap" style="transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); transform-origin: center center; cursor: crosshair; display: none; position: relative;">
+                            <img id="modal-preview-img" src="" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: block;">
+                            <div id="modal-markers-layer" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;"></div>
+                        </div>
+                    </div>
+                    <div class="modal-zoom-controls">
+                        <button type="button" class="modal-zoom-btn" id="btn-modal-zoom-out">−</button>
+                        <button type="button" class="modal-zoom-btn" id="btn-modal-zoom-in">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="action-btn secondary" id="btn-clear-markers" style="width: auto; margin-top: 0; margin-right: auto;"><span id="lbl-clear-markers">Clear Markers</span></button>
+                <button type="button" class="action-btn secondary" id="btn-cancel-modal" style="width: auto; margin-top: 0;"><span id="lbl-cancel">Cancel</span></button>
+                <button type="button" class="action-btn primary" id="btn-save-modal" style="width: auto;"><span id="lbl-save">Save Slide</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ==========================================
+            // Language Dictionary
+            // ==========================================
+            let currentLang = 'en';
+
+            const DICT = {
+                en: {
+                    app_title: 'Virtual <span>Microscope</span>',
+                    case_header: 'Case Note:',
+                    tray: 'Specimen Slide Tray',
+                    focus: 'Fine Focus Dial',
+                    lamp: 'Lamp Brightness',
+                    lenses: 'Microscope Objective Lenses',
+                    pow_low: 'Low Power',
+                    pow_high: 'High Power',
+                    pow_oil: 'Oil Immersion',
+                    edu: 'Educational Tools',
+                    btn_id: 'Identify Structures',
+                    btn_reset: 'Recenter Stage',
+                    stat_lamp: 'LAMP',
+                    stat_foc: 'FOCUS',
+                    status_sharp: 'SHARP',
+                    status_blur: 'BLURRED',
+                    add_slide: 'Add Custom Slide',
+                    edit_specimen: 'Edit Specimen',
+                    modal_title_add: 'Create Custom Specimen',
+                    modal_title_edit: 'Edit Specimen',
+                    upload: 'Upload Image (.jpg, .png)',
+                    name_en: 'Name (English)',
+                    name_ar: 'Name (Arabic)',
+                    desc_en: 'Description (English)',
+                    desc_ar: 'Description (Arabic)',
+                    instruction: 'Click on the image to place a marker.',
+                    prompt_en: 'Marker Name (English):',
+                    prompt_ar: 'Marker Name (Arabic):',
+                    clear_markers: 'Clear Markers',
+                    cancel: 'Cancel',
+                    save: 'Save Slide',
+                    upload_error: 'Storage Error: Image is too large (exceeds browser 5MB limit). It will work for now but will be lost if you refresh.',
+                    marker_tip: 'Double-click to Edit Name | Right-click to Delete'
+                },
+                ar: {
+                    app_title: 'المجهر <span>الافتراضي</span>',
+                    case_header: 'ملاحظة الحالة:',
+                    tray: 'صينية شرائح العينات',
+                    focus: 'عجلة ضبط الوضوح',
+                    lamp: 'سطوع الإضاءة',
+                    lenses: 'عدسات المجهر',
+                    pow_low: 'تكبير منخفض',
+                    pow_high: 'تكبير عالي',
+                    pow_oil: 'عدسة زيتية',
+                    edu: 'أدوات تعليمية',
+                    btn_id: 'عرض أسماء المكونات',
+                    btn_reset: 'إعادة التوسيط',
+                    stat_lamp: 'الإضاءة',
+                    stat_foc: 'الوضوح',
+                    status_sharp: 'واضح',
+                    status_blur: 'ضبابي',
+                    add_slide: 'إضافة شريحة مخصصة',
+                    edit_specimen: 'تعديل العينة',
+                    modal_title_add: 'إنشاء عينة مخصصة',
+                    modal_title_edit: 'تعديل العينة',
+                    upload: 'رفع صورة (.jpg, .png)',
+                    name_en: 'الاسم (بالإنجليزية)',
+                    name_ar: 'الاسم (بالعربية)',
+                    desc_en: 'الوصف (بالإنجليزية)',
+                    desc_ar: 'الوصف (بالعربية)',
+                    instruction: 'انقر على الصورة لوضع علامة.',
+                    prompt_en: 'اسم العلامة (بالإنجليزية):',
+                    prompt_ar: 'اسم العلامة (بالعربية):',
+                    clear_markers: 'مسح العلامات',
+                    cancel: 'إلغاء',
+                    save: 'حفظ الشريحة',
+                    upload_error: 'خطأ في التخزين: الصورة كبيرة جداً (تتجاوز حد المتصفح 5MB). ستعمل الشريحة مؤقتاً لكنها ستفقد عند تحديث الصفحة.',
+                    marker_tip: 'نقر مزدوج للتعديل | زر الفأرة الأيمن للحذف'
+                }
+            };
+
+            // ==========================================
+            // Specimen Data — bilingual names, descriptions, markers
+            // ==========================================
+            let samples = [
+                {
+                    id: 'blood',
+                    name: { en: 'Normal Blood Sample', ar: 'عينة دم طبيعية' },
+                    desc: { 
+                        en: 'A standard human blood sample. You can see many red blood cells that carry oxygen throughout the body, a few white blood cells that fight diseases, and tiny platelets that stop bleeding.',
+                        ar: 'هذه عينة من دم الإنسان الطبيعي. تشاهد هنا خلايا الدم الحمراء التي تنقل الأكسجين لجميع أنحاء الجسم، وخلايا الدم البيضاء التي تدافع عن الجسم ضد الأمراض، والصفائح الدموية الصغيرة التي تساعد على وقف النزيف.'
+                    },
+                    imgUrl: 'assets/blood_smear.png',
+                    markers: [
+                        { top: '48.0%', left: '49.5%', label: { en: 'Red Blood Cell', ar: 'خلية دم حمراء' } },
+                        { top: '50.5%', left: '50.5%', label: { en: 'White Blood Cell', ar: 'خلية دم بيضاء' } },
+                        { top: '49.0%', left: '51.0%', label: { en: 'Platelet', ar: 'صفيحة دموية' } },
+                        { top: '51.5%', left: '49.0%', label: { en: 'Plasma (Fluid)', ar: 'البلازما (سائل الدم)' } }
+                    ]
+                },
+                {
+                    id: 'malaria',
+                    name: { en: 'Malaria Infection', ar: 'عدوى الملاريا' },
+                    desc: { 
+                        en: 'A blood sample from a patient with Malaria. Notice the tiny purple rings inside the red blood cells — those are the living malaria parasites feeding inside the cells.',
+                        ar: 'عينة دم مأخوذة من مريض مصاب بالملاريا. لاحظ الحلقات الأرجوانية الصغيرة داخل خلايا الدم الحمراء — هذه هي طفيليات الملاريا التي تعيش وتتغذى داخل الخلايا وتسبب المرض.'
+                    },
+                    imgUrl: 'assets/malaria_smear.png',
+                    markers: [
+                        { top: '49.0%', left: '49.5%', label: { en: 'Malaria Parasite', ar: 'طفيلي الملاريا' } },
+                        { top: '51.0%', left: '50.5%', label: { en: 'Two parasites in one cell', ar: 'طفيليان في خلية واحدة' } },
+                        { top: '50.0%', left: '51.0%', label: { en: 'Healthy red blood cell', ar: 'خلية دم حمراء سليمة' } }
+                    ]
+                },
+                {
+                    id: 'mitosis',
+                    name: { en: 'Onion Root Cells', ar: 'خلايا جذر البصل' },
+                    desc: { 
+                        en: 'Cells from the tip of an onion root. These cells are dividing rapidly — you can see them in the middle of splitting their DNA to create new cells.',
+                        ar: 'خلايا من طرف جذر نبات البصل. هذه الخلايا تنقسم بسرعة كبيرة — يمكنك مشاهدتها وهي تنسخ مادتها الوراثية وتنقسم لتكوّن خلايا جديدة.'
+                    },
+                    imgUrl: 'assets/onion_mitosis.png', 
+                    markers: [
+                        { top: '49.0%', left: '49.5%', label: { en: 'Dividing Cell', ar: 'خلية تنقسم' } },
+                        { top: '51.0%', left: '50.5%', label: { en: 'Splitting DNA', ar: 'انفصال المادة الوراثية' } },
+                        { top: '50.0%', left: '51.0%', label: { en: 'Cell Wall', ar: 'جدار الخلية' } }
+                    ]
+                },
+                {
+                    id: 'bacteria',
+                    name: { en: 'Bacteria (Gram Stain)', ar: 'بكتيريا (صبغة جرام)' },
+                    desc: { 
+                        en: 'A mix of different bacteria stained to reveal their shapes. Purple round ones and pink rod-shaped ones. This test helps doctors figure out which germ is causing an infection.',
+                        ar: 'خليط من أنواع مختلفة من البكتيريا تم صبغها لإظهار أشكالها. البكتيريا الكروية البنفسجية والبكتيريا العصوية الوردية. هذا الفحص يساعد الأطباء في تحديد نوع الجرثومة المسببة للعدوى.'
+                    },
+                    imgUrl: 'assets/gram_stain.png',
+                    markers: [
+                        { top: '49.0%', left: '49.5%', label: { en: 'Round bacteria (Cocci)', ar: 'بكتيريا كروية' } },
+                        { top: '51.0%', left: '50.5%', label: { en: 'Rod bacteria (Bacilli)', ar: 'بكتيريا عصوية' } },
+                        { top: '50.0%', left: '51.0%', label: { en: 'Cell debris', ar: 'بقايا خلوية' } }
+                    ]
+                },
+                {
+                    id: 'urine',
+                    name: { en: 'Urine Sediment (Crystals)', ar: 'راسب البول (بلورات)' },
+                    desc: { 
+                        en: 'Examination of urine under a microscope. You can see geometric crystals (calcium oxalate), which are common but can sometimes indicate a tendency toward kidney stones.',
+                        ar: 'فحص عينة من البول تحت المجهر. تشاهد هنا بلورات هندسية الشكل (أوكسالات الكالسيوم)، وهي شائعة الظهور ولكنها قد تشير أحياناً إلى القابلية لتكون حصوات الكلى.'
+                    },
+                    imgUrl: 'assets/urine_crystals.png',
+                    markers: [
+                        { top: '49.5%', left: '49.0%', label: { en: 'Envelope Crystal', ar: 'بلورة مربعة (مثل الظرف)' } },
+                        { top: '51.0%', left: '50.5%', label: { en: 'Amorphous sediment', ar: 'رواسب غير متبلورة' } },
+                        { top: '50.0%', left: '51.5%', label: { en: 'Background crystal', ar: 'بلورة خلفية' } }
+                    ]
+                },
+                {
+                    id: 'histo',
+                    name: { en: 'Histopathology (Liver Tissue)', ar: 'الأنسجة (نسيج الكبد)' },
+                    desc: { 
+                        en: 'A thin slice of liver tissue stained with H&E. The pink areas are the cells\' bodies (cytoplasm) and the purple dots are the control centers (nuclei). Doctors study these to find diseases in organs.',
+                        ar: 'شريحة رقيقة جداً من نسيج الكبد مصبوغة بصبغة (H&E). المناطق الوردية هي أجسام الخلايا (السيتوبلازم) والنقاط الأرجوانية هي مراكز التحكم (النواة). يدرس الأطباء هذه الشرائح للكشف عن الأمراض في الأعضاء.'
+                    },
+                    imgUrl: 'assets/histopathology.png',
+                    markers: [
+                        { top: '49.0%', left: '51.0%', label: { en: 'Hepatocyte Nucleus', ar: 'نواة الخلية الكبدية' } },
+                        { top: '51.0%', left: '49.5%', label: { en: 'Hepatocyte Cytoplasm', ar: 'سيتوبلازم الخلية الكبدية' } },
+                        { top: '50.0%', left: '50.0%', label: { en: 'Cell Arrangement', ar: 'ترتيب الخلايا' } }
+                    ]
+                }
+            ];
+
+            // ==========================================
+            // DOM References
+            // ==========================================
+            const eyepiece = document.getElementById('eyepiece');
+            const slideContainer = document.getElementById('slide-container');
+            const sampleImage = document.getElementById('sample-image');
+            const markersLayer = document.getElementById('markers-layer');
+            const miniMapImg = document.getElementById('mini-map-img');
+            const miniMapViewport = document.getElementById('mini-map-viewport');
+            const slideTray = document.getElementById('slide-tray');
+            const scaleBarBar = document.querySelector('#scale-bar .bar');
+            const scaleBarText = document.querySelector('#scale-bar .text');
+            
+            const titleEl = document.getElementById('sample-title');
+            const descEl = document.getElementById('case-desc');
+            const focusStatusEl = document.getElementById('focus-status');
+            const lightReadout = document.getElementById('light-readout');
+            
+            const focusSlider = document.getElementById('focus-slider');
+            const lightSlider = document.getElementById('light-slider');
+            const zoomBtns = document.querySelectorAll('.lens-btn');
+            const btnIdentify = document.getElementById('btn-identify');
+            const btnReset = document.getElementById('btn-reset');
+            const btnEn = document.getElementById('btn-en');
+            const btnAr = document.getElementById('btn-ar');
+
+            // ==========================================
+            // State
+            // ==========================================
+            let isDragging = false;
+            let startMouseX = 0, startMouseY = 0;
+            let translateX = 0, translateY = 0;
+            let currentMagnification = 0.25; 
+            let currentSample = samples[0];
+            let isIdentifyActive = false;
+            let distanceFocus = 0;
+            
+            const CENTER_FOCUS_VAL = 50;
+            const BLUR_MULTIPLIER = 0.2; 
+            const SLIDE_WIDTH = 4000;
+            const SLIDE_HEIGHT = 4000;
+
+            // ==========================================
+            // Language Engine
+            // ==========================================
+            function applyLanguage(lang) {
+                currentLang = lang;
+                
+                if (lang === 'ar') {
+                    btnAr.classList.add('active');
+                    btnEn.classList.remove('active');
+                    document.body.classList.add('lang-ar');
+                } else {
+                    btnEn.classList.add('active');
+                    btnAr.classList.remove('active');
+                    document.body.classList.remove('lang-ar');
+                }
+
+                // Update all static UI text from dictionary
+                document.getElementById('app-title').innerHTML = DICT[lang].app_title;
+                document.getElementById('case-header').textContent = DICT[lang].case_header;
+                document.getElementById('lbl-tray').textContent = DICT[lang].tray;
+                document.getElementById('lbl-focus').textContent = DICT[lang].focus;
+                document.getElementById('lbl-lamp').textContent = DICT[lang].lamp;
+                document.getElementById('lbl-lenses').textContent = DICT[lang].lenses;
+                document.querySelector('.lbl-pow-low').textContent = DICT[lang].pow_low;
+                document.querySelector('.lbl-pow-high').textContent = DICT[lang].pow_high;
+                document.querySelector('.lbl-pow-oil').textContent = DICT[lang].pow_oil;
+                document.getElementById('lbl-edu').textContent = DICT[lang].edu;
+                document.getElementById('lbl-btn-id').textContent = DICT[lang].btn_id;
+                document.getElementById('lbl-btn-reset').textContent = DICT[lang].btn_reset;
+                document.getElementById('stat-lamp').textContent = DICT[lang].stat_lamp;
+                document.getElementById('stat-foc').textContent = DICT[lang].stat_foc;
+
+                // Modal strings
+                document.getElementById('lbl-add-slide').textContent = DICT[lang].add_slide;
+                document.getElementById('lbl-edit-specimen').textContent = DICT[lang].edit_specimen;
+                document.getElementById('lbl-upload').textContent = DICT[lang].upload;
+                document.getElementById('lbl-name-en').textContent = DICT[lang].name_en;
+                document.getElementById('lbl-name-ar').textContent = DICT[lang].name_ar;
+                document.getElementById('lbl-desc-en').textContent = DICT[lang].desc_en;
+                document.getElementById('lbl-desc-ar').textContent = DICT[lang].desc_ar;
+                document.getElementById('lbl-instruction').textContent = DICT[lang].instruction;
+                
+                // Add tip if exists
+                if (DICT[lang].marker_tip) {
+                    const tip = document.createElement('span');
+                    tip.textContent = DICT[lang].marker_tip;
+                    document.getElementById('lbl-instruction').appendChild(tip);
+                }
+
+                document.getElementById('lbl-clear-markers').textContent = DICT[lang].clear_markers;
+                document.getElementById('lbl-cancel').textContent = DICT[lang].cancel;
+                document.getElementById('lbl-save').textContent = DICT[lang].save;
+                
+                if (window.editSpecimenId) {
+                    document.getElementById('lbl-modal-title').textContent = DICT[lang].modal_title_edit;
+                } else {
+                    document.getElementById('lbl-modal-title').textContent = DICT[lang].modal_title_add;
+                }
+
+                // Update focus status word
+                if (distanceFocus < 3) {
+                    focusStatusEl.textContent = DICT[lang].status_sharp;
+                } else {
+                    focusStatusEl.textContent = DICT[lang].status_blur;
+                }
+
+                // Re-render dynamic content
+                loadSample(currentSample, false);
+                
+                // Rebuild tray labels
+                slideTray.innerHTML = '';
+                initTray();
+            }
+
+            btnEn.addEventListener('click', () => applyLanguage('en'));
+            btnAr.addEventListener('click', () => applyLanguage('ar'));
+
+            // ==========================================
+            // Sample Loading
+            // ==========================================
+            function loadSample(sample, resetView = true) {
+                currentSample = sample;
+                
+                titleEl.textContent = sample.name[currentLang];
+                descEl.textContent = sample.desc[currentLang];
+                
+                sampleImage.src = sample.imgUrl;
+                miniMapImg.src = sample.imgUrl;
+                
+                // Rebuild markers
+                markersLayer.innerHTML = '';
+                sample.markers.forEach(mark => {
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.top = mark.top;
+                    el.style.left = mark.left;
+                    el.style.setProperty('--inv-scale', 1 / currentMagnification);
+                    el.dataset.label = mark.label[currentLang];
+                    if (isIdentifyActive) el.classList.add('visible');
+                    markersLayer.appendChild(el);
+                });
+
+                if (resetView) resetStage();
+                updateTrayUI();
+            }
+
+            function updateTrayUI() {
+                document.querySelectorAll('.slide-item').forEach(el => {
+                    el.classList.toggle('active', el.dataset.id === currentSample.id);
+                });
+            }
+
+            function initTray() {
+                samples.forEach(sample => {
+                    const item = document.createElement('div');
+                    item.className = 'slide-item';
+                    item.dataset.id = sample.id;
+                    const shortName = sample.name[currentLang].split(' ').slice(0,2).join(' ');
+                    item.innerHTML = `<img src="${sample.imgUrl}" alt="thumb"><span>${shortName}</span>`;
+                    item.addEventListener('click', () => {
+                        if (currentSample.id !== sample.id) loadSample(sample);
+                    });
+                    slideTray.appendChild(item);
+                });
+                updateTrayUI();
+            }
+
+            // ==========================================
+            // Optical Filters (Focus + Light)
+            // ==========================================
+            function updateFilters() {
+                const val = parseInt(focusSlider.value, 10);
+                distanceFocus = Math.abs(val - CENTER_FOCUS_VAL);
+                const blurPx = distanceFocus * BLUR_MULTIPLIER;
+                
+                const lightVal = parseInt(lightSlider.value, 10);
+                const brightness = lightVal / 100;
+                let contrast = 1;
+                if (brightness > 1.2) contrast = 1 - ((brightness - 1.2) * 0.5);
+                
+                sampleImage.style.filter = `blur(${blurPx}px) brightness(${brightness}) contrast(${contrast})`;
+                lightReadout.textContent = `${lightVal}%`;
+                
+                if (distanceFocus < 3) {
+                    focusStatusEl.textContent = DICT[currentLang].status_sharp;
+                    focusStatusEl.style.color = '#00ff88';
+                } else {
+                    focusStatusEl.textContent = DICT[currentLang].status_blur;
+                    focusStatusEl.style.color = '#ff3366';
+                }
+            }
+
+            focusSlider.addEventListener('input', updateFilters);
+            lightSlider.addEventListener('input', updateFilters);
+
+            // ==========================================
+            // Transform (Pan + Zoom)
+            // ==========================================
+            function applyTransform() {
+                slideContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentMagnification})`;
+                
+                // Scale markers inversely so they stay the same screen size
+                const inv = 1 / currentMagnification;
+                document.querySelectorAll('.marker').forEach(m => {
+                    m.style.setProperty('--inv-scale', inv);
+                });
+                
+                document.getElementById('pos-x').textContent = Math.round(translateX);
+                document.getElementById('pos-y').textContent = Math.round(translateY);
+                updateMiniMap();
+            }
+
+            function resetStage() {
+                translateX = 0; translateY = 0;
+                slideContainer.classList.add('recenter-anim');
+                applyTransform();
+                setTimeout(() => slideContainer.classList.remove('recenter-anim'), 700);
+            }
+
+            function clampPan() {
+                const eyW = eyepiece.clientWidth;
+                const eyH = eyepiece.clientHeight;
+                
+                let limitX = Math.max(0, (SLIDE_WIDTH * currentMagnification - eyW) / 2);
+                let limitY = Math.max(0, (SLIDE_HEIGHT * currentMagnification - eyH) / 2);
+                
+                translateX = Math.max(-limitX, Math.min(limitX, translateX));
+                translateY = Math.max(-limitY, Math.min(limitY, translateY));
+            }
+
+            function updateMiniMap() {
+                const mapW = 160, mapH = 120;
+                const eyW = eyepiece.clientWidth; 
+                const eyH = eyepiece.clientHeight;
+                
+                const vpW = (eyW / currentMagnification / SLIDE_WIDTH) * mapW;
+                const vpH = (eyH / currentMagnification / SLIDE_HEIGHT) * mapH;
+                
+                const cx = (SLIDE_WIDTH / 2 - translateX) / SLIDE_WIDTH * mapW;
+                const cy = (SLIDE_HEIGHT / 2 - translateY) / SLIDE_HEIGHT * mapH;
+
+                miniMapViewport.style.width = `${vpW}px`;
+                miniMapViewport.style.height = `${vpH}px`;
+                miniMapViewport.style.left = `${cx - vpW/2}px`;
+                miniMapViewport.style.top = `${cy - vpH/2}px`;
+                miniMapViewport.style.borderRadius = '50%';
+            }
+
+            // ==========================================
+            // Drag to Pan
+            // ==========================================
+            eyepiece.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                // Remove any lingering animation classes immediately
+                slideContainer.classList.remove('zoom-anim', 'recenter-anim');
+                startMouseX = e.clientX - translateX;
+                startMouseY = e.clientY - translateY;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                translateX = e.clientX - startMouseX;
+                translateY = e.clientY - startMouseY;
+                clampPan();
+                applyTransform();
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // ==========================================
+            // Lens Switching (Zoom)
+            // ==========================================
+            zoomBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    if (target.classList.contains('active')) return; // Already selected
+                    
+                    zoomBtns.forEach(b => b.classList.remove('active'));
+                    target.classList.add('active');
+                    
+                    currentMagnification = parseFloat(target.dataset.zoom);
+                    scaleBarText.textContent = target.dataset.scale;
+                    scaleBarBar.style.width = target.dataset.bar;
+                    
+                    // Clamp pan position for new zoom level
+                    clampPan();
+                    
+                    // Animate the zoom transition smoothly
+                    slideContainer.classList.add('zoom-anim');
+                    applyTransform();
+                    
+                    // Remove transition class after animation completes
+                    setTimeout(() => slideContainer.classList.remove('zoom-anim'), 750);
+                    
+                    // Simulate slight focus drift when switching objectives
+                    focusSlider.value = CENTER_FOCUS_VAL + Math.round(Math.random() * 16 - 8);
+                    updateFilters();
+                });
+            });
+
+            btnReset.addEventListener('click', resetStage);
+
+            // ==========================================
+            // Identify Structures
+            // ==========================================
+            btnIdentify.addEventListener('click', () => {
+                isIdentifyActive = !isIdentifyActive;
+                
+                if (isIdentifyActive) {
+                    btnIdentify.classList.add('active');
+                    
+                    // Auto-zoom to 40x if currently on 10x for better readability
+                    if (currentMagnification <= 0.25) {
+                        document.getElementById('btn-40x').click();
+                    }
+
+                    document.querySelectorAll('.marker').forEach(m => m.classList.add('visible'));
+                    
+                    // Auto-focus
+                    focusSlider.value = CENTER_FOCUS_VAL;
+                    updateFilters();
+                } else {
+                    btnIdentify.classList.remove('active');
+                    document.querySelectorAll('.marker').forEach(m => m.classList.remove('visible'));
+                }
+            });
+
+            // ==========================================
+            // Custom Specimen Builder & Editor
+            // ==========================================
+            const modal = document.getElementById('builder-modal');
+            const btnOpenModal = document.getElementById('btn-open-modal');
+            const btnEditSpecimen = document.getElementById('btn-edit-specimen');
+            const btnCloseModal = document.getElementById('btn-close-modal');
+            const btnCancelModal = document.getElementById('btn-cancel-modal');
+            const btnSaveModal = document.getElementById('btn-save-modal');
+            const btnClearMarkers = document.getElementById('btn-clear-markers');
+            
+            const modalFile = document.getElementById('modal-file');
+            const modalImg = document.getElementById('modal-preview-img');
+            const previewContainer = document.getElementById('preview-container');
+            const modalImgWrap = document.getElementById('modal-image-wrap');
+            const modalMarkersLayer = document.getElementById('modal-markers-layer');
+            const btnModalZoomIn = document.getElementById('btn-modal-zoom-in');
+            const btnModalZoomOut = document.getElementById('btn-modal-zoom-out');
+            
+            let draggingMarker = null;
+            let modalZoom = 1;
+
+            function renderTempMarkers() {
+                modalMarkersLayer.innerHTML = '';
+                tempMarkers.forEach((mark, index) => {
+                    const dot = document.createElement('div');
+                    dot.className = 'temp-marker';
+                    dot.style.left = mark.left;
+                    dot.style.top = mark.top;
+                    dot.dataset.index = index;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'temp-marker-label';
+                    label.textContent = mark.label[currentLang];
+                    dot.appendChild(label);
+                    
+                    dot.addEventListener('mousedown', (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        draggingMarker = index;
+                        dot.style.cursor = 'grabbing';
+                    });
+
+                    dot.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        tempMarkers.splice(index, 1);
+                        renderTempMarkers();
+                    });
+
+                    dot.addEventListener('dblclick', (e) => {
+                        e.stopPropagation();
+                        const newEn = prompt(DICT[currentLang].prompt_en, mark.label.en);
+                        if (newEn === null) return;
+                        const newAr = prompt(DICT[currentLang].prompt_ar, mark.label.ar);
+                        if (newAr === null) return;
+                        
+                        tempMarkers[index].label = { en: newEn, ar: newAr };
+                        renderTempMarkers();
+                    });
+
+                    modalMarkersLayer.appendChild(dot);
+                });
+            }
+
+            function applyModalZoom() {
+                modalImgWrap.style.transform = `scale(${modalZoom})`;
+            }
+
+            btnModalZoomIn.addEventListener('click', () => {
+                modalZoom = Math.min(3, modalZoom + 0.2);
+                applyModalZoom();
+            });
+
+            btnModalZoomOut.addEventListener('click', () => {
+                modalZoom = Math.max(0.5, modalZoom - 0.2);
+                applyModalZoom();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (draggingMarker === null) return;
+                
+                const rect = modalImg.getBoundingClientRect();
+                
+                // When zoomed, the bounding rect is the visual size.
+                // We need to calculate where the mouse is relative to that visual box.
+                let x = (e.clientX - rect.left) / modalZoom;
+                let y = (e.clientY - rect.top) / modalZoom;
+
+                // The original width/height of the image element (non-scaled)
+                const origWidth = modalImg.clientWidth;
+                const origHeight = modalImg.clientHeight;
+                
+                x = Math.max(0, Math.min(origWidth, x));
+                y = Math.max(0, Math.min(origHeight, y));
+                
+                const leftPercent = (x / origWidth) * 100;
+                const topPercent = (y / origHeight) * 100;
+                
+                tempMarkers[draggingMarker].left = leftPercent.toFixed(2) + '%';
+                tempMarkers[draggingMarker].top = topPercent.toFixed(2) + '%';
+                
+                renderTempMarkers();
+            });
+
+            window.addEventListener('mouseup', () => {
+                draggingMarker = null;
+            });
+
+            function resetModal() {
+                modalFile.value = '';
+                document.getElementById('modal-name-en').value = '';
+                document.getElementById('modal-name-ar').value = '';
+                document.getElementById('modal-desc-en').value = '';
+                document.getElementById('modal-desc-ar').value = '';
+                modalImg.src = '';
+                modalImgWrap.style.display = 'none';
+                tempMarkers = [];
+                tempImgData = '';
+                modalZoom = 1;
+                applyModalZoom();
+                window.editSpecimenId = null;
+                modalMarkersLayer.innerHTML = '';
+                applyLanguage(currentLang); // Update UI text
+            }
+
+            function closeModal() {
+                modal.classList.remove('active');
+            }
+
+            btnOpenModal.addEventListener('click', () => {
+                resetModal();
+                modal.classList.add('active');
+            });
+
+            btnEditSpecimen.addEventListener('click', () => {
+                resetModal();
+                window.editSpecimenId = currentSample.id;
+                
+                // Pre-populate fields
+                document.getElementById('modal-name-en').value = currentSample.name.en;
+                document.getElementById('modal-name-ar').value = currentSample.name.ar;
+                document.getElementById('modal-desc-en').value = currentSample.desc.en;
+                document.getElementById('modal-desc-ar').value = currentSample.desc.ar;
+                
+                tempImgData = currentSample.imgUrl;
+                modalImg.src = tempImgData;
+                modalImgWrap.style.display = 'block';
+                
+                // Deep copy markers so we don't accidentally mutate originals if user cancels
+                tempMarkers = JSON.parse(JSON.stringify(currentSample.markers));
+                renderTempMarkers();
+
+                applyLanguage(currentLang); // Updates title to "Edit Specimen"
+                modal.classList.add('active');
+            });
+
+            btnClearMarkers.addEventListener('click', () => {
+                tempMarkers = [];
+                renderTempMarkers();
+            });
+            
+            btnCloseModal.addEventListener('click', closeModal);
+            btnCancelModal.addEventListener('click', closeModal);
+
+            modalFile.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        tempImgData = e.target.result;
+                        modalImg.src = tempImgData;
+                        modalImgWrap.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            let isMoving = false;
+
+            // Interactive marker placement
+            modalImgWrap.addEventListener('mousedown', () => { isMoving = false; });
+            modalImgWrap.addEventListener('mousemove', () => { if (draggingMarker !== null) isMoving = true; });
+
+            modalImgWrap.addEventListener('click', (e) => {
+                if (isMoving || draggingMarker !== null) return;
+                
+                // Calculate position relative to the image element
+                const rect = modalImg.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Convert to percentage
+                const leftPercent = (x / rect.width) * 100;
+                const topPercent = (y / rect.height) * 100;
+
+                const nameEn = prompt(DICT[currentLang].prompt_en || "Marker Name (English):");
+                if (!nameEn) return;
+                
+                const nameAr = prompt(DICT[currentLang].prompt_ar || "Marker Name (Arabic):");
+                if (!nameAr) return;
+
+                const markerData = {
+                    top: topPercent.toFixed(2) + '%',
+                    left: leftPercent.toFixed(2) + '%',
+                    label: { en: nameEn, ar: nameAr }
+                };
+                
+                tempMarkers.push(markerData);
+                renderTempMarkers();
+            });
+
+            btnSaveModal.addEventListener('click', () => {
+                const nameEn = document.getElementById('modal-name-en').value.trim();
+                const nameAr = document.getElementById('modal-name-ar').value.trim();
+                const descEn = document.getElementById('modal-desc-en').value.trim();
+                const descAr = document.getElementById('modal-desc-ar').value.trim();
+
+                if (!tempImgData) {
+                    alert('Please upload an image first.');
+                    return;
+                }
+                if (!nameEn || !nameAr) {
+                    alert('Please provide both English and Arabic names.');
+                    return;
+                }
+
+                if (window.editSpecimenId) {
+                    // Update existing
+                    const idx = samples.findIndex(s => s.id === window.editSpecimenId);
+                    if (idx !== -1) {
+                        samples[idx].name = { en: nameEn, ar: nameAr };
+                        samples[idx].desc = { en: descEn || nameEn, ar: descAr || nameAr };
+                        samples[idx].imgUrl = tempImgData;
+                        samples[idx].markers = [...tempMarkers];
+                        
+                        // Force UI refresh
+                        slideTray.innerHTML = '';
+                        initTray();
+                        loadSample(samples[idx]);
+                    }
+                } else {
+                    // Create new
+                    const newSpecimen = {
+                        id: 'custom_' + Date.now(),
+                        name: { en: nameEn, ar: nameAr },
+                        desc: { en: descEn || nameEn, ar: descAr || nameAr },
+                        imgUrl: tempImgData,
+                        markers: [...tempMarkers]
+                    };
+
+                    samples.push(newSpecimen);
+                    slideTray.innerHTML = '';
+                    initTray();
+                    
+                    // Auto-select the newly added specimen
+                    loadSample(newSpecimen);
+                }
+
+                // Push to Local Storage
+                try {
+                    localStorage.setItem('microscope_data', JSON.stringify(samples));
+                } catch (e) {
+                    alert(DICT[currentLang].upload_error);
+                }
+                
+                closeModal();
+            });
+
+
+            // ==========================================
+            // Boot
+            // ==========================================
+            try {
+                const savedData = localStorage.getItem('microscope_data');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        // Merge logic: Add new built-in samples that don't exist in saved data
+                        parsed.forEach(saved => {
+                            const existingIdx = samples.findIndex(s => s.id === saved.id);
+                            if (existingIdx !== -1) {
+                                // Update existing built-in with saved edits
+                                samples[existingIdx] = saved;
+                            } else if (saved.id.startsWith('custom_')) {
+                                // Keep custom samples
+                                samples.push(saved);
+                            }
+                        });
+                    }
+                }
+                currentSample = samples[0];
+            } catch(e) {
+                console.warn('Could not parse localStorage data for virtual microscope.', e);
+            }
+
+            initTray();
+            applyLanguage('en'); 
+            updateFilters();
+            window.addEventListener('resize', updateMiniMap);
+        });
+    </script>
+</body>
+</html>
