@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Laboratory - Advanced Microscope Simulator</title>
+    <link rel="icon" type="image/png" href="assets/lab_icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -645,6 +646,27 @@
         }
         .add-slide-btn:hover { border-color: var(--medical-cyan); color: var(--medical-cyan); }
 
+        /* ====== Mobile & Tablet Responsiveness ====== */
+        @media (max-width: 1024px) {
+            body { flex-direction: column; overflow: auto; height: auto; }
+            .viewport-section { height: 75vh; min-height: 500px; position: sticky; top: 0; background: #000; z-index: 5; }
+            .controls-section { width: 100%; min-width: 100%; border-left: none; border-top: 1px solid var(--border-color); height: auto; padding: 1.5rem; }
+            .microscope-assembly { transform: scale(0.85); }
+            .modal-content { width: 95vw; height: 95vh; }
+            .modal-body { flex-direction: column; overflow-y: auto; }
+            .modal-sidebar { width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .modal-preview-area { min-height: 400px; }
+            .modal-zoom-controls { bottom: 10px; right: 10px; }
+        }
+
+        @media (max-width: 600px) {
+            .microscope-assembly { transform: scale(0.6); }
+            .lang-switch { top: 10px; left: 10px; }
+            .controls-section { padding: 1rem; }
+            header h1 { font-size: 1.3rem; }
+            .objective-lenses { transform: scale(0.9); transform-origin: center; }
+        }
+
     </style>
 </head>
 <body>
@@ -1227,25 +1249,35 @@
             // ==========================================
             // Drag to Pan
             // ==========================================
-            eyepiece.addEventListener('mousedown', (e) => {
+            const startPan = (clientX, clientY) => {
                 isDragging = true;
-                // Remove any lingering animation classes immediately
                 slideContainer.classList.remove('zoom-anim', 'recenter-anim');
-                startMouseX = e.clientX - translateX;
-                startMouseY = e.clientY - translateY;
-            });
+                startMouseX = clientX - translateX;
+                startMouseY = clientY - translateY;
+            };
 
-            window.addEventListener('mousemove', (e) => {
+            const panMove = (clientX, clientY) => {
                 if (!isDragging) return;
-                translateX = e.clientX - startMouseX;
-                translateY = e.clientY - startMouseY;
+                translateX = clientX - startMouseX;
+                translateY = clientY - startMouseY;
                 clampPan();
                 applyTransform();
-            });
+            };
 
-            window.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
+            const endPan = () => { isDragging = false; };
+
+            eyepiece.addEventListener('mousedown', (e) => startPan(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => panMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', endPan);
+
+            eyepiece.addEventListener('touchstart', (e) => startPan(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    panMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+            window.addEventListener('touchend', endPan);
 
             // ==========================================
             // Lens Switching (Zoom)
@@ -1348,6 +1380,12 @@
                         dot.style.cursor = 'grabbing';
                     });
 
+                    dot.addEventListener('touchstart', (e) => {
+                        e.stopPropagation();
+                        draggingMarker = index;
+                        dot.style.cursor = 'grabbing';
+                    }, { passive: true });
+
                     dot.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1384,35 +1422,30 @@
                 applyModalZoom();
             });
 
-            window.addEventListener('mousemove', (e) => {
+            function moveAt(clientX, clientY) {
                 if (draggingMarker === null) return;
-                
                 const rect = modalImg.getBoundingClientRect();
-                
-                // When zoomed, the bounding rect is the visual size.
-                // We need to calculate where the mouse is relative to that visual box.
-                let x = (e.clientX - rect.left) / modalZoom;
-                let y = (e.clientY - rect.top) / modalZoom;
-
-                // The original width/height of the image element (non-scaled)
+                let x = (clientX - rect.left) / modalZoom;
+                let y = (clientY - rect.top) / modalZoom;
                 const origWidth = modalImg.clientWidth;
                 const origHeight = modalImg.clientHeight;
-                
                 x = Math.max(0, Math.min(origWidth, x));
                 y = Math.max(0, Math.min(origHeight, y));
-                
-                const leftPercent = (x / origWidth) * 100;
-                const topPercent = (y / origHeight) * 100;
-                
-                tempMarkers[draggingMarker].left = leftPercent.toFixed(2) + '%';
-                tempMarkers[draggingMarker].top = topPercent.toFixed(2) + '%';
-                
+                tempMarkers[draggingMarker].left = (x / origWidth * 100).toFixed(2) + '%';
+                tempMarkers[draggingMarker].top = (y / origHeight * 100).toFixed(2) + '%';
                 renderTempMarkers();
-            });
+            }
 
-            window.addEventListener('mouseup', () => {
-                draggingMarker = null;
-            });
+            window.addEventListener('mousemove', (e) => moveAt(e.clientX, e.clientY));
+            window.addEventListener('touchmove', (e) => {
+                if (draggingMarker !== null) {
+                    e.preventDefault();
+                    moveAt(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+
+            window.addEventListener('mouseup', () => { draggingMarker = null; });
+            window.addEventListener('touchend', () => { draggingMarker = null; });
 
             function resetModal() {
                 modalFile.value = '';
