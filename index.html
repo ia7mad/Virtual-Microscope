@@ -22,6 +22,7 @@
             --border-color: rgba(0, 212, 255, 0.2);
             --font-en: 'Inter', sans-serif;
             --font-ar: 'Tajawal', sans-serif;
+            --vignette-strength: 0.7;
         }
 
         * {
@@ -345,7 +346,7 @@
             bottom: 0;
             border-radius: 50%;
             pointer-events: none;
-            background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
+            background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, var(--vignette-strength, 0.7)) 100%);
             box-shadow: inset 0 0 40px rgba(0, 0, 0, 1);
             z-index: 5;
         }
@@ -1814,17 +1815,12 @@
 
         /* Focus-achieved flash */
         @keyframes focus-flash {
-            0% {
-                box-shadow: 0 0 80px rgba(0, 0, 0, 0.95) inset, 0 0 0 100vw rgba(0, 0, 0, 0.95);
-            }
-
-            40% {
-                box-shadow: 0 0 80px rgba(0, 0, 0, 0.95) inset, 0 0 0 100vw rgba(0, 0, 0, 0.95), 0 0 0 4px rgba(0, 255, 136, 0.6);
-            }
-
-            100% {
-                box-shadow: 0 0 80px rgba(0, 0, 0, 0.95) inset, 0 0 0 100vw rgba(0, 0, 0, 0.95);
-            }
+            0%   { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95); }
+            30%  { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95),
+                               0 0 0 6px rgba(0,255,136,0.8), 0 0 30px rgba(0,255,136,0.5); }
+            70%  { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95),
+                               0 0 0 3px rgba(0,255,136,0.35); }
+            100% { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95); }
         }
 
         #eyepiece.focus-achieved {
@@ -2214,6 +2210,94 @@
                 opacity: 0;
             }
         }
+        /* ====== Iris Diaphragm Animation ====== */
+        .iris-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: #000; border-radius: 50%; z-index: 20;
+            pointer-events: none; clip-path: circle(0% at 50% 50%); opacity: 0;
+        }
+        .iris-overlay.iris-opening {
+            animation: iris-open 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes iris-open {
+            0%   { opacity: 1; clip-path: circle(100% at 50% 50%); }
+            100% { opacity: 0; clip-path: circle(0% at 50% 50%); }
+        }
+
+        /* ====== Chromatic Aberration Overlay ====== */
+        .chromatic-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%; pointer-events: none; z-index: 6;
+            opacity: var(--chromatic-strength, 0);
+            background:
+                radial-gradient(circle at calc(50% - var(--ca-offset, 0px)) 50%,
+                    rgba(255,0,0,0.15) 0%, transparent 60%),
+                radial-gradient(circle at calc(50% + var(--ca-offset, 0px)) 50%,
+                    rgba(0,0,255,0.12) 0%, transparent 60%);
+            mix-blend-mode: screen;
+            transition: opacity 0.4s;
+        }
+
+        /* ====== Condenser Beam ====== */
+        .condenser-beam {
+            position: absolute; bottom: -55px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 45px solid transparent; border-right: 45px solid transparent;
+            border-top: 55px solid rgba(0,212,255,0.04);
+            pointer-events: none; z-index: 0; filter: blur(8px);
+        }
+
+        /* ====== Guided Tour ====== */
+        .tour-btn { background: rgba(120,60,255,0.12); color: #a855f7; border: 1px solid rgba(120,60,255,0.4); margin-top: 10px; }
+        .tour-btn:hover, .tour-btn:active { background: rgba(120,60,255,0.25); }
+        .tour-btn.active { background: #a855f7; color: #fff; }
+
+        .tour-overlay {
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            width: min(520px, 90%); z-index: 200; pointer-events: none;
+            animation: tour-card-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes tour-card-in {
+            from { opacity:0; transform: translateX(-50%) translateY(20px); }
+            to   { opacity:1; transform: translateX(-50%) translateY(0); }
+        }
+        .tour-overlay-inner {
+            background: rgba(4,8,18,0.92); backdrop-filter: blur(20px);
+            border: 1px solid rgba(168,85,247,0.35); border-radius: 14px;
+            padding: 18px 22px; box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        }
+        .tour-overlay-badge { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+        .tour-overlay-badge span:last-child { font-size:0.65rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:#a855f7; }
+        .tour-overlay-title { font-size:1.15rem; font-weight:700; color:#fff; margin:0 0 8px; line-height:1.3; }
+        .tour-overlay-desc { font-size:0.85rem; color:#c4cdd8; line-height:1.65; margin:0 0 10px; }
+        .tour-overlay-phase { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:rgba(168,85,247,0.7); }
+
+        .tour-control-bar {
+            position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+            z-index: 201; display:flex; align-items:center; gap:16px;
+            background: rgba(4,8,18,0.9); backdrop-filter: blur(14px);
+            border: 1px solid rgba(168,85,247,0.3); border-radius: 40px;
+            padding: 8px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+        }
+        .tour-progress-wrap { display:flex; flex-direction:column; gap:4px; min-width:160px; }
+        .tour-progress-text { font-size:0.65rem; font-weight:700; color:rgba(200,200,220,0.7); font-family:'Courier New',monospace; }
+        .tour-progress-track { height:3px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
+        .tour-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#a855f7); border-radius:2px; transition:width 0.6s cubic-bezier(0.16,1,0.3,1); width:0%; }
+        .tour-btns { display:flex; gap:8px; }
+        .tour-ctrl-btn { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff; border-radius:50%; width:32px; height:32px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+        .tour-ctrl-btn:hover { background:rgba(255,255,255,0.15); }
+        .tour-ctrl-exit { background:rgba(255,60,60,0.1); border-color:rgba(255,60,60,0.3); color:#ff6666; }
+
+        @media (max-width: 1024px) {
+            .tour-overlay { bottom:60px; width:min(380px,88%); }
+            .tour-overlay-title { font-size:0.95rem; }
+            .tour-overlay-desc { font-size:0.78rem; }
+            .tour-control-bar { bottom:8px; gap:10px; padding:6px 12px; }
+            .tour-progress-wrap { min-width:120px; }
+        }
+        @media (max-width: 600px) {
+            .tour-overlay { display:none !important; }
+        }
     </style>
 </head>
 
@@ -2277,7 +2361,10 @@
                     <span class="hint-hand">👆</span>
                     <span class="hint-text">Drag to explore</span>
                 </div>
+                <div class="chromatic-overlay" id="chromatic-overlay"></div>
+                <div class="iris-overlay" id="iris-overlay"></div>
             </div>
+            <div class="condenser-beam"></div>
             <div id="mini-map-container">
                 <img id="mini-map-img" src="" alt="Full Slide">
                 <video id="mini-map-vid" autoplay loop muted playsinline webkit-playsinline
@@ -2323,6 +2410,32 @@
             <!-- Live coordinate readout below the HUD -->
             <div class="hud-coords">
                 X: <span id="hud-x">0</span> &nbsp; Y: <span id="hud-y">0</span>
+            </div>
+        </div>
+
+        <!-- Guided Tour overlay card -->
+        <div id="tour-overlay" class="tour-overlay" style="display:none;">
+            <div class="tour-overlay-inner">
+                <div class="tour-overlay-badge">
+                    <span>🔬</span>
+                    <span id="tour-overlay-label">Guided Tour</span>
+                </div>
+                <h2 id="tour-overlay-title" class="tour-overlay-title"></h2>
+                <p id="tour-overlay-desc" class="tour-overlay-desc"></p>
+                <div class="tour-overlay-phase" id="tour-overlay-phase"></div>
+            </div>
+        </div>
+        <!-- Guided Tour control bar -->
+        <div id="tour-control-bar" class="tour-control-bar" style="display:none;">
+            <div class="tour-progress-wrap">
+                <span id="tour-progress-text" class="tour-progress-text">Slide 1 of 8</span>
+                <div class="tour-progress-track">
+                    <div class="tour-progress-fill" id="tour-progress-fill"></div>
+                </div>
+            </div>
+            <div class="tour-btns">
+                <button type="button" id="btn-tour-pause" class="tour-ctrl-btn">⏸</button>
+                <button type="button" id="btn-tour-exit" class="tour-ctrl-btn tour-ctrl-exit">✕</button>
             </div>
         </div>
     </div>
@@ -2449,6 +2562,10 @@
             </button>
             <button type="button" id="btn-reset" class="action-btn secondary">
                 <span id="lbl-btn-reset">Recenter Stage</span>
+            </button>
+            <button type="button" id="btn-tour" class="action-btn tour-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <span id="lbl-btn-tour">▶ Start Tour</span>
             </button>
         </div>
 
@@ -2605,7 +2722,18 @@
                     hud_sharp: 'SHARP',
                     hud_blur: 'BLUR',
                     hud_coords_x: 'X',
-                    hud_coords_y: 'Y'
+                    hud_coords_y: 'Y',
+                    tour_btn_start: '▶ Start Tour',
+                    tour_btn_exit: '✕ Exit Tour',
+                    tour_btn_pause: '⏸',
+                    tour_btn_resume: '▶',
+                    tour_progress: 'Slide',
+                    tour_of: 'of',
+                    tour_label: 'Guided Tour',
+                    tour_step_loading: 'Loading specimen...',
+                    tour_step_showing: 'Specimen Overview',
+                    tour_step_identifying: 'Identifying Structures',
+                    tour_step_transitioning: 'Next Specimen...'
                 },
                 ar: {
                     app_title: 'المجهر <span>الافتراضي</span>',
@@ -2652,7 +2780,18 @@
                     hud_sharp: 'واضح',
                     hud_blur: 'ضبابي',
                     hud_coords_x: 'س',
-                    hud_coords_y: 'ص'
+                    hud_coords_y: 'ص',
+                    tour_btn_start: '▶ جولة إرشادية',
+                    tour_btn_exit: '✕ إنهاء الجولة',
+                    tour_btn_pause: '⏸',
+                    tour_btn_resume: '▶',
+                    tour_progress: 'شريحة',
+                    tour_of: 'من',
+                    tour_label: 'جولة إرشادية',
+                    tour_step_loading: 'جارٍ تحميل العينة...',
+                    tour_step_showing: 'نظرة عامة على العينة',
+                    tour_step_identifying: 'تحديد المكونات',
+                    tour_step_transitioning: 'الانتقال للعينة التالية...'
                 }
             };
 
@@ -2765,6 +2904,76 @@
                         { top: '51.0%', left: '42.0%', label: { en: 'Sperm Head', ar: 'رأس الحيوان المنوي' } },
                         { top: '60.0%', left: '48.0%', label: { en: 'Sperm Tail (Flagellum)', ar: 'ذيل الحيوان المنوي (سوط)' } }
                     ]
+                },
+                {
+                    id: 'covid',
+                    name: { en: 'COVID-19 Infected Cell', ar: 'خلية مصابة بكوفيد-19' },
+                    desc: {
+                        en: "A cell infected by the COVID-19 virus (SARS-CoV-2). The tiny spikes on the surface are the virus's 'keys' — called spike proteins — that it uses to break into healthy cells.",
+                        ar: "خلية مصابة بفيروس كوفيد-19. الزوائد الشبيهة بالأشواك على سطح الخلية هي 'مفاتيح' الفيروس — تُسمى بروتينات الأشواك — التي يستخدمها للدخول إلى الخلايا السليمة."
+                    },
+                    imgUrl: 'assets/covid_cells.png',
+                    markers: [
+                        { top: '45.0%', left: '45.0%', label: { en: 'Infected Cell', ar: 'خلية مصابة' } },
+                        { top: '35.0%', left: '55.0%', label: { en: 'Virus Spike Proteins', ar: 'بروتينات الأشواك الفيروسية' } },
+                        { top: '65.0%', left: '30.0%', label: { en: 'Healthy Cell (Nearby)', ar: 'خلية سليمة (مجاورة)' } }
+                    ]
+                },
+                {
+                    id: 'pollen',
+                    name: { en: 'Pollen Grain', ar: 'حبة لقاح' },
+                    desc: {
+                        en: "A single pollen grain magnified hundreds of times. Pollen grains are the tiny male 'seeds' of flowering plants with a tough spiky outer wall to protect them during their journey from flower to flower.",
+                        ar: "حبة لقاح مُكبَّرة مئات المرات. حبوب اللقاح هي 'بذور' الذكور الصغيرة للنباتات المزهرة ذات جدار خارجي صلب شائك يحميها أثناء رحلتها من زهرة إلى أخرى."
+                    },
+                    imgUrl: 'assets/pollen_grain.png',
+                    markers: [
+                        { top: '40.0%', left: '50.0%', label: { en: 'Outer Wall (Exine)', ar: 'الجدار الخارجي (الإكزين)' } },
+                        { top: '55.0%', left: '35.0%', label: { en: 'Pollen Tube Opening (Aperture)', ar: 'فتحة أنبوب اللقاح' } },
+                        { top: '50.0%', left: '55.0%', label: { en: 'Cytoplasm (Inner Contents)', ar: 'السيتوبلازم (المحتويات الداخلية)' } }
+                    ]
+                },
+                {
+                    id: 'hair_follicle',
+                    name: { en: 'Hair Follicle Cross-Section', ar: 'مقطع بصيلة الشعر' },
+                    desc: {
+                        en: "A cross-section through skin showing a hair follicle — the tiny 'pocket' that grows a hair. The dark oval is the hair shaft. Around it are layers of cells that hold and nourish it.",
+                        ar: "مقطع عرضي عبر الجلد يُظهر بصيلة الشعر — 'الجيب' الصغير الذي ينمو منه الشعر. البيضاوي الداكن هو جذع الشعرة، وحوله طبقات من الخلايا التي تُثبّتها وتُغذّيها."
+                    },
+                    imgUrl: 'assets/hair_follicle.png',
+                    markers: [
+                        { top: '50.0%', left: '50.0%', label: { en: 'Hair Shaft', ar: 'جذع الشعرة' } },
+                        { top: '38.0%', left: '42.0%', label: { en: 'Follicle Wall', ar: 'جدار البصيلة' } },
+                        { top: '62.0%', left: '60.0%', label: { en: 'Sebaceous (Oil) Gland', ar: 'الغدة الدهنية' } }
+                    ]
+                },
+                {
+                    id: 'cancer_cells',
+                    name: { en: 'Abnormal Cells — Cervical Dysplasia', ar: 'خلايا غير طبيعية — خلل تنسج عنق الرحم' },
+                    desc: {
+                        en: "A Pap smear showing abnormal cells. The abnormal cells have much larger, darker nuclei compared to normal cells nearby. Spotting these early — before they become cancer — is exactly what this test is designed to do.",
+                        ar: "مسحة عنق رحم تُظهر خلايا غير طبيعية. لها نوى أكبر وأغمق بكثير مقارنة بالخلايا الطبيعية. اكتشافها مبكراً — قبل أن تصبح سرطاناً — هو بالضبط ما يهدف إليه هذا الفحص."
+                    },
+                    imgUrl: 'assets/cancer_cells.png',
+                    markers: [
+                        { top: '45.0%', left: '48.0%', label: { en: 'Abnormal Nucleus (Enlarged)', ar: 'نواة غير طبيعية (مضخّمة)' } },
+                        { top: '60.0%', left: '35.0%', label: { en: 'Normal Cell (Comparison)', ar: 'خلية طبيعية (للمقارنة)' } },
+                        { top: '38.0%', left: '58.0%', label: { en: 'Nuclear Enlargement', ar: 'تضخم النواة' } }
+                    ]
+                },
+                {
+                    id: 'sickle_cell',
+                    name: { en: 'Sickle Cell Anemia', ar: 'فقر الدم المنجلي' },
+                    desc: {
+                        en: "A blood smear from a patient with Sickle Cell Anemia — a genetic condition where red blood cells change from a normal round shape into a rigid crescent (sickle) shape that gets stuck in blood vessels.",
+                        ar: "مسحة دم من مريض بفقر الدم المنجلي — حالة وراثية تتحول فيها خلايا الدم الحمراء من شكلها الدائري إلى شكل منجل صلب ينسد في الأوعية الدموية."
+                    },
+                    imgUrl: 'assets/sickle_cell.png',
+                    markers: [
+                        { top: '48.0%', left: '45.0%', label: { en: 'Sickle-Shaped Cell', ar: 'خلية منجلية الشكل' } },
+                        { top: '58.0%', left: '55.0%', label: { en: 'Normal Round Cell', ar: 'خلية دائرية طبيعية' } },
+                        { top: '38.0%', left: '52.0%', label: { en: 'Deformed Cell', ar: 'خلية مشوهة' } }
+                    ]
                 }
             ];
 
@@ -2825,7 +3034,9 @@
                 'blood': 'blood', 'malaria': 'blood',
                 'mitosis': 'tissue', 'bacteria': 'other',
                 'urine': 'urine', 'histo': 'tissue',
-                'stool_sample': 'stool', 'semen_sample': 'semen'
+                'stool_sample': 'stool', 'semen_sample': 'semen',
+                'covid': 'other', 'pollen': 'other',
+                'hair_follicle': 'tissue', 'cancer_cells': 'tissue', 'sickle_cell': 'blood'
             };
 
             const CENTER_FOCUS_VAL = 50;
@@ -3126,6 +3337,13 @@
                 // Rebuild tray labels
                 slideTray.innerHTML = '';
                 initTray();
+
+                // Tour text
+                const lblBtnTour = document.getElementById('lbl-btn-tour');
+                if (lblBtnTour) lblBtnTour.textContent = tourActive ? DICT[lang].tour_btn_exit : DICT[lang].tour_btn_start;
+                const tourLabelEl = document.getElementById('tour-overlay-label');
+                if (tourLabelEl) tourLabelEl.textContent = DICT[lang].tour_label;
+                if (tourActive) _tourUpdateProgress();
             }
 
             btnEn.addEventListener('click', () => applyLanguage('en'));
@@ -3177,6 +3395,15 @@
                     if (isIdentifyActive) el.classList.add('visible');
                     markersLayer.appendChild(el);
                 });
+
+                // Iris diaphragm animation
+                const irisOverlay = document.getElementById('iris-overlay');
+                if (irisOverlay) {
+                    irisOverlay.classList.remove('iris-opening');
+                    void irisOverlay.offsetWidth;
+                    irisOverlay.classList.add('iris-opening');
+                    setTimeout(() => irisOverlay.classList.remove('iris-opening'), 700);
+                }
 
                 if (resetView) resetStage();
                 updateTrayUI();
@@ -3278,6 +3505,15 @@
                 }
                 const hudLamp = document.getElementById('hud-lamp');
                 if (hudLamp) hudLamp.textContent = `${lightVal}%`;
+
+                // Dynamic vignette — darker edges when lamp is dim
+                const vignetteStrength = Math.max(0.2, Math.min(0.95, 1.1 - (lightVal / 200)));
+                document.documentElement.style.setProperty('--vignette-strength', vignetteStrength.toFixed(2));
+
+                // Chromatic aberration — red/blue fringe when severely out of focus
+                const caStrength = distanceFocus > 15 ? Math.min(1, (distanceFocus - 15) / 35) : 0;
+                eyepiece.style.setProperty('--chromatic-strength', caStrength.toFixed(2));
+                eyepiece.style.setProperty('--ca-offset', (caStrength * 6).toFixed(1) + 'px');
             }
 
             // Helper: set focus value on both slider and knob
@@ -3542,6 +3778,108 @@
 
             btnIdentify.addEventListener('click', toggleIdentify);
             if (btnHudToggle) btnHudToggle.addEventListener('click', toggleIdentify);
+
+            // ==========================================
+            // Guided Tour State Machine
+            // ==========================================
+            let tourActive = false, tourPaused = false, tourStep = 0;
+            let tourPhase = 'idle', _tourTimer = null;
+            const TOUR_DURATIONS = { loading: 600, showing: 3200, identifying: 4000, transitioning: 800 };
+
+            function _tourClearTimer() { if (_tourTimer) { clearTimeout(_tourTimer); _tourTimer = null; } }
+
+            function _tourUpdateProgress() {
+                const total = samples.length, current = tourStep + 1;
+                const fill = document.getElementById('tour-progress-fill');
+                const text = document.getElementById('tour-progress-text');
+                if (fill) fill.style.width = ((tourStep / total) * 100) + '%';
+                if (text) text.textContent = `${DICT[currentLang].tour_progress} ${current} ${DICT[currentLang].tour_of} ${total}`;
+            }
+
+            function _tourSetPhase(phase) {
+                tourPhase = phase;
+                const el = document.getElementById('tour-overlay-phase');
+                if (el) el.textContent = DICT[currentLang]['tour_step_' + phase] || '';
+            }
+
+            function _tourRunPhase() {
+                if (!tourActive || tourPaused) return;
+                const sample = samples[tourStep];
+                const overlay = document.getElementById('tour-overlay');
+                const titleEl2 = document.getElementById('tour-overlay-title');
+                const descEl2 = document.getElementById('tour-overlay-desc');
+
+                if (tourPhase === 'loading') {
+                    if (isIdentifyActive) toggleIdentify();
+                    loadSample(sample, true);
+                    if (titleEl2) titleEl2.textContent = sample.name[currentLang];
+                    if (descEl2) descEl2.textContent = '';
+                    if (overlay) overlay.style.display = 'block';
+                    _tourSetPhase('loading');
+                    _tourClearTimer();
+                    _tourTimer = setTimeout(() => { _tourSetPhase('showing'); _tourRunPhase(); }, TOUR_DURATIONS.loading);
+
+                } else if (tourPhase === 'showing') {
+                    if (descEl2) descEl2.textContent = sample.desc[currentLang];
+                    if (overlay) { overlay.style.animation = 'none'; void overlay.offsetWidth; overlay.style.animation = ''; }
+                    _tourSetPhase('showing');
+                    _tourClearTimer();
+                    _tourTimer = setTimeout(() => { _tourSetPhase('identifying'); _tourRunPhase(); }, TOUR_DURATIONS.showing);
+
+                } else if (tourPhase === 'identifying') {
+                    if (!isIdentifyActive) toggleIdentify();
+                    _tourClearTimer();
+                    _tourTimer = setTimeout(() => { _tourSetPhase('transitioning'); _tourRunPhase(); }, TOUR_DURATIONS.identifying);
+
+                } else if (tourPhase === 'transitioning') {
+                    if (isIdentifyActive) toggleIdentify();
+                    if (overlay) overlay.style.display = 'none';
+                    _tourClearTimer();
+                    _tourTimer = setTimeout(() => {
+                        tourStep = (tourStep + 1) % samples.length;
+                        _tourUpdateProgress();
+                        _tourSetPhase('loading');
+                        _tourRunPhase();
+                    }, TOUR_DURATIONS.transitioning);
+                }
+            }
+
+            function startTour() {
+                tourActive = true; tourPaused = false; tourStep = 0; tourPhase = 'loading';
+                clearTimeout(_kioskTimer);
+                const btnTour = document.getElementById('btn-tour');
+                const bar = document.getElementById('tour-control-bar');
+                if (btnTour) { btnTour.classList.add('active'); document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_exit; }
+                if (bar) bar.style.display = 'flex';
+                _tourUpdateProgress();
+                _tourRunPhase();
+            }
+
+            function stopTour() {
+                tourActive = false; tourPaused = false;
+                _tourClearTimer();
+                if (isIdentifyActive) toggleIdentify();
+                const overlay = document.getElementById('tour-overlay');
+                const bar = document.getElementById('tour-control-bar');
+                const btnTour = document.getElementById('btn-tour');
+                if (overlay) overlay.style.display = 'none';
+                if (bar) bar.style.display = 'none';
+                if (btnTour) { btnTour.classList.remove('active'); document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_start; }
+                _resetKioskTimer();
+            }
+
+            function pauseResumeTour() {
+                if (!tourActive) return;
+                tourPaused = !tourPaused;
+                const pauseBtn = document.getElementById('btn-tour-pause');
+                if (pauseBtn) pauseBtn.textContent = tourPaused ? DICT[currentLang].tour_btn_resume : DICT[currentLang].tour_btn_pause;
+                if (!tourPaused) _tourRunPhase();
+                else _tourClearTimer();
+            }
+
+            document.getElementById('btn-tour').addEventListener('click', () => tourActive ? stopTour() : startTour());
+            document.getElementById('btn-tour-pause')?.addEventListener('click', pauseResumeTour);
+            document.getElementById('btn-tour-exit')?.addEventListener('click', stopTour);
 
             // ==========================================
             // Custom Specimen Builder & Editor
@@ -3990,6 +4328,7 @@
             function _resetKioskTimer() {
                 clearTimeout(_kioskTimer);
                 _kioskTimer = setTimeout(() => {
+                    if (tourActive) return; // Don't reset while tour is playing
                     // Reset to default state and show welcome
                     loadSample(samples[0], true);
                     applyLanguage('ar'); // Return to Arabic on reset
