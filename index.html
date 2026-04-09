@@ -2062,52 +2062,113 @@
             pointer-events: none;
         }
 
-        /* ====== Mobile HUD strip (phones ≤600px) ====== */
+        /* ====== Mobile layout (phones ≤600px) ====== */
         @media (max-width: 600px) {
-            /* Hide the full desktop HUD */
-            #analysis-hud { display: none; }
 
-            /* Disable GPU-heavy effects that crash mobile WebKit */
-            .chromatic-overlay { display: none !important; }
-            .iris-overlay { display: none !important; }
-            .tour-overlay-inner { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(4,8,18,0.96) !important; }
-            .tour-control-bar { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(4,8,18,0.96) !important; }
+            /* ── Top nav bar: full-width strip containing lang switch + metrics ── */
+            .lang-switch {
+                position: absolute;
+                top: 0; left: 0; right: 0;
+                width: 100%;
+                height: 38px;
+                border-radius: 0;
+                border: none;
+                border-bottom: 1px solid rgba(0,212,255,0.18);
+                background: rgba(5,8,16,0.97);
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                z-index: 200;
+                display: flex;
+                align-items: center;
+                padding: 0 6px;
+                gap: 0;
+            }
+            .lang-switch button {
+                padding: 6px 14px;
+                font-size: 0.78rem;
+                border-radius: 6px;
+            }
 
-            /* Compact metric strip pinned to top of viewport-section */
+            /* ── Mobile HUD: right-docked into the top bar ── */
             #mobile-hud {
                 display: flex !important;
                 position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 110;
+                top: 0; right: 0; left: auto;
+                transform: none;
+                height: 38px;
+                z-index: 201;
                 gap: 0;
-                background: rgba(4,8,14,0.88);
-                border: 1px solid rgba(0,212,255,0.2);
-                border-radius: 20px;
+                background: transparent;
+                border: none;
+                border-radius: 0;
+                border-left: 1px solid rgba(0,212,255,0.15);
                 overflow: hidden;
                 pointer-events: none;
                 white-space: nowrap;
             }
             .mobile-hud-cell {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
-                gap: 5px;
-                padding: 5px 10px;
+                justify-content: center;
+                gap: 1px;
+                padding: 4px 9px;
                 border-right: 1px solid rgba(255,255,255,0.06);
-                font-size: 0.68rem;
-                font-family: 'Courier New', monospace;
             }
             .mobile-hud-cell:last-child { border-right: none; }
-            .mobile-hud-lbl { color: rgba(139,155,180,0.6); font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
-            .mobile-hud-val { font-weight: 700; color: #e8f0f8; }
+            .mobile-hud-lbl {
+                color: rgba(139,155,180,0.55);
+                font-size: 0.42rem;
+                font-weight: 700;
+                letter-spacing: 0.8px;
+                text-transform: uppercase;
+                font-family: 'Inter', sans-serif;
+            }
+            .mobile-hud-val {
+                font-weight: 700;
+                color: #e8f0f8;
+                font-size: 0.65rem;
+                font-family: 'Courier New', monospace;
+            }
             #mobile-hud-focus.sharp { color: #00ff88; }
             #mobile-hud-focus.blurred { color: #ff4466; }
             #mobile-hud-mag { color: var(--medical-cyan); }
 
-            /* Tour card hidden on phones (too small) — control bar still shows */
+            /* ── Push the eyepiece section below the top bar ── */
+            .viewport-section {
+                padding-top: 38px;
+                height: 48vh;
+                height: 48dvh;
+                min-height: 270px;
+            }
+
+            /* ── Eyepiece: slightly smaller to fit within the padded area ── */
+            #eyepiece {
+                width: 66vw;
+                height: 66vw;
+                max-width: 300px;
+                max-height: 300px;
+                border-width: 6px;
+            }
+
+            /* ── Hide desktop HUD and GPU-heavy effects ── */
+            #analysis-hud { display: none; }
+            .chromatic-overlay { display: none !important; }
+            .iris-overlay { display: none !important; }
+            .tour-overlay-inner {
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(4,8,18,0.97) !important;
+            }
+
+            /* ── Tour card hidden (too small), control bar adjusted ── */
             .tour-overlay { display: none !important; }
-            .tour-control-bar { bottom: 6px; }
+            .tour-control-bar {
+                bottom: 4px;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                background: rgba(4,8,18,0.97) !important;
+            }
         }
 
         /* Shrink slightly on tablet */
