@@ -2062,9 +2062,52 @@
             pointer-events: none;
         }
 
-        /* Hide HUD on small phones — controls panel has all this info */
+        /* ====== Mobile HUD strip (phones ≤600px) ====== */
         @media (max-width: 600px) {
+            /* Hide the full desktop HUD */
             #analysis-hud { display: none; }
+
+            /* Disable GPU-heavy effects that crash mobile WebKit */
+            .chromatic-overlay { display: none !important; }
+            .iris-overlay { display: none !important; }
+            .tour-overlay-inner { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(4,8,18,0.96) !important; }
+            .tour-control-bar { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: rgba(4,8,18,0.96) !important; }
+
+            /* Compact metric strip pinned to top of viewport-section */
+            #mobile-hud {
+                display: flex !important;
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 110;
+                gap: 0;
+                background: rgba(4,8,14,0.88);
+                border: 1px solid rgba(0,212,255,0.2);
+                border-radius: 20px;
+                overflow: hidden;
+                pointer-events: none;
+                white-space: nowrap;
+            }
+            .mobile-hud-cell {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 5px 10px;
+                border-right: 1px solid rgba(255,255,255,0.06);
+                font-size: 0.68rem;
+                font-family: 'Courier New', monospace;
+            }
+            .mobile-hud-cell:last-child { border-right: none; }
+            .mobile-hud-lbl { color: rgba(139,155,180,0.6); font-size: 0.55rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+            .mobile-hud-val { font-weight: 700; color: #e8f0f8; }
+            #mobile-hud-focus.sharp { color: #00ff88; }
+            #mobile-hud-focus.blurred { color: #ff4466; }
+            #mobile-hud-mag { color: var(--medical-cyan); }
+
+            /* Tour card hidden on phones (too small) — control bar still shows */
+            .tour-overlay { display: none !important; }
+            .tour-control-bar { bottom: 6px; }
         }
 
         /* Shrink slightly on tablet */
@@ -2074,6 +2117,8 @@
             .hud-brand { padding: 0 7px; }
             #analysis-hud { bottom: 18px; }
             .hud-coords { display: none; }
+            /* Disable mix-blend-mode on tablet too — safer for WebKit */
+            .chromatic-overlay { mix-blend-mode: normal; }
         }
 
         @media (max-width: 1024px) {
@@ -2375,6 +2420,22 @@
             <div id="scale-bar">
                 <div class="bar"></div>
                 <div class="text">100 µm</div>
+            </div>
+        </div>
+
+        <!-- Mobile compact HUD strip — hidden on desktop via CSS, shown only on phones -->
+        <div id="mobile-hud" style="display:none;">
+            <div class="mobile-hud-cell">
+                <span class="mobile-hud-lbl" id="mlbl-mag">MAG</span>
+                <span class="mobile-hud-val" id="mobile-hud-mag">10×</span>
+            </div>
+            <div class="mobile-hud-cell">
+                <span class="mobile-hud-lbl" id="mlbl-focus">FOCUS</span>
+                <span class="mobile-hud-val blurred" id="mobile-hud-focus">--</span>
+            </div>
+            <div class="mobile-hud-cell">
+                <span class="mobile-hud-lbl" id="mlbl-lamp">LAMP</span>
+                <span class="mobile-hud-val" id="mobile-hud-lamp">100%</span>
             </div>
         </div>
 
@@ -3338,6 +3399,14 @@
                 slideTray.innerHTML = '';
                 initTray();
 
+                // Mobile HUD labels
+                const mlblMag = document.getElementById('mlbl-mag');
+                if (mlblMag) mlblMag.textContent = DICT[lang].hud_mag;
+                const mlblFocus = document.getElementById('mlbl-focus');
+                if (mlblFocus) mlblFocus.textContent = DICT[lang].hud_focus;
+                const mlblLamp = document.getElementById('mlbl-lamp');
+                if (mlblLamp) mlblLamp.textContent = DICT[lang].hud_lamp;
+
                 // Tour text
                 const lblBtnTour = document.getElementById('lbl-btn-tour');
                 if (lblBtnTour) lblBtnTour.textContent = tourActive ? DICT[lang].tour_btn_exit : DICT[lang].tour_btn_start;
@@ -3506,6 +3575,12 @@
                 const hudLamp = document.getElementById('hud-lamp');
                 if (hudLamp) hudLamp.textContent = `${lightVal}%`;
 
+                // Mobile HUD strip
+                const mFocus = document.getElementById('mobile-hud-focus');
+                const mLamp = document.getElementById('mobile-hud-lamp');
+                if (mFocus) { mFocus.textContent = isFocused ? DICT[currentLang].hud_sharp : DICT[currentLang].hud_blur; mFocus.className = 'mobile-hud-val ' + (isFocused ? 'sharp' : 'blurred'); }
+                if (mLamp) mLamp.textContent = `${lightVal}%`;
+
                 // Dynamic vignette — darker edges when lamp is dim
                 const vignetteStrength = Math.max(0.2, Math.min(0.95, 1.1 - (lightVal / 200)));
                 document.documentElement.style.setProperty('--vignette-strength', vignetteStrength.toFixed(2));
@@ -3673,9 +3748,12 @@
                     scaleBarText.textContent = target.dataset.scale;
                     scaleBarBar.style.width = target.dataset.bar;
 
-                    // Update HUD magnification display
+                    // Update HUD magnification display (desktop + mobile)
+                    const magLabel = target.textContent.trim().split('\n')[0].trim();
                     const hudMag = document.getElementById('hud-mag');
-                    if (hudMag) hudMag.textContent = target.textContent.trim().split('\n')[0].trim();
+                    if (hudMag) hudMag.textContent = magLabel;
+                    const mMag = document.getElementById('mobile-hud-mag');
+                    if (mMag) mMag.textContent = magLabel;
 
                     // If Identify mode is active, center on the first marker (or center of all markers)
                     if (isIdentifyActive && currentSample.markers && currentSample.markers.length > 0) {
