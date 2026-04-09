@@ -1182,7 +1182,7 @@
             <div id="eyepiece">
                 <div id="slide-container">
                     <img id="sample-image" src="" alt="Microscope Sample" draggable="false">
-                    <video id="sample-video" autoplay loop muted playsinline style="display:none;"></video>
+                    <video id="sample-video" autoplay loop muted playsinline webkit-playsinline style="display:none;"></video>
                     <div id="markers-layer"></div>
                 </div>
                 <div class="turret-shadow"></div>
@@ -1197,7 +1197,7 @@
             
             <div id="mini-map-container">
                 <img id="mini-map-img" src="" alt="Full Slide">
-                <video id="mini-map-vid" autoplay loop muted playsinline style="display:none; width:100%; height:100%; object-fit:cover; opacity:0.6;"></video>
+                <video id="mini-map-vid" autoplay loop muted playsinline webkit-playsinline style="display:none; width:100%; height:100%; object-fit:cover; opacity:0.6;"></video>
                 <div id="mini-map-viewport"></div>
             </div>
 
@@ -1383,7 +1383,7 @@
                     <div class="preview-container" id="preview-container">
                         <div id="modal-image-wrap" style="transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); transform-origin: center center; cursor: crosshair; display: none; position: relative;">
                             <img id="modal-preview-img" src="" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: block; position: relative; z-index: 1;">
-                            <video id="modal-preview-vid" autoplay loop muted playsinline style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: none; position: relative; z-index: 1;"></video>
+                            <video id="modal-preview-vid" autoplay loop muted playsinline webkit-playsinline style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: none; position: relative; z-index: 1;"></video>
                             <div id="modal-markers-layer" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;"></div>
                         </div>
                     </div>
@@ -1615,6 +1615,16 @@
             const slideContainer = document.getElementById('slide-container');
             const sampleImage = document.getElementById('sample-image');
             const sampleVideo = document.getElementById('sample-video');
+
+            // Unified video URL detection — handles data: URLs, .mp4 extensions, and Supabase URLs with query params
+            function isVideoUrl(url) {
+                if (!url) return false;
+                if (url.startsWith('data:video')) return true;
+                if (url.startsWith('blob:')) return true;
+                // Strip query string / hash before checking extension
+                const clean = url.split('?')[0].split('#')[0].toLowerCase();
+                return clean.endsWith('.mp4') || clean.endsWith('.webm') || clean.endsWith('.mov');
+            }
             const markersLayer = document.getElementById('markers-layer');
             const miniMapImg = document.getElementById('mini-map-img');
             const miniMapViewport = document.getElementById('mini-map-viewport');
@@ -1931,7 +1941,7 @@
                 titleEl.textContent = sample.name[currentLang];
                 descEl.textContent = sample.desc[currentLang];
                 
-                const isVid = sample.imgUrl && (sample.imgUrl.startsWith('data:video') || /\.(mp4|webm|mov)(\?|$)/i.test(sample.imgUrl));
+                const isVid = isVideoUrl(sample.imgUrl);
                 const miniMapVid = document.getElementById('mini-map-vid');
                 if (isVid) {
                     sampleImage.style.display = 'none';
@@ -2000,9 +2010,14 @@
                     item.className = 'slide-item';
                     item.dataset.id = sample.id;
                     const shortName = sample.name[currentLang].split(' ').slice(0,2).join(' ');
-                    const isVidThumb = sample.imgUrl.startsWith('data:video') || sample.imgUrl.endsWith('.mp4');
+                    const isVidThumb = isVideoUrl(sample.imgUrl);
                     if (isVidThumb) {
-                        item.innerHTML = `<video src="${sample.imgUrl}" autoplay loop muted playsinline style="width:100%; height:55px; object-fit:cover; opacity:0.8;"></video><span>${shortName}</span>`;
+                        item.innerHTML = `<video src="${sample.imgUrl}" autoplay loop muted playsinline webkit-playsinline style="width:100%; height:55px; object-fit:cover; opacity:0.8;"></video><span>${shortName}</span>`;
+                        // iOS needs explicit play() after element is in the DOM
+                        requestAnimationFrame(() => {
+                            const vid = item.querySelector('video');
+                            if (vid) { vid.load(); vid.play().catch(() => {}); }
+                        });
                     } else {
                         item.innerHTML = `<img src="${sample.imgUrl}" alt="thumb"><span>${shortName}</span>`;
                     }
@@ -2348,7 +2363,7 @@
 
             function moveAt(clientX, clientY) {
                 if (draggingMarker === null) return;
-                const activeMedia = (tempImgData && (tempImgData.startsWith('data:video') || tempImgData.endsWith('.mp4'))) ? document.getElementById('modal-preview-vid') : modalImg;
+                const activeMedia = isVideoUrl(tempImgData) ? document.getElementById('modal-preview-vid') : modalImg;
                 const rect = activeMedia.getBoundingClientRect();
                 let x = (clientX - rect.left) / modalZoom;
                 let y = (clientY - rect.top) / modalZoom;
@@ -2415,7 +2430,7 @@
                 document.getElementById('modal-desc-ar').value = currentSample.desc.ar;
                 
                 tempImgData = currentSample.imgUrl;
-                const isVid = tempImgData.startsWith('data:video') || tempImgData.endsWith('.mp4');
+                const isVid = isVideoUrl(tempImgData);
                 const modalVid = document.getElementById('modal-preview-vid');
                 if (isVid) {
                     modalVid.src = tempImgData;
@@ -2499,7 +2514,7 @@
                 if (isMoving || draggingMarker !== null) return;
                 
                 // Calculate position relative to the media element
-                const activeMedia = (tempImgData && (tempImgData.startsWith('data:video') || tempImgData.endsWith('.mp4'))) ? document.getElementById('modal-preview-vid') : modalImg;
+                const activeMedia = isVideoUrl(tempImgData) ? document.getElementById('modal-preview-vid') : modalImg;
                 const rect = activeMedia.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -2689,6 +2704,12 @@
                     eyepieceHint.classList.remove('hidden');
                     setTimeout(dismissHint, 6000);
                 }
+                // iOS: after user gesture, kick all visible videos to play
+                document.querySelectorAll('video').forEach(v => {
+                    if (v.style.display !== 'none' && v.src) {
+                        v.play().catch(() => {});
+                    }
+                });
             }
 
             // In Attract mode, clicking or tapping anywhere starts the experience
