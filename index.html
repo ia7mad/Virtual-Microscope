@@ -34,6 +34,7 @@
             display: flex;
             flex-direction: row; /* Always LTR layout: viewport left, sidebar right */
             height: 100vh;
+            height: 100dvh; /* iOS Safari: shrinks with browser chrome, prevents layout overflow */
             overflow: hidden;
             background-image: radial-gradient(circle at center, #11151a 0%, #000000 100%);
         }
@@ -481,7 +482,7 @@
             text-align: center;
         }
 
-        .lens-btn:hover {
+        .lens-btn:hover, .lens-btn:active {
             transform: translateY(3px);
             box-shadow: 
                 0 4px 8px rgba(0,0,0,0.9),
@@ -524,14 +525,16 @@
             background: rgba(0, 212, 255, 0.1); color: var(--medical-cyan); border: 1px solid var(--medical-cyan);
         }
         .action-btn.primary svg { fill: var(--medical-cyan); transition: transform 0.3s; }
-        .action-btn.primary:hover { background: rgba(0, 212, 255, 0.2); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
+        .action-btn.primary:hover,
+        .action-btn.primary:active { background: rgba(0, 212, 255, 0.2); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
         .action-btn.primary.active { background: var(--medical-cyan); color: #000; }
         .action-btn.primary.active svg { fill: #000; transform: scale(1.1); }
-        
+
         .action-btn.secondary {
             background: transparent; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); margin-top: 12px;
         }
-        .action-btn.secondary:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .action-btn.secondary:hover,
+        .action-btn.secondary:active { background: rgba(255,255,255,0.08); color: #fff; }
 
         /* Focus metrics footer */
         .metrics {
@@ -653,17 +656,18 @@
             body {
                 flex-direction: column;
                 height: 100vh;
+                height: 100dvh;
                 overflow: hidden;
             }
 
             .viewport-section {
                 flex: 0 0 auto;
-                height: 55vh;
-                min-height: 300px;
+                height: 48vh;
+                height: 48dvh;
+                min-height: 260px;
                 background: #000;
                 z-index: 5;
-                touch-action: none; /* Prevents browser pull-to-refresh and scroll conflicts */
-                -webkit-overflow-scrolling: auto;
+                touch-action: none;
             }
 
             .microscope-assembly {
@@ -689,14 +693,15 @@
 
             .controls-section {
                 flex: 1;
+                min-height: 0; /* critical: allows flex child to shrink and scroll on iOS */
                 width: 100%;
                 min-width: 100%;
                 border-left: none;
                 border-top: 1px solid var(--border-color);
-                height: auto;
-                padding: 1rem 1rem 2rem;
+                padding: 1rem 1rem 3rem;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain;
                 touch-action: pan-y;
             }
 
@@ -736,13 +741,13 @@
         }
 
         @media (max-width: 600px) {
-            .viewport-section { height: 50vh; min-height: 260px; }
-            
+            .viewport-section { height: 44vh; height: 44dvh; min-height: 240px; }
+
             #eyepiece {
-                width: 80vw;
-                height: 80vw;
-                max-width: 380px;
-                max-height: 380px;
+                width: 76vw;
+                height: 76vw;
+                max-width: 360px;
+                max-height: 360px;
                 border-width: 6px;
             }
 
@@ -1110,7 +1115,7 @@
             color: rgba(255,255,255,0.7); font-size: 0.85rem; padding: 6px 12px; cursor: pointer;
             white-space: nowrap; transition: 0.2s; outline: none; flex-shrink: 0;
         }
-        .cat-tab:hover { background: rgba(255,255,255,0.1); }
+        .cat-tab:hover, .cat-tab:active { background: rgba(255,255,255,0.1); }
         .cat-tab.active { background: rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.5); color: #fff; font-weight: 600; }
 
         /* Immersion: Turret Shadow for Lens Change */
@@ -1777,6 +1782,27 @@
                 }
             }
 
+            // Upload a video file to Supabase Storage and return its public URL.
+            // Videos cannot be stored as base64 data URLs — iOS Safari won't play them.
+            async function uploadVideoToStorage(file) {
+                if (!_supabase) return null;
+                try {
+                    const ext = file.name.split('.').pop().toLowerCase() || 'mp4';
+                    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+                    const { error } = await _supabase.storage
+                        .from('microscope-media')
+                        .upload(fileName, file, { contentType: file.type, cacheControl: '31536000', upsert: false });
+                    if (error) throw error;
+                    const { data: urlData } = _supabase.storage
+                        .from('microscope-media')
+                        .getPublicUrl(fileName);
+                    return urlData.publicUrl;
+                } catch(e) {
+                    console.error('[Storage] Upload failed:', e);
+                    return null;
+                }
+            }
+
             // Push current samples state to Supabase (fire-and-forget).
             async function saveToSupabase() {
                 if (!_supabase) return;
@@ -1905,19 +1931,26 @@
                 titleEl.textContent = sample.name[currentLang];
                 descEl.textContent = sample.desc[currentLang];
                 
-                const isVid = sample.imgUrl.startsWith('data:video') || sample.imgUrl.endsWith('.mp4');
+                const isVid = sample.imgUrl && (sample.imgUrl.startsWith('data:video') || /\.(mp4|webm|mov)(\?|$)/i.test(sample.imgUrl));
                 const miniMapVid = document.getElementById('mini-map-vid');
                 if (isVid) {
                     sampleImage.style.display = 'none';
-                    sampleVideo.style.display = 'block';
+                    // Set src BEFORE making visible — required on iOS
                     sampleVideo.src = sample.imgUrl;
+                    sampleVideo.style.display = 'block';
+                    sampleVideo.load();
+                    sampleVideo.play().catch(() => {}); // silent catch for autoplay policy
                     miniMapImg.style.display = 'none';
-                    miniMapVid.style.display = 'block';
                     miniMapVid.src = sample.imgUrl;
+                    miniMapVid.style.display = 'block';
+                    miniMapVid.load();
+                    miniMapVid.play().catch(() => {});
                 } else {
+                    sampleVideo.pause();
                     sampleVideo.style.display = 'none';
                     sampleImage.style.display = 'block';
                     sampleImage.src = sample.imgUrl;
+                    miniMapVid.pause();
                     miniMapVid.style.display = 'none';
                     miniMapImg.style.display = 'block';
                     miniMapImg.src = sample.imgUrl;
@@ -1995,8 +2028,9 @@
                 let contrast = 1;
                 if (brightness > 1.2) contrast = 1 - ((brightness - 1.2) * 0.5);
 
-                sampleImage.style.filter = `blur(${blurPx}px) brightness(${brightness}) contrast(${contrast})`;
-                sampleVideo.style.filter = `blur(${blurPx}px) brightness(${brightness}) contrast(${contrast})`;
+                const filterVal = `blur(${blurPx}px) brightness(${brightness}) contrast(${contrast})`;
+                sampleImage.style.filter = filterVal;
+                sampleVideo.style.filter = filterVal;
                 lightReadout.textContent = `${lightVal}%`;
 
                 const isFocused = distanceFocus < 3;
@@ -2411,27 +2445,48 @@
             btnCloseModal.addEventListener('click', closeModal);
             btnCancelModal.addEventListener('click', closeModal);
 
-            modalFile.addEventListener('change', function() {
+            modalFile.addEventListener('change', async function() {
                 const file = this.files[0];
-                if (file) {
+                if (!file) return;
+
+                const modalVid = document.getElementById('modal-preview-vid');
+                const isVideoFile = file.type.startsWith('video/');
+                const uploadLabel = document.getElementById('lbl-upload');
+                const origLabel = uploadLabel ? uploadLabel.textContent : '';
+
+                if (isVideoFile) {
+                    // Videos: upload to Supabase Storage so they get a real URL.
+                    // iOS Safari cannot play data: video URLs — only real http/https URLs work.
+                    if (uploadLabel) uploadLabel.textContent = '⏳ Uploading…';
+                    const publicUrl = await uploadVideoToStorage(file);
+                    if (uploadLabel) uploadLabel.textContent = origLabel;
+
+                    if (publicUrl) {
+                        tempImgData = publicUrl;
+                    } else {
+                        // Fallback: blob URL — works this session only (not cross-device)
+                        tempImgData = URL.createObjectURL(file);
+                        alert('Storage upload failed — video works this session only and will not sync to other devices.');
+                    }
+                    modalVid.src = tempImgData;
+                    modalVid.load();
+                    modalVid.play().catch(() => {});
+                    modalVid.style.display = 'block';
+                    modalImg.style.display = 'none';
+                } else {
+                    // Images: use base64 (compact, stored in DB, works everywhere)
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         tempImgData = e.target.result;
-                        const isVid = tempImgData.startsWith('data:video');
-                        const modalVid = document.getElementById('modal-preview-vid');
-                        if (isVid) {
-                            modalVid.src = tempImgData;
-                            modalVid.style.display = 'block';
-                            modalImg.style.display = 'none';
-                        } else {
-                            modalImg.src = tempImgData;
-                            modalImg.style.display = 'block';
-                            modalVid.style.display = 'none';
-                        }
+                        modalImg.src = tempImgData;
+                        modalImg.style.display = 'block';
+                        modalVid.style.display = 'none';
                         modalImgWrap.style.display = 'block';
                     };
                     reader.readAsDataURL(file);
+                    return; // reader.onload handles the rest
                 }
+                modalImgWrap.style.display = 'block';
             });
 
             let isMoving = false;
@@ -2636,8 +2691,9 @@
                 }
             }
 
-            // In Attract mode, clicking anywhere on the screen starts the experience
+            // In Attract mode, clicking or tapping anywhere starts the experience
             welcomeOverlay.addEventListener('click', dismissWelcome);
+            welcomeOverlay.addEventListener('touchend', (e) => { e.preventDefault(); dismissWelcome(); }, { passive: false });
 
             // ==========================================
             // Kiosk Auto-Reset (3 min inactivity)
