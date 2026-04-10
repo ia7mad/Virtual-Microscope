@@ -322,26 +322,6 @@
             z-index: 1;
         }
 
-        /* Glass glare — specular highlight on the lens surface */
-        #eyepiece::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background:
-                /* Anti-reflection coating tint — soft blue-purple wash top-left */
-                radial-gradient(ellipse 55% 40% at 28% 22%,
-                    rgba(160,200,255,0.10) 0%,
-                    transparent 100%),
-                /* Specular glint — small bright crescent */
-                radial-gradient(ellipse 18% 12% at 32% 20%,
-                    rgba(255,255,255,0.22) 0%,
-                    rgba(255,255,255,0.08) 40%,
-                    transparent 100%);
-            pointer-events: none;
-            z-index: 50;
-        }
-
         #eyepiece:active {
             cursor: grabbing;
         }
