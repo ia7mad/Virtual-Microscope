@@ -3926,7 +3926,7 @@
             // ==========================================
             let tourActive = false, tourPaused = false, tourStep = 0;
             let tourPhase = 'idle', _tourTimer = null;
-            const TOUR_DURATIONS = { loading: 600, showing: 3200, identifying: 4000, transitioning: 800 };
+            const TOUR_DURATIONS = { loading: 600, showing: 10000, transitioning: 800 };
 
             function _tourClearTimer() { if (_tourTimer) { clearTimeout(_tourTimer); _tourTimer = null; } }
 
@@ -3962,16 +3962,13 @@
                     _tourTimer = setTimeout(() => { _tourSetPhase('showing'); _tourRunPhase(); }, TOUR_DURATIONS.loading);
 
                 } else if (tourPhase === 'showing') {
+                    // Show description and immediately activate identify markers
                     if (descEl2) descEl2.textContent = sample.desc[currentLang];
                     if (overlay) { overlay.style.animation = 'none'; void overlay.offsetWidth; overlay.style.animation = ''; }
-                    _tourSetPhase('showing');
-                    _tourClearTimer();
-                    _tourTimer = setTimeout(() => { _tourSetPhase('identifying'); _tourRunPhase(); }, TOUR_DURATIONS.showing);
-
-                } else if (tourPhase === 'identifying') {
+                    _tourSetPhase('identifying'); // label shows "Identifying Structures" while markers are visible
                     if (!isIdentifyActive) toggleIdentify();
                     _tourClearTimer();
-                    _tourTimer = setTimeout(() => { _tourSetPhase('transitioning'); _tourRunPhase(); }, TOUR_DURATIONS.identifying);
+                    _tourTimer = setTimeout(() => { _tourSetPhase('transitioning'); _tourRunPhase(); }, TOUR_DURATIONS.showing);
 
                 } else if (tourPhase === 'transitioning') {
                     if (isIdentifyActive) toggleIdentify();
