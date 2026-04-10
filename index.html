@@ -414,62 +414,79 @@
             bottom: 0;
         }
 
+        @keyframes marker-ping {
+            0%   { box-shadow: 0 0 0 0 rgba(0,212,255,0.7), 0 0 6px var(--medical-cyan-glow); }
+            70%  { box-shadow: 0 0 0 10px rgba(0,212,255,0),  0 0 6px var(--medical-cyan-glow); }
+            100% { box-shadow: 0 0 0 0 rgba(0,212,255,0),     0 0 6px var(--medical-cyan-glow); }
+        }
+
         .marker {
             position: absolute;
-            width: 22px;
-            height: 22px;
-            border: 2px solid var(--medical-cyan);
+            /* tiny filled dot */
+            width: 8px;
+            height: 8px;
+            background: var(--medical-cyan);
             border-radius: 50%;
             transform: translate(-50%, -50%) scale(calc(var(--inv-scale, 1) * 0.5));
             opacity: 0;
             transition: opacity 0.4s ease;
             pointer-events: none;
-            box-shadow: 0 0 12px var(--medical-cyan-glow), inset 0 0 8px rgba(0, 212, 255, 0.2);
             z-index: 10;
         }
 
-        .marker::after {
-            content: attr(data-label);
-            position: absolute;
-            left: 28px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(8, 12, 18, 0.95);
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            white-space: nowrap;
-            border: 1px solid var(--border-color);
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transition: opacity 0.3s;
+        .marker.visible {
+            animation: marker-ping 2s ease-out infinite;
         }
 
-        body.lang-ar .marker::after {
-            left: auto;
-            right: 28px;
-            font-size: 13px;
-            font-family: var(--font-ar);
-            direction: rtl;
-        }
-
+        /* leader line */
         .marker::before {
             content: '';
             position: absolute;
             top: 50%;
-            left: 18px;
-            width: 8px;
+            left: 10px;
+            width: 36px;
             height: 1px;
-            background: var(--medical-cyan);
+            background: linear-gradient(to right, var(--medical-cyan), rgba(0,212,255,0.4));
             transform: translateY(-50%);
         }
 
         body.lang-ar .marker::before {
             left: auto;
-            right: 18px;
+            right: 10px;
+            background: linear-gradient(to left, var(--medical-cyan), rgba(0,212,255,0.4));
+        }
+
+        /* label pill — sits at end of leader line */
+        .marker::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(4, 8, 14, 0.72);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #e8f8ff;
+            padding: 3px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            border: 1px solid rgba(0,212,255,0.35);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        body.lang-ar .marker::after {
+            left: auto;
+            right: 48px;
+            font-size: 12px;
+            font-family: var(--font-ar);
+            direction: rtl;
         }
 
         .marker.visible {
