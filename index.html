@@ -209,13 +209,11 @@
             gap: 12px;
             overflow-x: auto;
             padding-bottom: 4px;
-            scrollbar-width: none;
-            cursor: grab;
+            scrollbar-width: thin;
         }
 
-        .tray::-webkit-scrollbar { display: none; }
-        .tray.is-dragging { cursor: grabbing; user-select: none; }
-        .tray.is-dragging * { pointer-events: none; }
+        .tray::-webkit-scrollbar { height: 4px; }
+        .tray::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.4); border-radius: 2px; }
 
         .slide-item {
             flex: 0 0 90px;
@@ -2364,13 +2362,11 @@
             gap: 0.5rem;
             overflow-x: auto;
             padding-bottom: 4px;
-            scrollbar-width: none;
-            cursor: grab;
+            scrollbar-width: thin;
         }
 
-        .category-tabs::-webkit-scrollbar { display: none; }
-        .category-tabs.is-dragging { cursor: grabbing; user-select: none; }
-        .category-tabs.is-dragging * { pointer-events: none; }
+        .category-tabs::-webkit-scrollbar { height: 4px; }
+        .category-tabs::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.3); border-radius: 4px; }
 
         .cat-tab {
             background: rgba(255, 255, 255, 0.05);
@@ -3669,49 +3665,8 @@
                 return update;
             }
 
-            /* ── Drag-to-scroll (pick & drag) ── */
-            function addDragScroll(el, getNavUpdate) {
-                let isDown = false, startX = 0, scrollStart = 0, dragged = false;
-
-                el.addEventListener('mousedown', e => {
-                    if (e.button !== 0) return;
-                    isDown = true;
-                    dragged = false;
-                    startX = e.pageX;
-                    scrollStart = el.scrollLeft;
-                    // NOTE: do NOT add is-dragging here — adding it immediately
-                    // sets pointer-events:none on children which breaks click dispatch
-                });
-
-                window.addEventListener('mousemove', e => {
-                    if (!isDown) return;
-                    const dx = e.pageX - startX;
-                    if (Math.abs(dx) > 6) {
-                        // Only enter drag mode once the user has clearly moved
-                        dragged = true;
-                        el.classList.add('is-dragging');
-                        el.scrollLeft = scrollStart - dx;
-                        if (getNavUpdate) getNavUpdate()();
-                    }
-                });
-
-                window.addEventListener('mouseup', () => {
-                    if (!isDown) return;
-                    isDown = false;
-                    el.classList.remove('is-dragging');
-                });
-
-                // Suppress the click that fires after a drag-release
-                el.addEventListener('click', e => {
-                    if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; }
-                }, true);
-            }
-
             const updateTabsNav = initScrollNav('tabs-prev', 'tabs-next', document.getElementById('category-tabs'), 160);
             let updateTrayNav = initScrollNav('tray-prev', 'tray-next', slideTray, 200);
-
-            addDragScroll(document.getElementById('category-tabs'), () => updateTabsNav);
-            addDragScroll(slideTray, () => updateTrayNav);
 
             function initTray() {
                 samples.forEach(sample => {
