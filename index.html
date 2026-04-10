@@ -202,23 +202,17 @@
         }
 
         .tray {
+            flex: 1;
             display: flex;
             direction: ltr;
             /* Tray always scrolls left-to-right */
             gap: 12px;
             overflow-x: auto;
-            padding-bottom: 8px;
-            scrollbar-width: thin;
+            padding-bottom: 4px;
+            scrollbar-width: none;
         }
 
-        .tray::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .tray::-webkit-scrollbar-thumb {
-            background: rgba(0, 212, 255, 0.4);
-            border-radius: 2px;
-        }
+        .tray::-webkit-scrollbar { display: none; }
 
         .slide-item {
             flex: 0 0 90px;
@@ -2324,22 +2318,52 @@
             text-transform: none;
         }
 
+        /* ── Scroll-nav wrapper (arrows + scrollable child) ── */
+        .scroll-nav-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .snav-arrow {
+            flex-shrink: 0;
+            width: 22px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 5px;
+            color: var(--medical-cyan);
+            font-size: 17px;
+            line-height: 1;
+            cursor: pointer;
+            transition: opacity 0.2s, background 0.2s;
+            opacity: 0.75;
+            padding: 0;
+        }
+
+        .snav-arrow:hover { opacity: 1; background: rgba(0,212,255,0.15); }
+        .snav-arrow:disabled { opacity: 0.2; pointer-events: none; }
+
+        /* tray arrows taller to match slide items */
+        .tray-nav-wrap .snav-arrow {
+            height: 70px;
+            border-radius: 6px;
+            font-size: 20px;
+        }
+
         .category-tabs {
+            flex: 1;
             display: flex;
             gap: 0.5rem;
             overflow-x: auto;
-            padding-bottom: 6px;
-            scrollbar-width: thin;
+            padding-bottom: 4px;
+            scrollbar-width: none;
         }
 
-        .category-tabs::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .category-tabs::-webkit-scrollbar-thumb {
-            background: rgba(0, 255, 136, 0.3);
-            border-radius: 4px;
-        }
+        .category-tabs::-webkit-scrollbar { display: none; }
 
         .cat-tab {
             background: rgba(255, 255, 255, 0.05);
@@ -2670,17 +2694,25 @@
         <div class="slide-drawer">
             <div class="tray-header">
                 <p class="tray-section-title" id="lbl-sample-type-title">Sample Type / نوع العينة</p>
-                <div class="category-tabs" id="category-tabs">
-                    <button class="cat-tab active" data-cat="all">🔬 All / الكل</button>
-                    <button class="cat-tab" data-cat="blood">🩸 Blood / دم</button>
-                    <button class="cat-tab" data-cat="urine">🧪 Urine / بول</button>
-                    <button class="cat-tab" data-cat="stool">💩 Stool / براز</button>
-                    <button class="cat-tab" data-cat="tissue">🫀 Tissue / نسيج</button>
-                    <button class="cat-tab" data-cat="semen">🧬 Semen / منوي</button>
-                    <button class="cat-tab" data-cat="other">🌟 Other / أخرى</button>
+                <div class="scroll-nav-wrap" id="tabs-nav-wrap">
+                    <button class="snav-arrow snav-prev" id="tabs-prev" aria-label="Previous">‹</button>
+                    <div class="category-tabs" id="category-tabs">
+                        <button class="cat-tab active" data-cat="all">🔬 All / الكل</button>
+                        <button class="cat-tab" data-cat="blood">🩸 Blood / دم</button>
+                        <button class="cat-tab" data-cat="urine">🧪 Urine / بول</button>
+                        <button class="cat-tab" data-cat="stool">💩 Stool / براز</button>
+                        <button class="cat-tab" data-cat="tissue">🫀 Tissue / نسيج</button>
+                        <button class="cat-tab" data-cat="semen">🧬 Semen / منوي</button>
+                        <button class="cat-tab" data-cat="other">🌟 Other / أخرى</button>
+                    </div>
+                    <button class="snav-arrow snav-next" id="tabs-next" aria-label="Next">›</button>
                 </div>
             </div>
-            <div class="tray" id="slide-tray"></div>
+            <div class="scroll-nav-wrap tray-nav-wrap" id="tray-nav-wrap">
+                <button class="snav-arrow snav-prev" id="tray-prev" aria-label="Previous">‹</button>
+                <div class="tray" id="slide-tray"></div>
+                <button class="snav-arrow snav-next" id="tray-next" aria-label="Next">›</button>
+            </div>
             <!-- Hidden in showcase: Add/Edit Slide tools -->
             <div class="add-slide-wrap" style="display:none;">
                 <button type="button" id="btn-open-modal" class="add-slide-btn">+ <span id="lbl-add-slide">Add Custom
@@ -3572,7 +3604,15 @@
 
             function updateTrayUI() {
                 document.querySelectorAll('.slide-item').forEach(el => {
-                    el.classList.toggle('active', el.dataset.id === currentSample.id);
+                    const isActive = el.dataset.id === currentSample.id;
+                    el.classList.toggle('active', isActive);
+                    // Smoothly scroll the active item into view inside the tray
+                    if (isActive) {
+                        requestAnimationFrame(() => {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                            requestAnimationFrame(updateTrayNav);
+                        });
+                    }
                 });
             }
 
@@ -3587,6 +3627,31 @@
                     initTray();
                 });
             });
+
+            /* ── Scroll-nav arrow helper ── */
+            function initScrollNav(prevId, nextId, scrollEl, step) {
+                const prev = document.getElementById(prevId);
+                const next = document.getElementById(nextId);
+                if (!prev || !next || !scrollEl) return () => {};
+
+                function update() {
+                    const atStart = scrollEl.scrollLeft <= 2;
+                    const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 2;
+                    prev.disabled = atStart;
+                    next.disabled = atEnd;
+                }
+
+                prev.addEventListener('click', () => scrollEl.scrollBy({ left: -step, behavior: 'smooth' }));
+                next.addEventListener('click', () => scrollEl.scrollBy({ left: step, behavior: 'smooth' }));
+                scrollEl.addEventListener('scroll', update, { passive: true });
+                // Also update on resize (container width may change)
+                new ResizeObserver(update).observe(scrollEl);
+                update();
+                return update;
+            }
+
+            const updateTabsNav = initScrollNav('tabs-prev', 'tabs-next', document.getElementById('category-tabs'), 160);
+            let updateTrayNav = initScrollNav('tray-prev', 'tray-next', slideTray, 200);
 
             function initTray() {
                 samples.forEach(sample => {
@@ -3614,6 +3679,8 @@
                     slideTray.appendChild(item);
                 });
                 updateTrayUI();
+                // Refresh arrow states after tray content changes
+                requestAnimationFrame(updateTrayNav);
             }
 
             // ==========================================
