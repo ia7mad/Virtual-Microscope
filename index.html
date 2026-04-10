@@ -1886,110 +1886,101 @@
             animation: focus-flash 0.6s ease;
         }
 
-        /* ====== Digital Analysis HUD ====== */
+        /* ====== Digital Analysis HUD — identify-only pill ====== */
         #analysis-hud {
             position: absolute;
-            bottom: 28px;
+            /* Sit at the bottom of the viewport section, in the barrel zone */
+            bottom: 18px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 110;
-            /* Overflow visible so scan line doesn't clip */
-            pointer-events: none; /* pass-through except the toggle cell */
+            pointer-events: none;
+        }
+
+        /* Hide everything except the identify toggle */
+        .hud-brand,
+        .hud-cell:not(.hud-identify),
+        .hud-coords {
+            display: none !important;
         }
 
         .hud-shell {
             display: flex;
-            align-items: stretch;
-            background: rgba(4, 8, 14, 0.88);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+            align-items: center;
+            background: rgba(4, 8, 14, 0.80);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 212, 255, 0.22);
-            border-radius: 12px;
+            border-radius: 100px; /* pill */
             overflow: hidden;
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.85),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.7);
             transition: border-color 0.4s, box-shadow 0.4s;
-            position: relative;
-        }
-
-        /* Animated scan-line sweeps across the HUD */
-        .hud-shell::before {
-            content: '';
-            position: absolute;
-            top: 0; bottom: 0;
-            width: 40px;
-            background: linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.12) 50%, transparent 100%);
-            animation: hud-scan 3s linear infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes hud-scan {
-            0%   { left: -40px; }
-            100% { left: calc(100% + 40px); }
         }
 
         #analysis-hud.active .hud-shell {
             border-color: rgba(0, 212, 255, 0.55);
             box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.85),
-                0 0 20px rgba(0, 212, 255, 0.18),
-                inset 0 1px 0 rgba(0, 212, 255, 0.1);
+                0 4px 20px rgba(0,0,0,0.7),
+                0 0 16px rgba(0,212,255,0.2);
         }
 
-        #analysis-hud.active .hud-shell::before {
-            background: linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.22) 50%, transparent 100%);
-            animation-duration: 1.6s;
+        /* Metric cells — only identify is visible */
+        .hud-metrics {
+            display: flex;
+            align-items: stretch;
         }
 
-        /* Brand strip on left edge */
-        .hud-brand {
+        .hud-cell {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0 10px;
-            gap: 4px;
-            border-right: 1px solid rgba(255,255,255,0.06);
-            position: relative;
-            z-index: 1;
+            padding: 8px 16px;
+            gap: 3px;
+            transition: background 0.3s;
         }
 
-        .hud-brand-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: var(--medical-cyan);
-            box-shadow: 0 0 8px var(--medical-cyan);
-            animation: hud-blink 1.8s ease-in-out infinite;
-        }
-
-        #analysis-hud.active .hud-brand-dot {
-            background: #00ff88;
-            box-shadow: 0 0 10px #00ff88;
-            animation-duration: 0.7s;
-        }
-
-        @keyframes hud-blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.25; }
-        }
-
-        .hud-brand-label {
-            font-size: 0.52rem;
-            font-weight: 800;
-            letter-spacing: 1.5px;
+        .hud-cell-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
-            color: rgba(0,212,255,0.55);
+            color: rgba(139,155,180,0.7);
             font-family: 'Inter', monospace;
-            writing-mode: vertical-lr;
-            transform: rotate(180deg);
         }
 
-        body.lang-ar .hud-brand-label {
-            font-family: var(--font-ar);
-            letter-spacing: 0; /* Arabic doesn't need letter-spacing */
-            font-size: 0.6rem;
+        .hud-cell-value {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #e8f0f8;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+            transition: color 0.3s;
+        }
+
+        .hud-cell-value.sharp  { color: #00ff88; }
+        .hud-cell-value.blurred { color: #ff4466; }
+        #hud-mag { color: var(--medical-cyan); }
+
+        /* Identify toggle */
+        .hud-cell.hud-identify {
+            cursor: pointer;
+            pointer-events: all;
+            padding: 8px 20px;
+            user-select: none;
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        .hud-cell.hud-identify:active { background: rgba(0,212,255,0.08); }
+
+        .hud-cell-label {
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: rgba(139,155,180,0.7);
+            font-family: 'Inter', monospace;
         }
 
         body.lang-ar .hud-cell-label {
@@ -2007,79 +1998,21 @@
             font-size: 0.68rem !important;
         }
 
-        /* Metric cells */
-        .hud-metrics {
-            display: flex;
-            align-items: stretch;
-            position: relative;
-            z-index: 1;
-        }
-
-        .hud-cell {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 16px;
-            gap: 3px;
-            border-right: 1px solid rgba(255,255,255,0.05);
-            min-width: 72px;
-            transition: background 0.3s;
-        }
-
-        .hud-cell:last-child { border-right: none; }
-
-        .hud-cell-label {
-            font-size: 0.58rem;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            color: rgba(139,155,180,0.7);
-            font-family: 'Inter', monospace;
-        }
-
-        .hud-cell-value {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #e8f0f8;
-            font-family: 'Courier New', monospace;
-            letter-spacing: 0.5px;
-            transition: color 0.3s;
-        }
-
-        /* Focus cell — color-coded */
-        .hud-cell-value.sharp { color: #00ff88; }
-        .hud-cell-value.blurred { color: #ff4466; }
-
-        /* Magnification cell — cyan accent */
-        #hud-mag { color: var(--medical-cyan); }
-
-        /* Identify toggle cell — interactive */
-        .hud-cell.hud-identify {
-            cursor: pointer;
-            pointer-events: all; /* only interactive cell */
-            background: rgba(255,255,255,0.02);
-            padding: 10px 18px;
-            position: relative;
-            user-select: none;
-        }
-
-        .hud-cell.hud-identify:active { background: rgba(0,212,255,0.06); }
-
         .hud-identify-pip {
-            width: 28px; height: 14px;
+            width: 32px; height: 16px;
             background: rgba(255,255,255,0.1);
-            border-radius: 7px;
+            border-radius: 8px;
             position: relative;
+            flex-shrink: 0;
             transition: background 0.3s;
-            border: 1px solid rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.15);
         }
 
         .hud-identify-pip::after {
             content: '';
             position: absolute;
             top: 2px; left: 2px;
-            width: 10px; height: 10px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             background: #8b9bb4;
             transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
@@ -2095,30 +2028,19 @@
         }
 
         #analysis-hud.active .hud-identify-pip::after {
-            transform: translateX(14px);
+            transform: translateX(16px);
             background: var(--medical-cyan);
             box-shadow: 0 0 8px var(--medical-cyan);
         }
 
         #analysis-hud.active .hud-cell-value.identify-text { color: var(--medical-cyan); }
 
-        /* Coordinate sub-bar */
-        .hud-coords {
-            position: absolute;
-            bottom: -22px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(4,8,14,0.82);
-            border: 1px solid rgba(255,255,255,0.07);
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            padding: 3px 14px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.6rem;
-            color: rgba(139,155,180,0.5);
-            letter-spacing: 1px;
-            white-space: nowrap;
-            pointer-events: none;
+        /* Coords kept in DOM for JS but fully hidden */
+        .hud-coords { display: none !important; }
+
+        @keyframes hud-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
         }
 
         /* ====== Mobile layout (phones ≤600px) ====== */
