@@ -2308,6 +2308,22 @@
             margin-bottom: 0.8rem;
         }
 
+        .tray-section-title {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(0,212,255,0.6);
+            margin-bottom: 0.45rem;
+        }
+
+        body.lang-ar .tray-section-title {
+            font-family: var(--font-ar);
+            font-size: 0.7rem;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
         .category-tabs {
             display: flex;
             gap: 0.5rem;
@@ -2653,6 +2669,7 @@
 
         <div class="slide-drawer">
             <div class="tray-header">
+                <p class="tray-section-title" id="lbl-sample-type-title">Sample Type / نوع العينة</p>
                 <div class="category-tabs" id="category-tabs">
                     <button class="cat-tab active" data-cat="all">🔬 All / الكل</button>
                     <button class="cat-tab" data-cat="blood">🩸 Blood / دم</button>
@@ -2933,7 +2950,8 @@
                     tour_step_loading: 'Loading specimen...',
                     tour_step_showing: 'Specimen Overview',
                     tour_step_identifying: 'Identifying Structures',
-                    tour_step_transitioning: 'Next Specimen...'
+                    tour_step_transitioning: 'Next Specimen...',
+                    sample_type_title: 'Sample Type'
                 },
                 ar: {
                     app_title: 'المجهر <span>الافتراضي</span>',
@@ -2991,7 +3009,8 @@
                     tour_step_loading: 'جارٍ تحميل العينة...',
                     tour_step_showing: 'نظرة عامة على العينة',
                     tour_step_identifying: 'تحديد المكونات',
-                    tour_step_transitioning: 'الانتقال للعينة التالية...'
+                    tour_step_transitioning: 'الانتقال للعينة التالية...',
+                    sample_type_title: 'نوع العينة'
                 }
             };
 
@@ -3376,6 +3395,8 @@
                 document.getElementById('lbl-btn-reset').textContent = DICT[lang].btn_reset;
                 document.getElementById('stat-lamp').textContent = DICT[lang].stat_lamp;
                 document.getElementById('stat-foc').textContent = DICT[lang].stat_foc;
+
+                document.getElementById('lbl-sample-type-title').textContent = DICT[lang].sample_type_title;
 
                 // Modal strings
                 document.getElementById('lbl-add-slide').textContent = DICT[lang].add_slide;
