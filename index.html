@@ -3635,17 +3635,28 @@
                 const next = document.getElementById(nextId);
                 if (!prev || !next || !scrollEl) return () => {};
 
-                // scrollLeft can be negative in Chrome when direction:rtl — normalise with abs
+                // In Arabic the left arrow (‹ = prev) means "forward" and right (› = next) means "back"
+                const rtl = () => document.body.classList.contains('lang-ar');
+
                 function update() {
                     const sl = Math.abs(scrollEl.scrollLeft);
                     const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
-                    prev.disabled = sl <= 2;
-                    next.disabled = sl >= maxScroll - 2;
+                    const canBack = sl > 2;
+                    const canFwd  = sl < maxScroll - 2;
+                    if (rtl()) {
+                        prev.disabled = !canFwd;   // ‹ goes forward in RTL
+                        next.disabled = !canBack;  // › goes back in RTL
+                    } else {
+                        prev.disabled = !canBack;
+                        next.disabled = !canFwd;
+                    }
                 }
 
-                // Both containers are direction:ltr so scrollBy left/right is always consistent
-                prev.addEventListener('click', () => scrollEl.scrollBy({ left: -step, behavior: 'smooth' }));
-                next.addEventListener('click', () => scrollEl.scrollBy({ left: step, behavior: 'smooth' }));
+                prev.addEventListener('click', () =>
+                    scrollEl.scrollBy({ left: rtl() ? step : -step, behavior: 'smooth' }));
+                next.addEventListener('click', () =>
+                    scrollEl.scrollBy({ left: rtl() ? -step : step, behavior: 'smooth' }));
+
                 scrollEl.addEventListener('scroll', update, { passive: true });
                 new ResizeObserver(update).observe(scrollEl);
                 update();
