@@ -2357,6 +2357,7 @@
         .category-tabs {
             flex: 1;
             display: flex;
+            direction: ltr; /* keep scroll LTR regardless of app language */
             gap: 0.5rem;
             overflow-x: auto;
             padding-bottom: 4px;
@@ -3634,17 +3635,18 @@
                 const next = document.getElementById(nextId);
                 if (!prev || !next || !scrollEl) return () => {};
 
+                // scrollLeft can be negative in Chrome when direction:rtl — normalise with abs
                 function update() {
-                    const atStart = scrollEl.scrollLeft <= 2;
-                    const atEnd = scrollEl.scrollLeft + scrollEl.clientWidth >= scrollEl.scrollWidth - 2;
-                    prev.disabled = atStart;
-                    next.disabled = atEnd;
+                    const sl = Math.abs(scrollEl.scrollLeft);
+                    const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+                    prev.disabled = sl <= 2;
+                    next.disabled = sl >= maxScroll - 2;
                 }
 
+                // Both containers are direction:ltr so scrollBy left/right is always consistent
                 prev.addEventListener('click', () => scrollEl.scrollBy({ left: -step, behavior: 'smooth' }));
                 next.addEventListener('click', () => scrollEl.scrollBy({ left: step, behavior: 'smooth' }));
                 scrollEl.addEventListener('scroll', update, { passive: true });
-                // Also update on resize (container width may change)
                 new ResizeObserver(update).observe(scrollEl);
                 update();
                 return update;
