@@ -269,15 +269,20 @@
 
         .assembly-ring {
             position: absolute;
-            top: -24px;
-            left: -24px;
-            right: -24px;
-            bottom: -24px;
+            /* sits just outside the eyecup shadow spread */
+            top: -56px;
+            left: -56px;
+            right: -56px;
+            bottom: -56px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.03);
+            border: none;
             pointer-events: none;
-            box-shadow: 0 0 50px rgba(0, 212, 255, 0.1), inset 0 0 30px rgba(0, 0, 0, 1);
-            z-index: 2;
+            /* Outer focus-glow ring (subtle cyan) + mount shadow */
+            box-shadow:
+                0 0 60px rgba(0,212,255,0.07),
+                0 0 120px rgba(0,0,0,0.6),
+                inset 0 0 40px rgba(0,0,0,0.9);
+            z-index: 0;
         }
 
         #eyepiece {
@@ -286,13 +291,55 @@
             max-width: 920px;
             max-height: 920px;
             border-radius: 50%;
-            border: 12px solid #0a0a0a;
-            box-shadow: 0 0 80px rgba(0, 0, 0, 0.95) inset, 0 0 0 100vw rgba(0, 0, 0, 0.95);
+            /* Inner dark lip between glass and barrel */
+            border: 5px solid #080808;
+            box-shadow:
+                /* Field vignette — heavy edge darkening inside the lens */
+                inset 0 0 120px rgba(0,0,0,0.85),
+                inset 0 0 50px  rgba(0,0,0,0.6),
+                /* Inner sleeve — recessed dark channel */
+                0 0 0 8px  #0d0d0d,
+                /* Chrome barrel — layered to fake a metallic gradient */
+                0 0 0 11px #242424,
+                0 0 0 15px #3e3e3e,
+                0 0 0 19px #525252,   /* peak highlight */
+                0 0 0 22px #3a3a3a,
+                0 0 0 26px #1c1c1c,
+                /* Dark channel separating barrel from eyecup */
+                0 0 0 29px #0a0a0a,
+                /* Rubber eyecup — matte dark ring */
+                0 0 0 38px #181818,
+                0 0 0 41px #202020,
+                /* 3-D lift shadow beneath eyepiece */
+                0 16px 50px rgba(0,0,0,0.95),
+                0  4px 20px rgba(0,0,0,0.8),
+                /* Backdrop blackout */
+                0 0 0 100vw rgba(0,0,0,0.95);
             overflow: hidden;
             position: relative;
             background: #000;
             cursor: grab;
             z-index: 1;
+        }
+
+        /* Glass glare — specular highlight on the lens surface */
+        #eyepiece::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background:
+                /* Anti-reflection coating tint — soft blue-purple wash top-left */
+                radial-gradient(ellipse 55% 40% at 28% 22%,
+                    rgba(160,200,255,0.10) 0%,
+                    transparent 100%),
+                /* Specular glint — small bright crescent */
+                radial-gradient(ellipse 18% 12% at 32% 20%,
+                    rgba(255,255,255,0.22) 0%,
+                    rgba(255,255,255,0.08) 40%,
+                    transparent 100%);
+            pointer-events: none;
+            z-index: 50;
         }
 
         #eyepiece:active {
@@ -1144,10 +1191,10 @@
             }
 
             .assembly-ring {
-                top: -16px;
-                left: -16px;
-                right: -16px;
-                bottom: -16px;
+                top: -48px;
+                left: -48px;
+                right: -48px;
+                bottom: -48px;
             }
 
             #mini-map-container {
@@ -1317,10 +1364,10 @@
             }
 
             .assembly-ring {
-                top: -12px;
-                left: -12px;
-                right: -12px;
-                bottom: -12px;
+                top: -44px;
+                left: -44px;
+                right: -44px;
+                bottom: -44px;
             }
 
             .controls-section {
@@ -1826,13 +1873,33 @@
         }
 
         /* Focus-achieved flash */
+        /* Shared barrel shadow — keeps the metallic ring intact during animation */
+        :root {
+            --eyepiece-barrel:
+                inset 0 0 120px rgba(0,0,0,0.85),
+                inset 0 0 50px  rgba(0,0,0,0.6),
+                0 0 0 8px  #0d0d0d,
+                0 0 0 11px #242424,
+                0 0 0 15px #3e3e3e,
+                0 0 0 19px #525252,
+                0 0 0 22px #3a3a3a,
+                0 0 0 26px #1c1c1c,
+                0 0 0 29px #0a0a0a,
+                0 0 0 38px #181818,
+                0 0 0 41px #202020,
+                0 16px 50px rgba(0,0,0,0.95),
+                0  4px 20px rgba(0,0,0,0.8),
+                0 0 0 100vw rgba(0,0,0,0.95);
+        }
+
         @keyframes focus-flash {
-            0%   { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95); }
-            30%  { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95),
-                               0 0 0 6px rgba(0,255,136,0.8), 0 0 30px rgba(0,255,136,0.5); }
-            70%  { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95),
+            0%   { box-shadow: var(--eyepiece-barrel); }
+            30%  { box-shadow: var(--eyepiece-barrel),
+                               0 0 0 6px rgba(0,255,136,0.8),
+                               0 0 30px rgba(0,255,136,0.5); }
+            70%  { box-shadow: var(--eyepiece-barrel),
                                0 0 0 3px rgba(0,255,136,0.35); }
-            100% { box-shadow: 0 0 80px rgba(0,0,0,0.95) inset, 0 0 0 100vw rgba(0,0,0,0.95); }
+            100% { box-shadow: var(--eyepiece-barrel); }
         }
 
         #eyepiece.focus-achieved {
