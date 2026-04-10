@@ -858,285 +858,6 @@
             font-weight: bold;
         }
 
-        /* ====== Builder Modal ====== */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .modal-content {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            width: 90vw;
-            max-width: 1000px;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-        }
-
-        .modal-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-header h2 {
-            font-size: 1.2rem;
-            color: var(--medical-cyan);
-            margin: 0;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        .modal-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-            direction: ltr;
-        }
-
-        body.lang-ar .modal-body {
-            direction: rtl;
-        }
-
-        .modal-sidebar {
-            width: 350px;
-            padding: 1.5rem;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        body.lang-ar .modal-sidebar {
-            border-right: none;
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .form-group label {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .form-group input,
-        .form-group textarea {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 10px;
-            border-radius: 6px;
-            font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--medical-cyan);
-        }
-
-        .file-upload-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px dashed rgba(255, 255, 255, 0.2);
-            padding: 1.5rem;
-            text-align: center;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: border-color 0.2s;
-            color: var(--medical-cyan);
-            font-weight: 600;
-        }
-
-        .file-upload-btn:hover {
-            border-color: var(--medical-cyan);
-        }
-
-        .file-upload-btn input {
-            display: none;
-        }
-
-        .modal-preview-area {
-            flex: 1;
-            padding: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            background: #000;
-            position: relative;
-        }
-
-        .preview-instruction {
-            color: var(--text-muted);
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .preview-instruction span {
-            font-size: 0.75rem;
-            opacity: 0.7;
-        }
-
-        .preview-container {
-            flex: 1;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .preview-container img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            cursor: crosshair;
-            display: none;
-        }
-
-        .temp-marker {
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: var(--medical-cyan);
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 10px var(--medical-cyan-glow);
-            cursor: grab;
-            z-index: 10;
-            border: 2px solid #fff;
-            pointer-events: auto;
-            transition: box-shadow 0.2s;
-        }
-
-        .temp-marker:hover {
-            box-shadow: 0 0 15px #fff;
-            border-color: var(--medical-cyan);
-        }
-
-        .temp-marker:active {
-            cursor: grabbing;
-        }
-
-        .temp-marker-label {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 10px;
-            white-space: nowrap;
-            pointer-events: none;
-            border: 1px solid var(--medical-cyan-glow);
-        }
-
-        .modal-zoom-controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            gap: 8px;
-            z-index: 20;
-        }
-
-        .modal-zoom-btn {
-            width: 32px;
-            height: 32px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border-color);
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            font-weight: bold;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-zoom-btn:hover {
-            background: var(--medical-cyan);
-            color: #000;
-        }
-
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-
-        .add-slide-wrap {
-            display: flex;
-            padding-top: 10px;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .add-slide-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.2);
-            color: var(--text-muted);
-            border-radius: 8px;
-            flex: 1;
-            padding: 8px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-family: inherit;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .add-slide-btn:hover {
-            border-color: var(--medical-cyan);
-            color: var(--medical-cyan);
-        }
-
         /* ====== Mobile & Tablet Responsiveness ====== */
         @media (max-width: 1024px) {
             body {
@@ -1287,41 +1008,6 @@
                 font-size: 0.75rem;
             }
 
-            /* Modal */
-            .modal-content {
-                width: 95vw;
-                height: 90vh;
-                max-height: 90vh;
-                border-radius: 10px;
-            }
-
-            .modal-body {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-
-            .modal-sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                padding: 1rem;
-            }
-
-            .modal-preview-area {
-                min-height: 300px;
-                padding: 1rem;
-            }
-
-            .modal-zoom-controls {
-                bottom: 10px;
-                right: 10px;
-            }
-
-            .modal-zoom-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 1.4rem;
-            }
         }
 
         @media (max-width: 600px) {
@@ -1388,9 +1074,6 @@
                 height: 60px;
             }
 
-            .add-slide-wrap {
-                flex-direction: column;
-            }
         }
 
         /* ====== Kiosk Attract Mode (Welcome Screen) ====== */
@@ -2556,7 +2239,6 @@
     <div class="lang-switch">
         <button id="btn-en" class="active">EN</button>
         <button id="btn-ar">العربية</button>
-        <button id="btn-admin-login" title="Admin Login" style="opacity: 0.6; padding: 6px 10px;">🔒</button>
     </div>
 
     <div class="viewport-section">
@@ -2711,13 +2393,6 @@
                 <div class="tray" id="slide-tray"></div>
                 <button class="snav-arrow snav-next" id="tray-next" aria-label="Next">›</button>
             </div>
-            <!-- Hidden in showcase: Add/Edit Slide tools -->
-            <div class="add-slide-wrap" style="display:none;">
-                <button type="button" id="btn-open-modal" class="add-slide-btn">+ <span id="lbl-add-slide">Add Custom
-                        Slide</span></button>
-                <button type="button" id="btn-edit-specimen" class="add-slide-btn">✎ <span id="lbl-edit-specimen">Edit
-                        Specimen</span></button>
-            </div>
         </div>
 
         <div class="control-group">
@@ -2806,82 +2481,6 @@
         <div id="btn-export-data" style="display:none"></div>
     </div>
 
-    <!-- Builder Modal -->
-    <div id="builder-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="lbl-modal-title">Create Custom Specimen</h2>
-                <button type="button" class="close-btn" id="btn-close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-sidebar">
-                    <label class="file-upload-btn">
-                        <span id="lbl-upload">Upload Image/Video</span>
-                        <input type="file" id="modal-file" accept="image/png, image/jpeg, image/gif, video/mp4">
-                    </label>
-                    <div class="form-group">
-                        <label id="lbl-category">Category / التصنيف</label>
-                        <select id="modal-category"
-                            style="width: 100%; padding: 8px; border-radius: 4px; background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 212, 255, 0.3); color: white; outline: none; margin-bottom: 4px; font-family: var(--font-en);">
-                            <option value="blood">🩸 Blood Sample / عينة دم</option>
-                            <option value="urine">🧪 Urine Sample / عينة بول</option>
-                            <option value="stool">💩 Stool Sample / عينة براز</option>
-                            <option value="tissue">🫀 Tissue Sample / عينة نسيج</option>
-                            <option value="semen">🧬 Semen Sample / سائل منوي</option>
-                            <option value="other">🌟 Other / أخرى</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label id="lbl-name-en">Name (English)</label>
-                        <input type="text" id="modal-name-en" placeholder="e.g. Skin Tissue">
-                    </div>
-                    <div class="form-group">
-                        <label id="lbl-name-ar">Name (Arabic)</label>
-                        <input type="text" id="modal-name-ar" placeholder="مثال: نسيج الجلد">
-                    </div>
-                    <div class="form-group">
-                        <label id="lbl-desc-en">Description (English)</label>
-                        <textarea id="modal-desc-en" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label id="lbl-desc-ar">Description (Arabic)</label>
-                        <textarea id="modal-desc-ar" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-preview-area">
-                    <div class="preview-instruction" id="lbl-instruction">Click on the image to place a marker.</div>
-                    <div class="preview-container" id="preview-container">
-                        <div id="modal-image-wrap"
-                            style="transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); transform-origin: center center; cursor: crosshair; display: none; position: relative;">
-                            <img id="modal-preview-img" src="" alt=""
-                                style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: block; position: relative; z-index: 1;">
-                            <video id="modal-preview-vid" autoplay loop muted playsinline webkit-playsinline
-                                style="max-width: 100%; max-height: 100%; object-fit: contain; cursor: crosshair; display: none; position: relative; z-index: 1;"></video>
-                            <div id="modal-markers-layer"
-                                style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-zoom-controls">
-                        <button type="button" class="modal-zoom-btn" id="btn-modal-zoom-out">−</button>
-                        <button type="button" class="modal-zoom-btn" id="btn-modal-zoom-in">+</button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="action-btn secondary" id="btn-clear-markers"
-                    style="width: auto; margin-top: 0; margin-right: auto;"><span id="lbl-clear-markers">Clear
-                        Markers</span></button>
-                <button type="button" class="action-btn" id="btn-delete-slide"
-                    style="width: auto; margin-top: 0; background: rgba(255, 50, 50, 0.15); color: #ff4d4d; border: 1px solid #ff4d4d; display: none;"><span
-                        id="lbl-delete">Delete Slide</span></button>
-                <button type="button" class="action-btn secondary" id="btn-cancel-modal"
-                    style="width: auto; margin-top: 0;"><span id="lbl-cancel">Cancel</span></button>
-                <button type="button" class="action-btn primary" id="btn-save-modal" style="width: auto;"><span
-                        id="lbl-save">Save Slide</span></button>
-            </div>
-        </div>
-    </div>
 
     <script>
         // ==========================================
@@ -2920,24 +2519,6 @@
                     stat_foc: 'FOCUS',
                     status_sharp: 'SHARP',
                     status_blur: 'BLURRED',
-                    add_slide: 'Add Custom Slide',
-                    edit_specimen: 'Edit Specimen',
-                    modal_title_add: 'Create Custom Specimen',
-                    modal_title_edit: 'Edit Specimen',
-                    upload: 'Upload Media (.jpg, .png, .gif, .mp4)',
-                    name_en: 'Name (English)',
-                    name_ar: 'Name (Arabic)',
-                    desc_en: 'Description (English)',
-                    desc_ar: 'Description (Arabic)',
-                    instruction: 'Click on the image to place a marker.',
-                    prompt_en: 'Marker Name (English):',
-                    prompt_ar: 'Marker Name (Arabic):',
-                    clear_markers: 'Clear Markers',
-                    cancel: 'Cancel',
-                    save: 'Save Slide',
-                    upload_error: 'Storage Error: Image is too large (exceeds browser 5MB limit). It will work for now but will be lost if you refresh.',
-                    marker_tip: 'Double-click to Edit Name | Right-click to Delete',
-                    delete_slide: 'Delete Slide',
                     hud_brand: 'ANALYSIS',
                     hud_mag: 'MAG',
                     hud_focus: 'FOCUS',
@@ -2979,24 +2560,6 @@
                     stat_foc: 'الوضوح',
                     status_sharp: 'واضح',
                     status_blur: 'ضبابي',
-                    add_slide: 'إضافة شريحة مخصصة',
-                    edit_specimen: 'تعديل العينة',
-                    modal_title_add: 'إنشاء عينة مخصصة',
-                    modal_title_edit: 'تعديل العينة',
-                    upload: 'رفع ملف (.jpg, .png, .gif, .mp4)',
-                    name_en: 'الاسم (بالإنجليزية)',
-                    name_ar: 'الاسم (بالعربية)',
-                    desc_en: 'الوصف (بالإنجليزية)',
-                    desc_ar: 'الوصف (بالعربية)',
-                    instruction: 'انقر على الصورة لوضع علامة.',
-                    prompt_en: 'اسم العلامة (بالإنجليزية):',
-                    prompt_ar: 'اسم العلامة (بالعربية):',
-                    clear_markers: 'مسح العلامات',
-                    cancel: 'إلغاء',
-                    save: 'حفظ الشريحة',
-                    upload_error: 'خطأ في التخزين: الصورة كبيرة جداً (تتجاوز حد المتصفح 5MB). ستعمل الشريحة مؤقتاً لكنها ستفقد عند تحديث الصفحة.',
-                    marker_tip: 'نقر مزدوج للتعديل | زر الفأرة الأيمن للحذف',
-                    delete_slide: 'حذف الشريحة',
                     hud_brand: 'تحليل',
                     hud_mag: 'تكبير',
                     hud_focus: 'وضوح',
@@ -3323,43 +2886,7 @@
                 }
             }
 
-            // Upload any file (image or video) to Supabase Storage and return its public URL.
-            async function uploadFileToStorage(file) {
-                if (!_supabase) return null;
-                try {
-                    const ext = file.name.split('.').pop().toLowerCase() || 'bin';
-                    const fileName = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-                    const { error } = await _supabase.storage
-                        .from('microscope-media')
-                        .upload(fileName, file, { contentType: file.type, cacheControl: '31536000', upsert: false });
-                    if (error) throw error;
-                    const { data: urlData } = _supabase.storage
-                        .from('microscope-media')
-                        .getPublicUrl(fileName);
-                    return urlData.publicUrl;
-                } catch (e) {
-                    console.error('[Storage] Upload failed:', e);
-                    return null;
-                }
-            }
-
-            // Keep alias for backward compat with any existing references
-            async function uploadVideoToStorage(file) { return uploadFileToStorage(file); }
-
-            // Push current samples state to Supabase (fire-and-forget).
-            async function saveToSupabase() {
-                if (!_supabase) return;
-                try {
-                    const { error } = await _supabase
-                        .from('microscope_config')
-                        .upsert({ id: 1, samples: samples, updated_at: new Date().toISOString() });
-                    if (error) throw error;
-                } catch (e) {
-                    console.warn('[Supabase] Save failed:', e);
-                }
-            }
-
-            // Subscribe to real-time changes — other devices that save trigger a fresh fetch here.
+            // Subscribe to real-time changes — admin.html saves trigger a fresh fetch here.
             function subscribeToSupabaseChanges() {
                 if (!_supabase) return;
                 _supabase
@@ -3407,33 +2934,6 @@
 
                 document.getElementById('lbl-sample-type-title').textContent = DICT[lang].sample_type_title;
 
-                // Modal strings
-                document.getElementById('lbl-add-slide').textContent = DICT[lang].add_slide;
-                document.getElementById('lbl-edit-specimen').textContent = DICT[lang].edit_specimen;
-                document.getElementById('lbl-upload').textContent = DICT[lang].upload;
-                document.getElementById('lbl-name-en').textContent = DICT[lang].name_en;
-                document.getElementById('lbl-name-ar').textContent = DICT[lang].name_ar;
-                document.getElementById('lbl-desc-en').textContent = DICT[lang].desc_en;
-                document.getElementById('lbl-desc-ar').textContent = DICT[lang].desc_ar;
-                document.getElementById('lbl-instruction').textContent = DICT[lang].instruction;
-
-                // Add tip if exists
-                if (DICT[lang].marker_tip) {
-                    const tip = document.createElement('span');
-                    tip.textContent = DICT[lang].marker_tip;
-                    document.getElementById('lbl-instruction').appendChild(tip);
-                }
-
-                document.getElementById('lbl-clear-markers').textContent = DICT[lang].clear_markers;
-                document.getElementById('lbl-cancel').textContent = DICT[lang].cancel;
-                document.getElementById('lbl-save').textContent = DICT[lang].save;
-                document.getElementById('lbl-delete').textContent = DICT[lang].delete_slide;
-
-                if (window.editSpecimenId) {
-                    document.getElementById('lbl-modal-title').textContent = DICT[lang].modal_title_edit;
-                } else {
-                    document.getElementById('lbl-modal-title').textContent = DICT[lang].modal_title_add;
-                }
 
                 // Update focus status word
                 if (distanceFocus < 3) {
@@ -4115,351 +3615,12 @@
             document.getElementById('btn-tour-exit')?.addEventListener('click', stopTour);
 
             // ==========================================
-            // Custom Specimen Builder & Editor
+            // (Specimen editing moved to admin.html)
             // ==========================================
-            const modal = document.getElementById('builder-modal');
-            const btnOpenModal = document.getElementById('btn-open-modal');
-            const btnEditSpecimen = document.getElementById('btn-edit-specimen');
-            const btnCloseModal = document.getElementById('btn-close-modal');
-            const btnCancelModal = document.getElementById('btn-cancel-modal');
-            const btnSaveModal = document.getElementById('btn-save-modal');
-            const btnClearMarkers = document.getElementById('btn-clear-markers');
+            const modal = null;
 
-            const modalFile = document.getElementById('modal-file');
-            const modalImg = document.getElementById('modal-preview-img');
-            const previewContainer = document.getElementById('preview-container');
-            const modalImgWrap = document.getElementById('modal-image-wrap');
-            const modalMarkersLayer = document.getElementById('modal-markers-layer');
-            const btnModalZoomIn = document.getElementById('btn-modal-zoom-in');
-            const btnModalZoomOut = document.getElementById('btn-modal-zoom-out');
+            function closeModal() { /* no-op — modal removed */ }
 
-            let draggingMarker = null;
-            let modalZoom = 1;
-
-            function renderTempMarkers() {
-                modalMarkersLayer.innerHTML = '';
-                tempMarkers.forEach((mark, index) => {
-                    const dot = document.createElement('div');
-                    dot.className = 'temp-marker';
-                    dot.style.left = mark.left;
-                    dot.style.top = mark.top;
-                    dot.dataset.index = index;
-
-                    const label = document.createElement('div');
-                    label.className = 'temp-marker-label';
-                    label.textContent = mark.label[currentLang];
-                    dot.appendChild(label);
-
-                    dot.addEventListener('mousedown', (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        draggingMarker = index;
-                        dot.style.cursor = 'grabbing';
-                    });
-
-                    dot.addEventListener('touchstart', (e) => {
-                        e.stopPropagation();
-                        draggingMarker = index;
-                        dot.style.cursor = 'grabbing';
-                    }, { passive: true });
-
-                    dot.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        tempMarkers.splice(index, 1);
-                        renderTempMarkers();
-                    });
-
-                    dot.addEventListener('dblclick', (e) => {
-                        e.stopPropagation();
-                        const newEn = prompt(DICT[currentLang].prompt_en, mark.label.en);
-                        if (newEn === null) return;
-                        const newAr = prompt(DICT[currentLang].prompt_ar, mark.label.ar);
-                        if (newAr === null) return;
-
-                        tempMarkers[index].label = { en: newEn, ar: newAr };
-                        renderTempMarkers();
-                    });
-
-                    modalMarkersLayer.appendChild(dot);
-                });
-            }
-
-            function applyModalZoom() {
-                modalImgWrap.style.transform = `scale(${modalZoom})`;
-            }
-
-            btnModalZoomIn.addEventListener('click', () => {
-                modalZoom = Math.min(3, modalZoom + 0.2);
-                applyModalZoom();
-            });
-
-            btnModalZoomOut.addEventListener('click', () => {
-                modalZoom = Math.max(0.5, modalZoom - 0.2);
-                applyModalZoom();
-            });
-
-            function moveAt(clientX, clientY) {
-                if (draggingMarker === null) return;
-                const activeMedia = isVideoUrl(tempImgData) ? document.getElementById('modal-preview-vid') : modalImg;
-                const rect = activeMedia.getBoundingClientRect();
-                let x = (clientX - rect.left) / modalZoom;
-                let y = (clientY - rect.top) / modalZoom;
-                const origWidth = activeMedia.clientWidth;
-                const origHeight = activeMedia.clientHeight;
-                x = Math.max(0, Math.min(origWidth, x));
-                y = Math.max(0, Math.min(origHeight, y));
-                tempMarkers[draggingMarker].left = (x / origWidth * 100).toFixed(2) + '%';
-                tempMarkers[draggingMarker].top = (y / origHeight * 100).toFixed(2) + '%';
-                renderTempMarkers();
-            }
-
-            window.addEventListener('mousemove', (e) => moveAt(e.clientX, e.clientY));
-            window.addEventListener('touchmove', (e) => {
-                if (draggingMarker !== null) {
-                    e.preventDefault();
-                    moveAt(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: false });
-
-            window.addEventListener('mouseup', () => { draggingMarker = null; });
-            window.addEventListener('touchend', () => { draggingMarker = null; });
-
-            function resetModal() {
-                modalFile.value = '';
-                document.getElementById('modal-name-en').value = '';
-                document.getElementById('modal-name-ar').value = '';
-                document.getElementById('modal-desc-en').value = '';
-                document.getElementById('modal-desc-ar').value = '';
-                modalImg.src = '';
-                document.getElementById('modal-preview-vid').src = '';
-                modalImg.style.display = 'none';
-                document.getElementById('modal-preview-vid').style.display = 'none';
-                modalImgWrap.style.display = 'none';
-                tempMarkers = [];
-                tempImgData = '';
-                modalZoom = 1;
-                applyModalZoom();
-                window.editSpecimenId = null;
-                modalMarkersLayer.innerHTML = '';
-                applyLanguage(currentLang); // Update UI text
-            }
-
-            function closeModal() {
-                modal.classList.remove('active');
-            }
-
-            btnOpenModal.addEventListener('click', () => {
-                resetModal();
-                document.getElementById('modal-category').value = 'other';
-                document.getElementById('btn-delete-slide').style.display = 'none';
-                modal.classList.add('active');
-            });
-
-            btnEditSpecimen.addEventListener('click', () => {
-                resetModal();
-                window.editSpecimenId = currentSample.id;
-
-                // Pre-populate fields
-                document.getElementById('modal-category').value = currentSample.category || 'other';
-                document.getElementById('modal-name-en').value = currentSample.name.en;
-                document.getElementById('modal-name-ar').value = currentSample.name.ar;
-                document.getElementById('modal-desc-en').value = currentSample.desc.en;
-                document.getElementById('modal-desc-ar').value = currentSample.desc.ar;
-
-                tempImgData = currentSample.imgUrl;
-                const isVid = isVideoUrl(tempImgData);
-                const modalVid = document.getElementById('modal-preview-vid');
-                if (isVid) {
-                    modalVid.src = tempImgData;
-                    modalVid.style.display = 'block';
-                    modalImg.style.display = 'none';
-                } else {
-                    modalImg.src = tempImgData;
-                    modalImg.style.display = 'block';
-                    modalVid.style.display = 'none';
-                }
-                modalImgWrap.style.display = 'block';
-
-                // Deep copy markers so we don't accidentally mutate originals if user cancels
-                tempMarkers = JSON.parse(JSON.stringify(currentSample.markers));
-                renderTempMarkers();
-
-                document.getElementById('btn-delete-slide').style.display = 'flex';
-                applyLanguage(currentLang); // Updates title to "Edit Specimen"
-                modal.classList.add('active');
-            });
-
-            btnClearMarkers.addEventListener('click', () => {
-                tempMarkers = [];
-                renderTempMarkers();
-            });
-
-            btnCloseModal.addEventListener('click', closeModal);
-            btnCancelModal.addEventListener('click', closeModal);
-
-            modalFile.addEventListener('change', async function () {
-                const file = this.files[0];
-                if (!file) return;
-
-                const modalVid = document.getElementById('modal-preview-vid');
-                const isVideoFile = file.type.startsWith('video/');
-                const uploadLabel = document.getElementById('lbl-upload');
-                const origLabel = uploadLabel ? uploadLabel.textContent : '';
-
-                // All files (images and videos) go to Supabase Storage so every device
-                // can load them via an absolute public URL — no base64, no local-only blobs.
-                if (uploadLabel) uploadLabel.textContent = currentLang === 'ar' ? '⏳ جارٍ الرفع…' : '⏳ Uploading…';
-                const publicUrl = await uploadFileToStorage(file);
-                if (uploadLabel) uploadLabel.textContent = origLabel;
-
-                if (!publicUrl) {
-                    alert(currentLang === 'ar'
-                        ? 'فشل رفع الملف. تحقق من الاتصال بالإنترنت وحاول مجدداً.'
-                        : 'Upload failed. Check your internet connection and try again.');
-                    return;
-                }
-
-                tempImgData = publicUrl;
-
-                if (isVideoFile) {
-                    modalVid.src = publicUrl;
-                    modalVid.load();
-                    modalVid.play().catch(() => { });
-                    modalVid.style.display = 'block';
-                    modalImg.style.display = 'none';
-                } else {
-                    modalImg.src = publicUrl;
-                    modalImg.style.display = 'block';
-                    modalVid.style.display = 'none';
-                }
-                modalImgWrap.style.display = 'block';
-            });
-
-            let isMoving = false;
-
-            // Interactive marker placement
-            modalImgWrap.addEventListener('mousedown', () => { isMoving = false; });
-            modalImgWrap.addEventListener('mousemove', () => { if (draggingMarker !== null) isMoving = true; });
-
-            modalImgWrap.addEventListener('click', (e) => {
-                if (isMoving || draggingMarker !== null) return;
-
-                // Calculate position relative to the media element
-                const activeMedia = isVideoUrl(tempImgData) ? document.getElementById('modal-preview-vid') : modalImg;
-                const rect = activeMedia.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // Convert to percentage
-                const leftPercent = (x / rect.width) * 100;
-                const topPercent = (y / rect.height) * 100;
-
-                const nameEn = prompt(DICT[currentLang].prompt_en || "Marker Name (English):");
-                if (!nameEn) return;
-
-                const nameAr = prompt(DICT[currentLang].prompt_ar || "Marker Name (Arabic):");
-                if (!nameAr) return;
-
-                const markerData = {
-                    top: topPercent.toFixed(2) + '%',
-                    left: leftPercent.toFixed(2) + '%',
-                    label: { en: nameEn, ar: nameAr }
-                };
-
-                tempMarkers.push(markerData);
-                renderTempMarkers();
-            });
-
-            btnSaveModal.addEventListener('click', () => {
-                const categoryVal = document.getElementById('modal-category').value;
-                const nameEn = document.getElementById('modal-name-en').value.trim();
-                const nameAr = document.getElementById('modal-name-ar').value.trim();
-                const descEn = document.getElementById('modal-desc-en').value.trim();
-                const descAr = document.getElementById('modal-desc-ar').value.trim();
-
-                if (!tempImgData) {
-                    alert('Please upload an image first.');
-                    return;
-                }
-                if (!nameEn || !nameAr) {
-                    alert('Please provide both English and Arabic names.');
-                    return;
-                }
-
-                if (window.editSpecimenId) {
-                    // Update existing
-                    const idx = samples.findIndex(s => s.id === window.editSpecimenId);
-                    if (idx !== -1) {
-                        samples[idx].category = categoryVal;
-                        samples[idx].name = { en: nameEn, ar: nameAr };
-                        samples[idx].desc = { en: descEn || nameEn, ar: descAr || nameAr };
-                        samples[idx].imgUrl = tempImgData;
-                        samples[idx].markers = [...tempMarkers];
-
-                        // Force UI refresh
-                        slideTray.innerHTML = '';
-                        initTray();
-                        loadSample(samples[idx]);
-                    }
-                } else {
-                    // Create new
-                    const newSpecimen = {
-                        id: 'custom_' + Date.now(),
-                        category: categoryVal,
-                        name: { en: nameEn, ar: nameAr },
-                        desc: { en: descEn || nameEn, ar: descAr || nameAr },
-                        imgUrl: tempImgData,
-                        markers: [...tempMarkers]
-                    };
-
-                    samples.push(newSpecimen);
-                    slideTray.innerHTML = '';
-                    initTray();
-
-                    // Auto-select the newly added specimen
-                    loadSample(newSpecimen);
-                }
-
-                // Sync to Supabase (authoritative source — all devices update automatically)
-                saveToSupabase();
-                // Also cache locally for instant next-load (images are Supabase URLs so no quota issues)
-                try { localStorage.setItem('microscope_data', JSON.stringify(samples)); } catch (_) { }
-
-                closeModal();
-            });
-
-            document.getElementById('btn-delete-slide').addEventListener('click', () => {
-                if (!window.editSpecimenId) return;
-
-                if (samples.length <= 1) {
-                    alert(currentLang === 'ar' ? 'لا يمكن حذف الشريحة الأخيرة!' : 'Cannot delete the last slide!');
-                    return;
-                }
-
-                const confMsg = currentLang === 'ar' ? 'هل أنت متأكد أنك تريد حذف هذه الشريحة؟' : 'Are you sure you want to delete this slide?';
-                if (!confirm(confMsg)) return;
-
-                const idx = samples.findIndex(s => s.id === window.editSpecimenId);
-                if (idx !== -1) {
-                    samples.splice(idx, 1);
-
-                    try {
-                        localStorage.setItem('microscope_data', JSON.stringify(samples));
-                    } catch (e) {
-                        console.error('Save failed');
-                    }
-                    saveToSupabase(); // sync deletion to all devices
-
-                    slideTray.innerHTML = '';
-                    initTray();
-                    loadSample(samples[0]);
-                }
-                closeModal();
-            });
-
-            // Sync is now handled by Supabase (saveToSupabase / loadFromSupabase).
-            // The old manual export button is deprecated — all devices sync automatically.
 
             // ==========================================
             // Boot — localStorage first (instant), then Supabase (authoritative)
@@ -4492,12 +3653,8 @@
 
             // Async: load from Supabase (authoritative source)
             // If Supabase is empty and we have local data, seed the cloud first.
-            loadFromSupabase(true).then(loaded => {
-                if (!loaded && samples.length > 0) {
-                    // Supabase is empty — push current data (hardcoded defaults or localStorage) up
-                    saveToSupabase();
-                }
-                // Subscribe to real-time so future saves on any device propagate here instantly
+            loadFromSupabase(true).then(() => {
+                // Subscribe to real-time so admin.html saves propagate here instantly
                 subscribeToSupabaseChanges();
             });
 
@@ -4572,32 +3729,6 @@
             );
             _resetKioskTimer();
 
-            // ==========================================
-            // Admin Panel Auth
-            // ==========================================
-            let isAdminUnlocked = false;
-            const btnAdmin = document.getElementById('btn-admin-login');
-            const adminWrap = document.querySelector('.add-slide-wrap');
-            const metricsWrap = document.querySelector('.metrics');
-
-            btnAdmin.addEventListener('click', () => {
-                if (isAdminUnlocked) {
-                    isAdminUnlocked = false;
-                    adminWrap.style.display = 'none';
-                    metricsWrap.style.display = 'none';
-                    btnAdmin.style.opacity = '0.6';
-                } else {
-                    const pwd = prompt(currentLang === 'ar' ? 'أدخل كلمة مرور المسؤول:' : 'Enter Admin Password:');
-                    if (pwd === '1234') {
-                        isAdminUnlocked = true;
-                        adminWrap.style.display = 'flex';
-                        metricsWrap.style.display = 'grid'; // Metrics layout uses grid
-                        btnAdmin.style.opacity = '1';
-                    } else if (pwd !== null) {
-                        alert(currentLang === 'ar' ? 'كلمة المرور غير صحيحة' : 'Incorrect Password');
-                    }
-                }
-            });
         });
     </script>
 </body>
