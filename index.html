@@ -2327,10 +2327,13 @@
 
         /* ── Credit Badge ── */
         .credit-badge {
-            margin-top: 6px;
-            margin-bottom: 10px;
+            position: sticky;
+            bottom: 0;
+            margin-top: auto;
+            padding: 10px 0 6px;
             display: flex;
             justify-content: center;
+            background: linear-gradient(to bottom, transparent, var(--dark-bg) 55%);
         }
         .credit-line {
             display: inline-flex;
