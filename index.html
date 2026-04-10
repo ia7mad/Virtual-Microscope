@@ -3674,21 +3674,25 @@
                 let isDown = false, startX = 0, scrollStart = 0, dragged = false;
 
                 el.addEventListener('mousedown', e => {
-                    // Ignore right-click and non-primary buttons
                     if (e.button !== 0) return;
                     isDown = true;
                     dragged = false;
                     startX = e.pageX;
                     scrollStart = el.scrollLeft;
-                    el.classList.add('is-dragging');
+                    // NOTE: do NOT add is-dragging here — adding it immediately
+                    // sets pointer-events:none on children which breaks click dispatch
                 });
 
                 window.addEventListener('mousemove', e => {
                     if (!isDown) return;
                     const dx = e.pageX - startX;
-                    if (Math.abs(dx) > 5) dragged = true;
-                    el.scrollLeft = scrollStart - dx;
-                    if (getNavUpdate) getNavUpdate()();
+                    if (Math.abs(dx) > 6) {
+                        // Only enter drag mode once the user has clearly moved
+                        dragged = true;
+                        el.classList.add('is-dragging');
+                        el.scrollLeft = scrollStart - dx;
+                        if (getNavUpdate) getNavUpdate()();
+                    }
                 });
 
                 window.addEventListener('mouseup', () => {
@@ -3697,7 +3701,7 @@
                     el.classList.remove('is-dragging');
                 });
 
-                // Suppress click on children after a real drag
+                // Suppress the click that fires after a drag-release
                 el.addEventListener('click', e => {
                     if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; }
                 }, true);
