@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What's In Your Blood? — Biochemistry Explorer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0404'/%3E%3Cpath d='M32 8 C32 8 18 28 18 38 Q18 50 32 52 Q46 50 46 38 Q46 28 32 8Z' fill='%23dd3311'/%3E%3Ccircle cx='32' cy='38' r='8' fill='rgba(255,180,150,0.35)'/%3E%3C/svg%3E">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Tajawal:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: rgba(15, 18, 24, 0.85);
+            --medical-cyan: #00d4ff;
+            --medical-cyan-glow: rgba(0, 212, 255, 0.5);
+            --text-main: #f0f4f8;
+            --text-muted: #8b9bb4;
+            --border-color: rgba(0, 212, 255, 0.2);
+            --font-en: 'Inter', sans-serif;
+            --font-ar: 'Tajawal', sans-serif;
+            --comp-color: #00d4ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-en);
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #11151a 0%, #000000 100%);
+        }
+
+        body.lang-ar { font-family: var(--font-ar); }
+
+        /* ── Language Switch ── */
+        .lang-switch {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+        }
+
+        .lang-switch button {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 18px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .lang-switch button.active {
+            background: var(--medical-cyan);
+            color: #000;
+        }
+
+        /* ── Main Layout ── */
+        .viewport-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            order: 1;
+        }
+
+        .controls-section {
+            width: 440px;
+            min-width: 440px;
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+            z-index: 10;
+            overflow-y: auto;
+            order: 2;
+        }
+
+        .controls-section::-webkit-scrollbar { width: 6px; }
+        .controls-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+        body.lang-ar .controls-section { direction: rtl; text-align: right; }
+
+        /* ── Header ── */
+        header {
+            margin-bottom: 1.2rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1.3;
+        }
+
+        header h1 span { color: var(--medical-cyan); text-shadow: 0 0 12px var(--medical-cyan-glow); }
+
+        /* ── Component Detail Panel ── */
+        .comp-detail {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-left: 3px solid var(--comp-color);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 10px;
+            transition: border-left-color 0.4s;
+        }
+
+        body.lang-ar .comp-detail {
+            border-left: 1px solid rgba(255,255,255,0.06);
+            border-right: 3px solid var(--comp-color);
+        }
+
+        .comp-name-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .comp-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--comp-color);
+            box-shadow: 0 0 8px var(--comp-color);
+            flex-shrink: 0;
+            transition: background 0.4s, box-shadow 0.4s;
+        }
+
+        #comp-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--comp-color);
+            transition: color 0.4s;
+        }
+
+        #comp-desc {
+            font-size: 0.83rem;
+            line-height: 1.65;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        body.lang-ar #comp-desc { color: #d1d9e2; font-size: 0.92rem; line-height: 1.8; }
+
+        .comp-stats { display: flex; flex-direction: column; gap: 8px; }
+
+        .stat-card {
+            border-radius: 7px;
+            padding: 9px 12px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .stat-card.range-card { background: rgba(0,212,255,0.05); border: 1px solid rgba(0,212,255,0.12); }
+        .stat-card.high-card  { background: rgba(255,120,30,0.05);  border: 1px solid rgba(255,120,30,0.12); }
+        .stat-card.low-card   { background: rgba(80,160,255,0.05);  border: 1px solid rgba(80,160,255,0.12); }
+
+        .stat-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .range-card .stat-icon { background: rgba(0,212,255,0.15); color: var(--medical-cyan); }
+        .high-card  .stat-icon { background: rgba(255,120,30,0.18); color: #ff8030; font-size: 1rem; }
+        .low-card   .stat-icon { background: rgba(80,160,255,0.18); color: #50a0ff; font-size: 1rem; }
+
+        .stat-body { flex: 1; }
+
+        .stat-label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.9px;
+            margin-bottom: 3px;
+        }
+
+        .range-card .stat-label { color: rgba(0,212,255,0.65); }
+        .high-card  .stat-label { color: rgba(255,120,30,0.75); }
+        .low-card   .stat-label { color: rgba(80,160,255,0.75); }
+
+        body.lang-ar .stat-label { text-transform: none; letter-spacing: 0; font-size: 0.7rem; }
+
+        .stat-value {
+            font-size: 0.78rem;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        body.lang-ar .stat-value { font-size: 0.88rem; }
+
+        .range-track {
+            height: 5px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 3px;
+            margin-top: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .range-normal {
+            position: absolute;
+            left: 22%;
+            width: 56%;
+            height: 100%;
+            background: var(--comp-color);
+            border-radius: 3px;
+            opacity: 0.5;
+            transition: background 0.4s;
+        }
+
+        /* ── Tray / Drawer ── */
+        .comp-drawer { margin-top: 1.2rem; margin-bottom: 1rem; }
+
+        .tray-header { margin-bottom: 0.6rem; }
+
+        .tray-section-title {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        body.lang-ar .tray-section-title { text-transform: none; letter-spacing: 0; font-size: 0.78rem; }
+
+        /* Category tabs */
+        .scroll-nav-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow: hidden;
+        }
+
+        .category-tabs {
+            flex: 1;
+            display: flex;
+            direction: ltr;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 2px 0 4px;
+            scrollbar-width: none;
+        }
+
+        .category-tabs::-webkit-scrollbar { display: none; }
+
+        .cat-tab {
+            flex: 0 0 auto;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .cat-tab:hover { border-color: rgba(0,212,255,0.4); color: var(--text-main); }
+
+        .cat-tab.active {
+            background: rgba(0,212,255,0.12);
+            border-color: var(--medical-cyan);
+            color: var(--medical-cyan);
+        }
+
+        .snav-arrow {
+            flex-shrink: 0;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .snav-arrow:hover:not(:disabled) { border-color: var(--medical-cyan); color: var(--medical-cyan); }
+        .snav-arrow:disabled { opacity: 0.25; cursor: default; }
+
+        /* Tray */
+        .tray-nav-wrap { margin-top: 8px; }
+
+        .tray {
+            flex: 1;
+            display: flex;
+            direction: ltr;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+        }
+
+        .tray::-webkit-scrollbar { height: 4px; }
+        .tray::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.4); border-radius: 2px; }
+
+        .comp-item {
+            flex: 0 0 82px;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+            background: #000;
+        }
+
+        .comp-item:hover { border-color: rgba(0,212,255,0.5); transform: translateY(-2px); }
+
+        .comp-item.active {
+            border-color: var(--item-color, var(--medical-cyan));
+            box-shadow: 0 0 14px color-mix(in srgb, var(--item-color, var(--medical-cyan)) 50%, transparent);
+        }
+
+        .comp-thumb {
+            width: 100%;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .comp-item span {
+            display: block;
+            font-size: 9px;
+            text-align: center;
+            padding: 5px 3px;
+            background: rgba(10, 15, 20, 0.95);
+            font-weight: 600;
+            color: #fff;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            direction: ltr;
+        }
+
+        /* ── Eyepiece Assembly ── */
+        .blood-assembly { position: relative; }
+
+        .assembly-ring {
+            position: absolute;
+            top: -56px; left: -56px; right: -56px; bottom: -56px;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow:
+                0 0 60px rgba(0, 212, 255, 0.07),
+                0 0 120px rgba(0, 0, 0, 0.6),
+                inset 0 0 40px rgba(0, 0, 0, 0.9);
+        }
+
+        #eyepiece {
+            width: 92vh;
+            height: 92vh;
+            max-width: 920px;
+            max-height: 920px;
+            border-radius: 50%;
+            border: 5px solid #080808;
+            box-shadow:
+                inset 0 0 120px rgba(0,0,0,0.85),
+                inset 0 0 50px rgba(0,0,0,0.6),
+                0 0 0 8px #0d0d0d,
+                0 0 0 11px #242424,
+                0 0 0 15px #3e3e3e,
+                0 0 0 19px #525252,
+                0 0 0 22px #3a3a3a,
+                0 0 0 26px #1c1c1c,
+                0 0 0 29px #0a0a0a,
+                0 0 0 38px #181818,
+                0 0 0 41px #202020,
+                0 16px 50px rgba(0,0,0,0.95),
+                0 4px 20px rgba(0,0,0,0.8),
+                0 0 0 100vw rgba(0,0,0,0.95);
+            overflow: hidden;
+            position: relative;
+            background: #060101;
+        }
+
+        /* ── Blood Scene ── */
+        #blood-scene {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at 45% 45%, #1e0606 0%, #160404 55%, #0a0101 100%);
+            overflow: hidden;
+            transition: background 0.5s;
+        }
+
+        /* Plasma shimmer for dissolved components */
+        #blood-scene::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.6s;
+        }
+
+        #blood-scene.hl-albumin::after   { opacity: 1; background: radial-gradient(circle at center, rgba(102,187,204,0.1) 0%, transparent 65%); }
+        #blood-scene.hl-glucose::after   { opacity: 1; background: radial-gradient(circle at center, rgba(68,204,136,0.1) 0%, transparent 65%); }
+        #blood-scene.hl-cholesterol::after { opacity: 1; background: radial-gradient(circle at center, rgba(238,153,51,0.1) 0%, transparent 65%); }
+        #blood-scene.hl-urea::after      { opacity: 1; background: radial-gradient(circle at center, rgba(170,136,187,0.1) 0%, transparent 65%); }
+
+        /* ── Red Blood Cells ── */
+        @keyframes cell-drift-a { 0%,100% { transform: translate(0,0) rotate(var(--rot,0deg)); } 50% { transform: translate(2px,-2px) rotate(var(--rot,0deg)); } }
+        @keyframes cell-drift-b { 0%,100% { transform: translate(0,0) rotate(var(--rot,0deg)); } 50% { transform: translate(-2px,2px) rotate(var(--rot,0deg)); } }
+        @keyframes cell-drift-c { 0%,100% { transform: translate(0,0) rotate(var(--rot,0deg)); } 50% { transform: translate(1px,3px) rotate(var(--rot,0deg)); } }
+
+        .bc-cell { position: absolute; border-radius: 50%; transition: opacity 0.5s, box-shadow 0.4s; }
+
+        .rbc {
+            background: radial-gradient(circle at 50% 50%,
+                rgba(210,140,120,0.85) 0%,
+                rgba(210,140,120,0.85) 17%,
+                rgba(200,58,38,0.96) 30%,
+                rgba(195,52,32,0.96) 68%,
+                rgba(185,72,52,0.9) 84%,
+                rgba(168,58,40,0.85) 100%
+            );
+            box-shadow: 0 1px 5px rgba(0,0,0,0.75), inset 0 0 4px rgba(0,0,0,0.3);
+        }
+
+        .wbc {
+            background: radial-gradient(circle at 42% 38%,
+                rgba(190,170,230,0.75) 0%,
+                rgba(140,118,195,0.9) 38%,
+                rgba(96,84,162,0.92) 68%,
+                rgba(72,62,138,0.88) 100%
+            );
+            box-shadow: 0 2px 10px rgba(0,0,0,0.85), inset 0 0 8px rgba(100,80,180,0.25), 0 0 0 1px rgba(160,140,220,0.2);
+        }
+
+        .wbc::after {
+            content: '';
+            position: absolute;
+            top: 28%; left: 22%;
+            width: 55%; height: 48%;
+            background: rgba(50,35,110,0.65);
+            border-radius: 44% 56% 62% 38% / 52% 48% 52% 48%;
+        }
+
+        .platelet {
+            width: 6px;
+            height: 5px;
+            background: rgba(215,185,145,0.75);
+            box-shadow: 0 0 2px rgba(0,0,0,0.55);
+        }
+
+        /* Highlight effects */
+        #blood-scene.hl-rbc .wbc,
+        #blood-scene.hl-rbc .platelet         { opacity: 0.2; }
+        #blood-scene.hl-rbc .rbc              { box-shadow: 0 0 12px rgba(210,70,50,0.7), 0 1px 5px rgba(0,0,0,0.75); }
+
+        #blood-scene.hl-wbc .rbc,
+        #blood-scene.hl-wbc .platelet         { opacity: 0.2; }
+        #blood-scene.hl-wbc .wbc             { box-shadow: 0 0 16px rgba(136,153,220,0.7), 0 2px 10px rgba(0,0,0,0.8); }
+
+        #blood-scene.hl-platelets .rbc,
+        #blood-scene.hl-platelets .wbc        { opacity: 0.2; }
+        #blood-scene.hl-platelets .platelet   { background: rgba(230,195,115,0.95); box-shadow: 0 0 6px rgba(212,168,87,0.8); width: 8px; height: 7px; }
+
+        #blood-scene.hl-hemoglobin .wbc,
+        #blood-scene.hl-hemoglobin .platelet  { opacity: 0.2; }
+        #blood-scene.hl-hemoglobin .rbc       { box-shadow: 0 0 14px rgba(196,64,32,0.8), 0 1px 5px rgba(0,0,0,0.75); }
+
+        #blood-scene.hl-albumin .rbc,
+        #blood-scene.hl-albumin .wbc,
+        #blood-scene.hl-albumin .platelet     { opacity: 0.18; }
+
+        #blood-scene.hl-glucose .rbc,
+        #blood-scene.hl-glucose .wbc,
+        #blood-scene.hl-glucose .platelet     { opacity: 0.18; }
+
+        #blood-scene.hl-cholesterol .rbc,
+        #blood-scene.hl-cholesterol .wbc,
+        #blood-scene.hl-cholesterol .platelet { opacity: 0.18; }
+
+        #blood-scene.hl-urea .rbc,
+        #blood-scene.hl-urea .wbc,
+        #blood-scene.hl-urea .platelet        { opacity: 0.18; }
+
+        /* ── Markers ── */
+        #markers-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes marker-ping {
+            0%   { box-shadow: 0 0 0 0 var(--marker-alpha, rgba(0,212,255,0.7)), 0 0 6px var(--marker-glow, var(--medical-cyan-glow)); }
+            70%  { box-shadow: 0 0 0 10px transparent, 0 0 6px var(--marker-glow, var(--medical-cyan-glow)); }
+            100% { box-shadow: 0 0 0 0 transparent, 0 0 6px var(--marker-glow, var(--medical-cyan-glow)); }
+        }
+
+        .marker {
+            position: absolute;
+            width: 9px;
+            height: 9px;
+            background: var(--marker-color, var(--medical-cyan));
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .marker.visible { opacity: 1; animation: marker-ping 2s ease-out infinite; }
+
+        .marker::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 11px;
+            width: 34px; height: 1px;
+            background: linear-gradient(to right, var(--marker-color, var(--medical-cyan)), rgba(0,212,255,0.3));
+            transform: translateY(-50%);
+        }
+
+        body.lang-ar .marker::before {
+            left: auto; right: 11px;
+            background: linear-gradient(to left, var(--marker-color, var(--medical-cyan)), rgba(0,212,255,0.3));
+        }
+
+        .marker::after {
+            content: attr(data-label);
+            position: absolute;
+            left: 47px; top: 50%;
+            transform: translateY(-50%);
+            background: rgba(4, 8, 14, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #e8f8ff;
+            padding: 3px 9px;
+            border-radius: 20px;
+            white-space: nowrap;
+            border: 1px solid rgba(0,212,255,0.3);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        body.lang-ar .marker::after {
+            left: auto; right: 47px;
+            font-size: 12px;
+            font-family: var(--font-ar);
+            direction: rtl;
+        }
+
+        .marker.visible::after { opacity: 1; }
+
+        /* ── Vignette + Crosshairs ── */
+        .lens-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 42%, rgba(0,0,0,0.72) 100%);
+            box-shadow: inset 0 0 40px rgba(0,0,0,1);
+            z-index: 5;
+        }
+
+        .crosshair {
+            position: absolute;
+            background: rgba(0, 212, 255, 0.1);
+            pointer-events: none;
+            z-index: 4;
+        }
+
+        .crosshair-v { top: 0; bottom: 0; left: 50%; width: 1px; transform: translateX(-50%); }
+        .crosshair-h { left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); }
+
+        /* ── Eyepiece Hint ── */
+        .eyepiece-hint {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 1.2s ease;
+            text-align: center;
+        }
+
+        .eyepiece-hint .hint-hand {
+            font-size: 2rem;
+            animation: hint-tap 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 8px rgba(0,212,255,0.5));
+        }
+
+        @keyframes hint-tap {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .eyepiece-hint .hint-text {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .eyepiece-hint.hidden { opacity: 0; }
+
+        /* ── Action Buttons ── */
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .action-btn.primary {
+            background: rgba(0,212,255,0.1);
+            color: var(--medical-cyan);
+            border: 1px solid var(--medical-cyan);
+        }
+
+        .action-btn.primary:hover, .action-btn.primary:active {
+            background: rgba(0,212,255,0.2);
+            box-shadow: 0 0 20px rgba(0,212,255,0.2);
+        }
+
+        .action-btn.primary.active {
+            background: var(--medical-cyan);
+            color: #000;
+        }
+
+        .action-btn.secondary {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-top: 10px;
+        }
+
+        .action-btn.secondary:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+        .tour-btn {
+            background: rgba(168,85,247,0.1);
+            color: #a855f7;
+            border: 1px solid rgba(168,85,247,0.4);
+            margin-top: 10px;
+        }
+
+        .tour-btn:hover, .tour-btn.active { background: #a855f7; color: #fff; }
+
+        /* ── Credit Badge ── */
+        .credit-badge {
+            position: sticky;
+            bottom: 0;
+            margin-top: auto;
+            padding: 10px 0 6px;
+            display: flex;
+            justify-content: center;
+            background: linear-gradient(to bottom, transparent, var(--bg-deep) 55%);
+        }
+
+        .credit-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 14px 6px 10px;
+            border-radius: 100px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(0,212,255,0.12);
+            font-size: 11px;
+            color: rgba(180,200,220,0.6);
+            letter-spacing: 0.03em;
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        .credit-line:hover { border-color: rgba(0,212,255,0.35); color: rgba(200,225,240,0.85); }
+        .credit-line strong { color: rgba(0,212,255,0.8); font-weight: 600; }
+
+        .credit-icon { width: 14px; height: 14px; color: rgba(0,212,255,0.55); flex-shrink: 0; }
+
+        /* ── Control Group label ── */
+        .control-group { margin-bottom: 1.2rem; }
+
+        .control-group > label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        body.lang-ar .control-group > label { text-transform: none; letter-spacing: 0; font-size: 0.82rem; }
+
+        /* ── Tour System ── */
+        .tour-overlay {
+            position: absolute;
+            bottom: 70px; right: 20px;
+            width: 320px;
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        .tour-overlay-inner {
+            background: rgba(4,8,18,0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0,212,255,0.22);
+            border-radius: 16px;
+            padding: 20px;
+            animation: tour-card-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes tour-card-in {
+            from { opacity: 0; transform: translateY(16px) scale(0.96); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .tour-overlay-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            color: rgba(0,212,255,0.7);
+            margin-bottom: 12px;
+        }
+
+        body.lang-ar .tour-overlay-badge { text-transform: none; letter-spacing: 0; font-size: 0.72rem; }
+
+        .tour-overlay-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .tour-overlay-desc {
+            font-size: 0.82rem;
+            color: #a8b8cc;
+            line-height: 1.65;
+        }
+
+        body.lang-ar .tour-overlay-title { font-size: 1.05rem; }
+        body.lang-ar .tour-overlay-desc  { font-size: 0.9rem; line-height: 1.8; }
+
+        .tour-overlay-phase {
+            margin-top: 12px;
+            display: inline-block;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.25);
+            color: var(--medical-cyan);
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+
+        body.lang-ar .tour-overlay-phase { text-transform: none; letter-spacing: 0; font-size: 0.7rem; }
+
+        .tour-control-bar {
+            position: absolute;
+            bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(4,8,18,0.85);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(0,212,255,0.2);
+            border-radius: 50px;
+            padding: 10px 20px;
+        }
+
+        .tour-progress-wrap { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
+
+        .tour-progress-text { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.5px; }
+
+        .tour-progress-track {
+            height: 3px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .tour-progress-fill {
+            height: 100%;
+            background: var(--medical-cyan);
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+
+        .tour-btns { display: flex; gap: 8px; }
+
+        .tour-ctrl-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .tour-ctrl-btn:hover { border-color: var(--medical-cyan); color: var(--medical-cyan); }
+        .tour-ctrl-exit { border-color: rgba(255,80,80,0.3); color: rgba(255,80,80,0.7); }
+        .tour-ctrl-exit:hover { border-color: #ff5050; color: #ff5050; background: rgba(255,80,80,0.1); }
+
+        /* ── Welcome Overlay ── */
+        .welcome-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: #020204;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.9s cubic-bezier(0.4,0,0.2,1);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .welcome-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+        .bokeh-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; filter: blur(15px); pointer-events: none;
+        }
+
+        .bokeh-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(200,30,10,0.35) 0%, transparent 70%);
+            animation: float-bokeh linear infinite;
+        }
+
+        .bokeh-circle:nth-child(1) { width:400px; height:400px; top:-10%; left:10%; animation-duration:25s; }
+        .bokeh-circle:nth-child(2) { width:600px; height:600px; top:40%; left:-20%; background: radial-gradient(circle, rgba(180,20,5,0.3) 0%, transparent 70%); animation-duration:35s; animation-delay:-5s; }
+        .bokeh-circle:nth-child(3) { width:300px; height:300px; bottom:10%; right:10%; animation-duration:20s; animation-delay:-10s; }
+        .bokeh-circle:nth-child(4) { width:500px; height:500px; top:-20%; right:-10%; background: radial-gradient(circle, rgba(100,0,0,0.2) 0%, transparent 70%); animation-duration:40s; animation-delay:-2s; }
+        .bokeh-circle:nth-child(5) { width:250px; height:250px; bottom:-10%; left:30%; animation-duration:28s; animation-delay:-15s; }
+        .bokeh-circle:nth-child(6) { width:450px; height:450px; top:40%; right:20%; background: radial-gradient(circle, rgba(160,10,5,0.18) 0%, transparent 70%); animation-duration:32s; animation-delay:-8s; }
+
+        @keyframes float-bokeh {
+            0%   { transform: translateY(0) scale(1) rotate(0deg); opacity:0.5; }
+            33%  { transform: translateY(-50px) scale(1.1) rotate(120deg); opacity:0.8; }
+            66%  { transform: translateY(50px) scale(0.9) rotate(240deg); opacity:0.5; }
+            100% { transform: translateY(0) scale(1) rotate(360deg); opacity:0.5; }
+        }
+
+        .welcome-content {
+            position: relative; z-index: 2; text-align: center; width: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: none;
+        }
+
+        .welcome-icon-large {
+            font-size: clamp(5rem,9vw,11rem);
+            line-height: 1;
+            margin-bottom: 1.8rem;
+            filter: drop-shadow(0 0 40px rgba(200,30,10,0.9));
+            animation: icon-float-large 4s ease-in-out infinite;
+        }
+
+        @keyframes icon-float-large {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-18px) scale(1.04); }
+        }
+
+        .welcome-title-huge {
+            font-size: clamp(2.8rem,5.5vw,6.5rem);
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: 1px;
+            color: #fff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .welcome-title-huge span { color: #ff4422; text-shadow: 0 0 40px rgba(200,30,10,0.8); }
+
+        .welcome-title-ar-huge {
+            font-family: var(--font-ar);
+            font-size: clamp(2.5rem,4.5vw,5.5rem);
+            font-weight: 700;
+            margin: 0.5rem 0 3.5rem;
+            color: #fff;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .welcome-title-ar-huge span { color: #ff4422; text-shadow: 0 0 40px rgba(200,30,10,0.8); }
+
+        .welcome-subtitle-group {
+            margin: -2rem 0 3.5rem;
+            display: flex; flex-direction: column; gap: 10px; opacity: 0.9;
+        }
+
+        .welcome-subtitle-group .subtitle-en {
+            font-size: clamp(1rem,1.8vw,1.5rem);
+            color: #d1d9e2; font-weight: 500; letter-spacing: 0.5px; margin: 0;
+        }
+
+        .welcome-subtitle-group .subtitle-ar {
+            font-family: var(--font-ar);
+            font-size: clamp(1.1rem,2vw,1.4rem);
+            color: #ff8866; font-weight: 600; margin: 0;
+        }
+
+        .tap-to-start-container {
+            position: relative; margin-top: 1.5rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .pulse-ring {
+            position: absolute; width: 100%; height: 100%;
+            min-width: 380px; min-height: 110px;
+            border: 3px solid #ff4422; border-radius: 60px;
+            animation: expand-pulse 2s cubic-bezier(0.1,0.8,0.3,1) infinite;
+        }
+
+        @keyframes expand-pulse {
+            0%   { transform: scale(0.8); opacity: 1; border-width:4px; box-shadow: 0 0 20px #ff4422; }
+            100% { transform: scale(1.3); opacity: 0; border-width:1px; box-shadow: 0 0 60px #ff4422; }
+        }
+
+        .tap-text {
+            position: relative; z-index: 1;
+            background: linear-gradient(135deg, rgba(200,30,10,0.2) 0%, rgba(80,10,5,0.6) 100%);
+            border: 2px solid #ff4422; border-radius: 60px;
+            padding: 1.4rem 3.5rem;
+            display: flex; flex-direction: column; gap: 8px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(200,30,10,0.25);
+            transition: transform 0.2s;
+        }
+
+        .welcome-overlay:hover .tap-text { transform: scale(1.04); }
+
+        .tap-text span {
+            font-size: clamp(1.1rem,1.8vw,1.8rem);
+            font-weight: 800; letter-spacing: 2px; color: #fff;
+        }
+
+        .tap-text .tap-text-ar {
+            font-family: var(--font-ar);
+            font-size: clamp(1.2rem,2vw,2rem);
+            letter-spacing: 0; color: #ff8866;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            body { flex-direction: column; }
+
+            .viewport-section {
+                flex: 0 0 auto; height: 48vh; height: 48dvh;
+                min-height: 260px; background: #000; z-index: 5;
+            }
+
+            .blood-assembly { transform: scale(0.95); transform-origin: center; }
+
+            #eyepiece { width: 60vw; height: 60vw; max-width: 560px; max-height: 560px; border-width: 8px; }
+
+            .assembly-ring { top:-48px; left:-48px; right:-48px; bottom:-48px; }
+
+            .controls-section {
+                flex: 1; min-height: 0; width: 100%; min-width: 100%;
+                border-left: none; border-top: 1px solid var(--border-color);
+                padding: 1rem 1rem 2rem;
+                overflow-y: auto; -webkit-overflow-scrolling: touch;
+                overscroll-behavior-y: contain; touch-action: pan-y;
+            }
+
+            header { margin-bottom: 0.8rem; padding-bottom: 0.8rem; }
+            header h1 { font-size: 1.25rem; }
+
+            .comp-detail { padding: 10px; }
+
+            .lang-switch { top: 8px; left: 8px; }
+            .lang-switch button { padding: 6px 12px; font-size: 0.75rem; }
+
+            .credit-badge { position: static; margin-top: 10px; padding: 6px 0 12px; background: none; }
+
+            .tour-overlay { display: none !important; }
+        }
+
+        @media (max-width: 600px) {
+            .viewport-section { height: 44vh; height: 44dvh; min-height: 240px; }
+            #eyepiece { width: 84vw; height: 84vw; max-width: 420px; max-height: 420px; border-width: 6px; }
+            .blood-assembly { transform: scale(0.9); }
+            .assembly-ring { top:-44px; left:-44px; right:-44px; bottom:-44px; }
+            .controls-section { padding: 0.8rem 0.8rem 2rem; }
+            header h1 { font-size: 1.05rem; }
+        }
+
+        @media (max-width: 1024px) {
+            .credit-badge { position: static; margin-top: 10px; padding: 6px 0 12px; background: none; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Welcome Overlay -->
+    <div id="welcome-overlay" class="welcome-overlay">
+        <div class="bokeh-container">
+            <div class="bokeh-circle"></div>
+            <div class="bokeh-circle"></div>
+            <div class="bokeh-circle"></div>
+            <div class="bokeh-circle"></div>
+            <div class="bokeh-circle"></div>
+            <div class="bokeh-circle"></div>
+        </div>
+        <div class="welcome-content">
+            <div class="welcome-icon-large">🩸</div>
+            <h1 class="welcome-title-huge">WHAT'S IN <span>YOUR BLOOD?</span></h1>
+            <h2 class="welcome-title-ar-huge">ماذا يوجد <span>في دمك؟</span></h2>
+            <div class="welcome-subtitle-group">
+                <p class="subtitle-en">Discover the tiny world inside every drop of your blood.</p>
+                <p class="subtitle-ar">اكتشف العالم الصغير داخل كل قطرة من دمك</p>
+            </div>
+            <div class="tap-to-start-container">
+                <div class="pulse-ring"></div>
+                <div class="tap-text">
+                    <span>👆 TAP THE SCREEN TO START</span>
+                    <span class="tap-text-ar">اضغط على الشاشة للبدء</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Language Switch -->
+    <div class="lang-switch">
+        <button id="btn-en" class="active">EN</button>
+        <button id="btn-ar">العربية</button>
+    </div>
+
+    <!-- Viewport -->
+    <div class="viewport-section">
+        <div class="blood-assembly">
+            <div class="assembly-ring"></div>
+            <div id="eyepiece">
+
+                <!-- Blood Scene -->
+                <div id="blood-scene" class="">
+                    <!-- Red Blood Cells -->
+                    <div class="bc-cell rbc" style="top:12%;left:17%;width:32px;height:23px;--rot:-12deg;animation:cell-drift-a 7s ease-in-out infinite;animation-delay:-1s"></div>
+                    <div class="bc-cell rbc" style="top:16%;left:44%;width:28px;height:21px;--rot:25deg;animation:cell-drift-b 8s ease-in-out infinite;animation-delay:-4s"></div>
+                    <div class="bc-cell rbc" style="top:20%;left:73%;width:34px;height:24px;--rot:-35deg;animation:cell-drift-c 6s ease-in-out infinite;animation-delay:-2s"></div>
+                    <div class="bc-cell rbc" style="top:27%;left:26%;width:30px;height:22px;--rot:48deg;animation:cell-drift-a 9s ease-in-out infinite;animation-delay:-6s"></div>
+                    <div class="bc-cell rbc" style="top:31%;left:60%;width:31px;height:23px;--rot:-20deg;animation:cell-drift-b 7s ease-in-out infinite;animation-delay:-1s"></div>
+                    <div class="bc-cell rbc" style="top:35%;left:84%;width:28px;height:20px;--rot:60deg;animation:cell-drift-c 8s ease-in-out infinite;animation-delay:-3s"></div>
+                    <div class="bc-cell rbc" style="top:41%;left:14%;width:33px;height:24px;--rot:-45deg;animation:cell-drift-a 6s ease-in-out infinite;animation-delay:-5s"></div>
+                    <div class="bc-cell rbc" style="top:45%;left:40%;width:32px;height:23px;--rot:15deg;animation:cell-drift-b 7s ease-in-out infinite;animation-delay:-2s"></div>
+                    <div class="bc-cell rbc" style="top:47%;left:64%;width:30px;height:22px;--rot:-30deg;animation:cell-drift-c 8s ease-in-out infinite;animation-delay:-4s"></div>
+                    <div class="bc-cell rbc" style="top:54%;left:28%;width:31px;height:22px;--rot:50deg;animation:cell-drift-a 9s ease-in-out infinite;animation-delay:-1s"></div>
+                    <div class="bc-cell rbc" style="top:58%;left:52%;width:33px;height:24px;--rot:-18deg;animation:cell-drift-b 7s ease-in-out infinite;animation-delay:-6s"></div>
+                    <div class="bc-cell rbc" style="top:63%;left:77%;width:29px;height:21px;--rot:38deg;animation:cell-drift-c 6s ease-in-out infinite;animation-delay:-2s"></div>
+                    <div class="bc-cell rbc" style="top:68%;left:42%;width:32px;height:23px;--rot:-25deg;animation:cell-drift-a 8s ease-in-out infinite;animation-delay:-3s"></div>
+                    <div class="bc-cell rbc" style="top:73%;left:65%;width:30px;height:22px;--rot:55deg;animation:cell-drift-b 7s ease-in-out infinite;animation-delay:-5s"></div>
+                    <div class="bc-cell rbc" style="top:52%;left:87%;width:31px;height:23px;--rot:-40deg;animation:cell-drift-c 9s ease-in-out infinite;animation-delay:-1s"></div>
+                    <div class="bc-cell rbc" style="top:81%;left:44%;width:33px;height:24px;--rot:20deg;animation:cell-drift-a 6s ease-in-out infinite;animation-delay:-4s"></div>
+                    <!-- White Blood Cells -->
+                    <div class="bc-cell wbc" style="top:36%;left:53%;width:52px;height:47px;animation:cell-drift-b 10s ease-in-out infinite;animation-delay:-3s"></div>
+                    <div class="bc-cell wbc" style="top:64%;left:20%;width:46px;height:42px;animation:cell-drift-a 11s ease-in-out infinite;animation-delay:-5s"></div>
+                    <div class="bc-cell wbc" style="top:21%;left:34%;width:44px;height:40px;animation:cell-drift-c 9s ease-in-out infinite;animation-delay:-2s"></div>
+                    <!-- Platelets -->
+                    <div class="bc-cell platelet" style="top:70%;left:34%;animation:cell-drift-c 5s ease-in-out infinite;animation-delay:0s"></div>
+                    <div class="bc-cell platelet" style="top:71%;left:37%;animation:cell-drift-a 5.5s ease-in-out infinite;animation-delay:-1s"></div>
+                    <div class="bc-cell platelet" style="top:72%;left:35.5%;animation:cell-drift-b 4.8s ease-in-out infinite;animation-delay:-2s"></div>
+                    <div class="bc-cell platelet" style="top:69%;left:39.5%;animation:cell-drift-c 5.2s ease-in-out infinite;animation-delay:-0.5s"></div>
+                    <div class="bc-cell platelet" style="top:44%;left:32%;animation:cell-drift-a 6s ease-in-out infinite;animation-delay:-3s"></div>
+                    <div class="bc-cell platelet" style="top:60%;left:65%;animation:cell-drift-b 5s ease-in-out infinite;animation-delay:-1.5s"></div>
+                    <div class="bc-cell platelet" style="top:30%;left:68%;animation:cell-drift-c 5.5s ease-in-out infinite;animation-delay:-4s"></div>
+                    <div class="bc-cell platelet" style="top:56%;left:75%;animation:cell-drift-a 4.5s ease-in-out infinite;animation-delay:-0.8s"></div>
+                    <div class="bc-cell platelet" style="top:80%;left:30%;animation:cell-drift-b 6s ease-in-out infinite;animation-delay:-2.5s"></div>
+                    <div class="bc-cell platelet" style="top:16%;left:60%;animation:cell-drift-c 5s ease-in-out infinite;animation-delay:-3.5s"></div>
+                    <div class="bc-cell platelet" style="top:85%;left:66%;animation:cell-drift-a 5.3s ease-in-out infinite;animation-delay:-1.2s"></div>
+                    <div class="bc-cell platelet" style="top:39%;left:79%;animation:cell-drift-b 4.8s ease-in-out infinite;animation-delay:-0.3s"></div>
+                    <!-- Markers -->
+                    <div id="markers-layer"></div>
+                </div>
+
+                <div class="crosshair crosshair-v"></div>
+                <div class="crosshair crosshair-h"></div>
+                <div class="lens-overlay"></div>
+
+                <div class="eyepiece-hint" id="eyepiece-hint">
+                    <span class="hint-hand">👆</span>
+                    <span class="hint-text" id="hint-text">Select a component</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tour overlay card -->
+        <div id="tour-overlay" class="tour-overlay" style="display:none;">
+            <div class="tour-overlay-inner">
+                <div class="tour-overlay-badge">
+                    <span>🩸</span>
+                    <span id="tour-overlay-label">Guided Tour</span>
+                </div>
+                <h2 id="tour-overlay-title" class="tour-overlay-title"></h2>
+                <p id="tour-overlay-desc" class="tour-overlay-desc"></p>
+                <div class="tour-overlay-phase" id="tour-overlay-phase"></div>
+            </div>
+        </div>
+
+        <!-- Tour control bar -->
+        <div id="tour-control-bar" class="tour-control-bar" style="display:none;">
+            <div class="tour-progress-wrap">
+                <span id="tour-progress-text" class="tour-progress-text">Step 1 of 5</span>
+                <div class="tour-progress-track">
+                    <div class="tour-progress-fill" id="tour-progress-fill"></div>
+                </div>
+            </div>
+            <div class="tour-btns">
+                <button type="button" id="btn-tour-pause" class="tour-ctrl-btn">⏸</button>
+                <button type="button" id="btn-tour-exit" class="tour-ctrl-btn tour-ctrl-exit">✕</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Sidebar -->
+    <div class="controls-section">
+        <header>
+            <h1 id="app-title">What's In <span>Your Blood?</span></h1>
+
+            <div class="comp-detail" id="comp-detail">
+                <div class="comp-name-row">
+                    <div class="comp-dot" id="comp-dot"></div>
+                    <span id="comp-name">Select a component →</span>
+                </div>
+                <p id="comp-desc">Choose any component from the tray below to learn what it does in your body.</p>
+                <div class="comp-stats" id="comp-stats" style="display:none;">
+                    <div class="stat-card range-card">
+                        <div class="stat-icon">◈</div>
+                        <div class="stat-body">
+                            <div class="stat-label" id="lbl-normal-range">Normal Range</div>
+                            <div class="stat-value" id="comp-range">—</div>
+                            <div class="range-track"><div class="range-normal" id="range-normal-bar"></div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card high-card">
+                        <div class="stat-icon">↑</div>
+                        <div class="stat-body">
+                            <div class="stat-label" id="lbl-too-high">Too High</div>
+                            <div class="stat-value" id="comp-high">—</div>
+                        </div>
+                    </div>
+                    <div class="stat-card low-card">
+                        <div class="stat-icon">↓</div>
+                        <div class="stat-body">
+                            <div class="stat-label" id="lbl-too-low">Too Low</div>
+                            <div class="stat-value" id="comp-low">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="comp-drawer">
+            <div class="tray-header">
+                <p class="tray-section-title" id="lbl-category-title">Component Type</p>
+                <div class="scroll-nav-wrap" id="tabs-nav-wrap">
+                    <button class="snav-arrow snav-prev" id="tabs-prev">‹</button>
+                    <div class="category-tabs" id="category-tabs">
+                        <button class="cat-tab active" data-cat="all">🩸 All</button>
+                        <button class="cat-tab" data-cat="cells">🔴 Cells</button>
+                        <button class="cat-tab" data-cat="proteins">🔵 Proteins</button>
+                        <button class="cat-tab" data-cat="nutrients">🟢 Nutrients</button>
+                        <button class="cat-tab" data-cat="fats">🟡 Fats</button>
+                        <button class="cat-tab" data-cat="waste">🟣 Waste</button>
+                    </div>
+                    <button class="snav-arrow snav-next" id="tabs-next">›</button>
+                </div>
+            </div>
+            <div class="scroll-nav-wrap tray-nav-wrap" id="tray-nav-wrap">
+                <button class="snav-arrow snav-prev" id="tray-prev">‹</button>
+                <div class="tray" id="comp-tray"></div>
+                <button class="snav-arrow snav-next" id="tray-next">›</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label id="lbl-edu">Explore</label>
+            <button type="button" id="btn-identify" class="action-btn primary">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <span id="lbl-btn-id">Explain Components</span>
+            </button>
+            <button type="button" id="btn-tour" class="action-btn tour-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                <span id="lbl-btn-tour">▶ Start Tour</span>
+            </button>
+        </div>
+
+        <div class="credit-badge">
+            <span class="credit-line">
+                <svg class="credit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9.75 3.5h4.5M12 3.5v3M9 6.5c-2.5 0-4 1.5-4 3.5 0 1.5.75 2.8 2 3.5L8 20h8l1-6.5c1.25-.7 2-2 2-3.5 0-2-1.5-3.5-4-3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="7" y1="20" x2="17" y2="20" stroke-linecap="round"/>
+                    <line x1="8" y1="17" x2="16" y2="17" stroke-linecap="round" stroke-dasharray="2 2"/>
+                </svg>
+                <span>Created by <strong>Ahmed Othman</strong></span>
+            </span>
+        </div>
+    </div>
+
+    <script>
+        // ── Supabase ──
+        const _SUPABASE_URL  = 'https://ddaxqnhubrctawppwwzc.supabase.co';
+        const _SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXhxbmh1YnJjdGF3cHB3d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0OTg4MTYsImV4cCI6MjA5MTA3NDgxNn0.WMdh50NVygfR73-gzazmjgTjXq7IcBvUpAiCd2BNuR4';
+        let _supabase = null;
+        try { _supabase = supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON); } catch(e) {}
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ── Dictionary ──
+            let currentLang = 'en';
+            const DICT = {
+                en: {
+                    app_title:        'What\'s In <span>Your Blood?</span>',
+                    category_title:   'Component Type',
+                    edu:              'Explore',
+                    btn_id:           'Explain Components',
+                    normal_range:     'Normal Range',
+                    too_high:         'Too High ↑',
+                    too_low:          'Too Low ↓',
+                    hint_text:        'Select a component',
+                    hint_selected:    'Toggle Explain to see labels',
+                    tour_btn_start:   '▶ Start Tour',
+                    tour_btn_exit:    '✕ Exit Tour',
+                    tour_btn_pause:   '⏸',
+                    tour_btn_resume:  '▶',
+                    tour_progress:    'Step',
+                    tour_of:          'of',
+                    tour_label:       'Guided Tour',
+                    comp_placeholder: 'Select a component →',
+                    comp_placeholder_desc: 'Choose any component from the tray below to learn what it does in your body.',
+                },
+                ar: {
+                    app_title:        'ماذا يوجد <span>في دمك؟</span>',
+                    category_title:   'نوع المكون',
+                    edu:              'استكشف',
+                    btn_id:           'شرح المكونات',
+                    normal_range:     'النطاق الطبيعي',
+                    too_high:         'مرتفع جداً ↑',
+                    too_low:          'منخفض جداً ↓',
+                    hint_text:        'اختر مكوناً',
+                    hint_selected:    'فعّل الشرح لرؤية التسميات',
+                    tour_btn_start:   '▶ جولة إرشادية',
+                    tour_btn_exit:    '✕ إنهاء الجولة',
+                    tour_btn_pause:   '⏸',
+                    tour_btn_resume:  '▶',
+                    tour_progress:    'خطوة',
+                    tour_of:          'من',
+                    tour_label:       'جولة إرشادية',
+                    comp_placeholder: '← اختر مكوناً',
+                    comp_placeholder_desc: 'اختر أي مكون من الصينية أدناه لتعرف وظيفته في جسمك.',
+                }
+            };
+
+            // ── Component Data ──
+            const components = [
+                {
+                    id: 'rbc',
+                    name:   { en: 'Red Blood Cells', ar: 'كريات الدم الحمراء' },
+                    emoji:  '🔴',
+                    color:  '#e05535',
+                    category: 'cells',
+                    desc:   {
+                        en: 'Carry oxygen from your lungs to every cell in your body. Their unique biconcave disc shape helps them squeeze through the tiniest blood vessels.',
+                        ar: 'تنقل الأكسجين من رئتيك إلى كل خلية في جسمك. شكلها القرصي المقعر الفريد يساعدها على التسلل عبر أصغر الأوعية الدموية.'
+                    },
+                    normalRange: { en: '4.5 – 5.5 million cells / µL', ar: '4.5 – 5.5 مليون خلية / ميكرولتر' },
+                    tooHigh:     { en: 'Polycythemia — blood becomes too thick, raising clot risk.', ar: 'كثرة الحمر — يصبح الدم سميكاً جداً مما يرفع خطر الجلطات.' },
+                    tooLow:      { en: 'Anemia — you feel tired, pale, and short of breath.', ar: 'فقر الدم — تشعر بالإرهاق والشحوب وضيق التنفس.' },
+                    markers: [
+                        { top: '46%', left: '41%', label: { en: 'Red Blood Cell', ar: 'كرية دم حمراء' } },
+                        { top: '48%', left: '65%', label: { en: 'Biconcave disc', ar: 'قرص مقعر من الجهتين' } }
+                    ]
+                },
+                {
+                    id: 'wbc',
+                    name:   { en: 'White Blood Cells', ar: 'كريات الدم البيضاء' },
+                    emoji:  '🔵',
+                    color:  '#8899dd',
+                    category: 'cells',
+                    desc:   {
+                        en: 'Your body\'s immune soldiers. Outnumbered 700 to 1 by red cells, they patrol the bloodstream hunting viruses, bacteria, and any threat.',
+                        ar: 'جنود جهازك المناعي. رغم قلتها — فهي أقل من الكريات الحمراء بـ700 مرة — تدور في الدم باستمرار بحثاً عن الفيروسات والبكتيريا.'
+                    },
+                    normalRange: { en: '4,500 – 11,000 cells / µL', ar: '4,500 – 11,000 خلية / ميكرولتر' },
+                    tooHigh:     { en: 'Leukocytosis — often signals infection or inflammation.', ar: 'زيادة الكريات البيضاء — غالباً تشير إلى عدوى أو التهاب.' },
+                    tooLow:      { en: 'Leukopenia — the body is vulnerable to infections.', ar: 'نقص الكريات البيضاء — الجسم يصبح عرضة للعدوى.' },
+                    markers: [
+                        { top: '37%', left: '54%', label: { en: 'White Blood Cell', ar: 'كرية دم بيضاء' } }
+                    ]
+                },
+                {
+                    id: 'platelets',
+                    name:   { en: 'Platelets', ar: 'الصفائح الدموية' },
+                    emoji:  '🟡',
+                    color:  '#d4a857',
+                    category: 'cells',
+                    desc:   {
+                        en: 'Tiny cell fragments that patch wounds. When you cut yourself, platelets rush to the site, clump together, and form a plug to stop the bleeding.',
+                        ar: 'شظايا خلوية صغيرة تسد الجروح. عندما تجرح نفسك، تتجمع الصفائح في موقع الجرح لتشكل سدادة توقف النزيف.'
+                    },
+                    normalRange: { en: '150,000 – 400,000 / µL', ar: '150,000 – 400,000 / ميكرولتر' },
+                    tooHigh:     { en: 'Thrombocytosis — increased risk of unwanted blood clots.', ar: 'كثرة الصفائح — خطر متزايد لتكون جلطات غير مرغوب فيها.' },
+                    tooLow:      { en: 'Thrombocytopenia — cuts and bruises bleed longer than normal.', ar: 'نقص الصفائح — تستغرق الجروح والكدمات وقتاً أطول للتوقف عن النزيف.' },
+                    markers: [
+                        { top: '70%', left: '36%', label: { en: 'Platelet cluster', ar: 'تجمع صفائح دموية' } }
+                    ]
+                },
+                {
+                    id: 'hemoglobin',
+                    name:   { en: 'Hemoglobin', ar: 'الهيموجلوبين' },
+                    emoji:  '🟠',
+                    color:  '#c44020',
+                    category: 'proteins',
+                    desc:   {
+                        en: 'The iron-rich protein inside red blood cells that gives blood its red color and grabs oxygen in the lungs to deliver it everywhere.',
+                        ar: 'البروتين الغني بالحديد داخل الكريات الحمراء. يمنح الدم لونه الأحمر ويلتقط الأكسجين في الرئتين لتوصيله إلى كل مكان.'
+                    },
+                    normalRange: { en: '12 – 17.5 g/dL (varies by sex)', ar: '12 – 17.5 جرام/ديسيلتر (يختلف حسب الجنس)' },
+                    tooHigh:     { en: 'Can indicate dehydration or lung disease.', ar: 'قد يشير إلى الجفاف أو أمراض الرئة.' },
+                    tooLow:      { en: 'Anemia — cells aren\'t getting enough oxygen.', ar: 'فقر الدم — الخلايا لا تحصل على كمية كافية من الأكسجين.' },
+                    markers: [
+                        { top: '46%', left: '41%', label: { en: 'Hemoglobin (inside)', ar: 'هيموجلوبين (بالداخل)' } }
+                    ]
+                },
+                {
+                    id: 'albumin',
+                    name:   { en: 'Albumin', ar: 'الألبومين' },
+                    emoji:  '🩵',
+                    color:  '#66bbcc',
+                    category: 'proteins',
+                    desc:   {
+                        en: 'The most abundant protein in blood plasma. It keeps fluid inside blood vessels, carries hormones, medicines, and nutrients, and helps maintain blood pressure.',
+                        ar: 'أكثر البروتينات وفرةً في بلازما الدم. يحافظ على السوائل داخل الأوعية الدموية ويحمل الهرمونات والأدوية والمغذيات.'
+                    },
+                    normalRange: { en: '3.5 – 5.0 g/dL', ar: '3.5 – 5.0 جرام/ديسيلتر' },
+                    tooHigh:     { en: 'Usually means dehydration — the blood is too concentrated.', ar: 'عادةً يعني الجفاف — تركيز الدم مرتفع جداً.' },
+                    tooLow:      { en: 'Hypoalbuminemia — can cause fluid to leak out of vessels (edema).', ar: 'نقص الألبومين — قد يسبب تسرب السوائل خارج الأوعية (الوذمة).' },
+                    markers: [
+                        { top: '27%', left: '47%', label: { en: 'Albumin (in plasma)', ar: 'ألبومين (في البلازما)' } }
+                    ]
+                },
+                {
+                    id: 'glucose',
+                    name:   { en: 'Glucose', ar: 'الجلوكوز' },
+                    emoji:  '🟢',
+                    color:  '#44cc88',
+                    category: 'nutrients',
+                    desc:   {
+                        en: 'Your body\'s main fuel. Every single cell — from your brain to your muscles — burns glucose for energy. It\'s what food is ultimately converted into.',
+                        ar: 'الوقود الرئيسي لجسمك. كل خلية — من دماغك إلى عضلاتك — تحرق الجلوكوز للحصول على الطاقة. وهو ما تتحول إليه المواد الغذائية في نهاية المطاف.'
+                    },
+                    normalRange: { en: '70 – 100 mg/dL (fasting)', ar: '70 – 100 ملجم/ديسيلتر (صائم)' },
+                    tooHigh:     { en: 'Hyperglycemia — over time this leads to diabetes and organ damage.', ar: 'ارتفاع السكر في الدم — مع الوقت يؤدي إلى السكري وتلف الأعضاء.' },
+                    tooLow:      { en: 'Hypoglycemia — dizziness, sweating, confusion, and even fainting.', ar: 'انخفاض السكر — دوخة وتعرق وارتباك وقد يصل إلى الإغماء.' },
+                    markers: [
+                        { top: '60%', left: '46%', label: { en: 'Glucose (dissolved)', ar: 'جلوكوز (مذاب)' } }
+                    ]
+                },
+                {
+                    id: 'cholesterol',
+                    name:   { en: 'Cholesterol', ar: 'الكوليسترول' },
+                    emoji:  '🟡',
+                    color:  '#ee9933',
+                    category: 'fats',
+                    desc:   {
+                        en: 'A fatty molecule essential for building cell walls and producing hormones. HDL is the "good" type that clears arteries; LDL is the "bad" type that can clog them.',
+                        ar: 'جزيء دهني ضروري لبناء جدران الخلايا وإنتاج الهرمونات. HDL هو النوع "الجيد" الذي ينظف الشرايين؛ LDL هو النوع "السيئ" الذي قد يسدها.'
+                    },
+                    normalRange: { en: 'Total < 200 mg/dL (LDL < 100)', ar: 'الكلي < 200 ملجم/ديسيلتر (LDL < 100)' },
+                    tooHigh:     { en: 'Hypercholesterolemia — fatty plaques build up, narrowing arteries.', ar: 'ارتفاع الكوليسترول — تتراكم اللويحات الدهنية وتضيق الشرايين.' },
+                    tooLow:      { en: 'Rare, but very low levels are linked to anxiety and depression.', ar: 'نادر، لكن المستويات المنخفضة جداً مرتبطة بالقلق والاكتئاب.' },
+                    markers: [
+                        { top: '79%', left: '61%', label: { en: 'Cholesterol (in plasma)', ar: 'كوليسترول (في البلازما)' } }
+                    ]
+                },
+                {
+                    id: 'urea',
+                    name:   { en: 'Urea', ar: 'اليوريا' },
+                    emoji:  '🟣',
+                    color:  '#aa88bb',
+                    category: 'waste',
+                    desc:   {
+                        en: 'A waste product created when your body breaks down proteins. It travels through the blood to the kidneys, which filter it out and flush it away in urine.',
+                        ar: 'مادة نفايات تتكون عند هضم البروتينات. تنتقل عبر الدم إلى الكليتين اللتين تصفّيانها وتطرحانها في البول.'
+                    },
+                    normalRange: { en: '7 – 20 mg/dL (BUN)', ar: '7 – 20 ملجم/ديسيلتر (نيتروجين اليوريا)' },
+                    tooHigh:     { en: 'Uremia — suggests the kidneys are struggling to filter waste.', ar: 'اليوريمية — تشير إلى أن الكليتين تعانيان في تصفية الفضلات.' },
+                    tooLow:      { en: 'May indicate liver disease or a very low-protein diet.', ar: 'قد يشير إلى مرض في الكبد أو نظام غذائي شحيح البروتين.' },
+                    markers: [
+                        { top: '23%', left: '52%', label: { en: 'Urea (waste)', ar: 'يوريا (فضلات)' } }
+                    ]
+                }
+            ];
+
+            // ── DOM Refs ──
+            const bloodScene      = document.getElementById('blood-scene');
+            const markersLayer    = document.getElementById('markers-layer');
+            const compTray        = document.getElementById('comp-tray');
+            const compDetail      = document.getElementById('comp-detail');
+            const compDot         = document.getElementById('comp-dot');
+            const compNameEl      = document.getElementById('comp-name');
+            const compDescEl      = document.getElementById('comp-desc');
+            const compStatsEl     = document.getElementById('comp-stats');
+            const compRangeEl     = document.getElementById('comp-range');
+            const compHighEl      = document.getElementById('comp-high');
+            const compLowEl       = document.getElementById('comp-low');
+            const rangeNormalBar  = document.getElementById('range-normal-bar');
+            const btnIdentify     = document.getElementById('btn-identify');
+            const btnEn           = document.getElementById('btn-en');
+            const btnAr           = document.getElementById('btn-ar');
+            const eyepieceHint    = document.getElementById('eyepiece-hint');
+            const hintText        = document.getElementById('hint-text');
+
+            // ── State ──
+            let currentComponent  = null;
+            let isIdentifyActive  = false;
+            let currentCategory   = 'all';
+
+            // ── Load Component ──
+            function loadComponent(comp) {
+                currentComponent = comp;
+
+                // Update sidebar panel
+                compDetail.style.setProperty('--comp-color', comp.color);
+                compDot.style.background = comp.color;
+                compDot.style.boxShadow  = `0 0 8px ${comp.color}`;
+                compNameEl.style.color   = comp.color;
+                compNameEl.textContent   = comp.name[currentLang];
+                compDescEl.textContent   = comp.desc[currentLang];
+
+                document.getElementById('lbl-normal-range').textContent = DICT[currentLang].normal_range;
+                document.getElementById('lbl-too-high').textContent     = DICT[currentLang].too_high;
+                document.getElementById('lbl-too-low').textContent      = DICT[currentLang].too_low;
+
+                compRangeEl.textContent = comp.normalRange[currentLang];
+                compHighEl.textContent  = comp.tooHigh[currentLang];
+                compLowEl.textContent   = comp.tooLow[currentLang];
+                rangeNormalBar.style.background = comp.color;
+                compStatsEl.style.display = 'flex';
+
+                // Scene highlight
+                bloodScene.className = `hl-${comp.id}`;
+
+                // Markers
+                rebuildMarkers();
+
+                // Eyepiece hint
+                hintText.textContent = DICT[currentLang].hint_selected;
+                eyepieceHint.classList.add('hidden');
+                setTimeout(() => {
+                    if (currentComponent) eyepieceHint.classList.add('hidden');
+                }, 200);
+
+                updateTrayUI();
+            }
+
+            function rebuildMarkers() {
+                markersLayer.innerHTML = '';
+                if (!currentComponent) return;
+                currentComponent.markers.forEach(mark => {
+                    const el = document.createElement('div');
+                    el.className = 'marker';
+                    el.style.top  = mark.top;
+                    el.style.left = mark.left;
+                    el.style.setProperty('--marker-color', currentComponent.color);
+                    el.style.setProperty('--marker-alpha', hexToRgba(currentComponent.color, 0.65));
+                    el.style.setProperty('--marker-glow',  hexToRgba(currentComponent.color, 0.45));
+                    el.dataset.label = mark.label[currentLang];
+                    if (isIdentifyActive) el.classList.add('visible');
+                    markersLayer.appendChild(el);
+                });
+            }
+
+            function hexToRgba(hex, alpha) {
+                const r = parseInt(hex.slice(1,3),16);
+                const g = parseInt(hex.slice(3,5),16);
+                const b = parseInt(hex.slice(5,7),16);
+                return `rgba(${r},${g},${b},${alpha})`;
+            }
+
+            function updateTrayUI() {
+                document.querySelectorAll('.comp-item').forEach(el => {
+                    const active = el.dataset.id === (currentComponent ? currentComponent.id : '');
+                    el.classList.toggle('active', active);
+                    if (active) el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                });
+            }
+
+            // ── Category Tabs ──
+            document.querySelectorAll('.cat-tab').forEach(tab => {
+                tab.addEventListener('click', e => {
+                    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    currentCategory = e.currentTarget.dataset.cat;
+                    rebuildTray();
+                });
+            });
+
+            // ── Tray ──
+            function rebuildTray() {
+                compTray.innerHTML = '';
+                components.forEach(comp => {
+                    if (currentCategory !== 'all' && comp.category !== currentCategory) return;
+                    const item = document.createElement('div');
+                    item.className = 'comp-item';
+                    item.dataset.id = comp.id;
+                    item.style.setProperty('--item-color', comp.color);
+                    const shortName = comp.name[currentLang];
+                    item.innerHTML = `
+                        <div class="comp-thumb" style="background:radial-gradient(circle at 40% 35%, ${comp.color}33 0%, ${comp.color}11 60%, #050a12 100%);">
+                            <span style="font-size:1.6rem;">${comp.emoji}</span>
+                        </div>
+                        <span>${shortName}</span>`;
+                    item.addEventListener('click', () => loadComponent(comp));
+                    compTray.appendChild(item);
+                });
+                updateTrayUI();
+                if (updateTrayNav) updateTrayNav();
+            }
+
+            // ── Scroll Nav ──
+            function initScrollNav(prevId, nextId, scrollEl, step) {
+                const prev = document.getElementById(prevId);
+                const next = document.getElementById(nextId);
+                if (!prev || !next || !scrollEl) return () => {};
+                const rtl = () => document.body.classList.contains('lang-ar');
+
+                function update() {
+                    const sl       = Math.abs(scrollEl.scrollLeft);
+                    const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+                    const canBack  = sl > 2;
+                    const canFwd   = sl < maxScroll - 2;
+                    if (rtl()) { prev.disabled = !canFwd; next.disabled = !canBack; }
+                    else        { prev.disabled = !canBack; next.disabled = !canFwd; }
+                }
+
+                prev.addEventListener('click', () => scrollEl.scrollBy({ left: rtl() ?  step : -step, behavior: 'smooth' }));
+                next.addEventListener('click', () => scrollEl.scrollBy({ left: rtl() ? -step :  step, behavior: 'smooth' }));
+                scrollEl.addEventListener('scroll', update, { passive: true });
+                new ResizeObserver(update).observe(scrollEl);
+                update();
+                return update;
+            }
+
+            initScrollNav('tabs-prev', 'tabs-next', document.getElementById('category-tabs'), 140);
+            let updateTrayNav = initScrollNav('tray-prev', 'tray-next', compTray, 180);
+
+            // ── Identify Toggle ──
+            btnIdentify.addEventListener('click', () => {
+                isIdentifyActive = !isIdentifyActive;
+                btnIdentify.classList.toggle('active', isIdentifyActive);
+                document.querySelectorAll('.marker').forEach(m => m.classList.toggle('visible', isIdentifyActive));
+                if (isIdentifyActive && !currentComponent) {
+                    loadComponent(components[0]);
+                }
+            });
+
+            // ── Language ──
+            function applyLanguage(lang) {
+                currentLang = lang;
+                if (lang === 'ar') {
+                    btnAr.classList.add('active'); btnEn.classList.remove('active');
+                    document.body.classList.add('lang-ar');
+                } else {
+                    btnEn.classList.add('active'); btnAr.classList.remove('active');
+                    document.body.classList.remove('lang-ar');
+                }
+
+                document.getElementById('app-title').innerHTML     = DICT[lang].app_title;
+                document.getElementById('lbl-category-title').textContent = DICT[lang].category_title;
+                document.getElementById('lbl-edu').textContent     = DICT[lang].edu;
+                document.getElementById('lbl-btn-id').textContent  = DICT[lang].btn_id;
+                hintText.textContent = currentComponent ? DICT[lang].hint_selected : DICT[lang].hint_text;
+
+                // Update category tabs
+                const tabLabels = {
+                    en: { all:'🩸 All', cells:'🔴 Cells', proteins:'🔵 Proteins', nutrients:'🟢 Nutrients', fats:'🟡 Fats', waste:'🟣 Waste' },
+                    ar: { all:'🩸 الكل', cells:'🔴 خلايا', proteins:'🔵 بروتينات', nutrients:'🟢 مغذيات', fats:'🟡 دهون', waste:'🟣 فضلات' }
+                };
+                document.querySelectorAll('.cat-tab').forEach(tab => {
+                    tab.textContent = tabLabels[lang][tab.dataset.cat] || tab.textContent;
+                });
+
+                if (currentComponent) {
+                    loadComponent(currentComponent);
+                } else {
+                    compNameEl.textContent = DICT[lang].comp_placeholder;
+                    compDescEl.textContent = DICT[lang].comp_placeholder_desc;
+                }
+
+                rebuildTray();
+
+                // Tour
+                const lblBtnTour = document.getElementById('lbl-btn-tour');
+                if (lblBtnTour) lblBtnTour.textContent = tourActive ? DICT[lang].tour_btn_exit : DICT[lang].tour_btn_start;
+                const tourLabelEl = document.getElementById('tour-overlay-label');
+                if (tourLabelEl) tourLabelEl.textContent = DICT[lang].tour_label;
+                if (tourActive) tourUpdateProgress();
+            }
+
+            btnEn.addEventListener('click', () => applyLanguage('en'));
+            btnAr.addEventListener('click', () => applyLanguage('ar'));
+
+            // ── Guided Tour ──
+            const tourSteps = [
+                {
+                    component: null,
+                    phase: { en: 'Introduction', ar: 'مقدمة' },
+                    title: { en: 'A Drop of Your Blood', ar: 'قطرة من دمك' },
+                    desc:  { en: 'Every drop of blood carries millions of tiny workers — red cells, white cells, proteins, and nutrients — each with a vital job that keeps you alive.', ar: 'كل قطرة دم تحمل ملايين العمال الصغار — كريات حمراء وبيضاء وبروتينات ومغذيات — كل منها له دور حيوي يبقيك على قيد الحياة.' }
+                },
+                {
+                    component: 'rbc',
+                    phase: { en: 'Cells', ar: 'الخلايا' },
+                    title: { en: 'Red Blood Cells', ar: 'كريات الدم الحمراء' },
+                    desc:  { en: 'The most abundant cell — 5 million in every tiny drop. Their round disc shape and flexible membrane let them squeeze through vessels thinner than a human hair.', ar: 'أكثر الخلايا وفرة — 5 ملايين في كل قطرة صغيرة. شكلها القرصي وغشاؤها المرن يتيحان لها المرور عبر أوعية أرفع من شعرة الإنسان.' }
+                },
+                {
+                    component: 'wbc',
+                    phase: { en: 'Cells', ar: 'الخلايا' },
+                    title: { en: 'White Blood Cells', ar: 'كريات الدم البيضاء' },
+                    desc:  { en: 'Rare but powerful. Only 1 in every 700 blood cells is white. When an infection strikes, the bone marrow can produce thousands more within hours.', ar: 'نادرة لكن قوية. واحدة فقط من كل 700 خلية دم هي بيضاء. عند الإصابة بعدوى، يمكن لنخاع العظم إنتاج الآلاف منها في غضون ساعات.' }
+                },
+                {
+                    component: 'glucose',
+                    phase: { en: 'Nutrients', ar: 'المغذيات' },
+                    title: { en: 'Glucose', ar: 'الجلوكوز' },
+                    desc:  { en: 'Your body\'s universal fuel. The brain alone consumes about 120 grams of glucose per day — roughly 60% of all the glucose your body uses at rest.', ar: 'الوقود العالمي لجسمك. يستهلك الدماغ وحده حوالي 120 جراماً من الجلوكوز يومياً — ما يعادل 60٪ من جميع ما يستهلكه جسمك أثناء الراحة.' }
+                },
+                {
+                    component: 'hemoglobin',
+                    phase: { en: 'Proteins', ar: 'البروتينات' },
+                    title: { en: 'Hemoglobin', ar: 'الهيموجلوبين' },
+                    desc:  { en: 'One red blood cell contains ~270 million hemoglobin molecules. Each can carry 4 oxygen atoms, meaning a single cell can transport over one billion oxygen atoms at once.', ar: 'تحتوي كل كرية دم حمراء على ~270 مليون جزيء هيموجلوبين. كل جزيء يستطيع حمل 4 ذرات أكسجين، مما يعني أن الخلية الواحدة تنقل أكثر من مليار ذرة أكسجين في آنٍ واحد.' }
+                },
+            ];
+
+            let tourActive = false;
+            let tourPaused = false;
+            let tourStep   = 0;
+            let tourTimer  = null;
+            const TOUR_STEP_DURATION = 6000;
+
+            function startTour() {
+                tourActive = true; tourPaused = false; tourStep = 0;
+                document.getElementById('btn-tour').classList.add('active');
+                document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_exit;
+                document.getElementById('tour-overlay').style.display = 'block';
+                document.getElementById('tour-control-bar').style.display = 'flex';
+                isIdentifyActive = true;
+                btnIdentify.classList.add('active');
+                runTourStep();
+            }
+
+            function stopTour() {
+                tourActive = false; tourPaused = false;
+                clearTimeout(tourTimer);
+                document.getElementById('btn-tour').classList.remove('active');
+                document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_start;
+                document.getElementById('tour-overlay').style.display = 'none';
+                document.getElementById('tour-control-bar').style.display = 'none';
+            }
+
+            function pauseResumeTour() {
+                tourPaused = !tourPaused;
+                const btn = document.getElementById('btn-tour-pause');
+                btn.textContent = tourPaused ? DICT[currentLang].tour_btn_resume : DICT[currentLang].tour_btn_pause;
+                if (!tourPaused) { clearTimeout(tourTimer); tourTimer = setTimeout(advanceTour, TOUR_STEP_DURATION); }
+                else clearTimeout(tourTimer);
+            }
+
+            function advanceTour() {
+                tourStep++;
+                if (tourStep >= tourSteps.length) { stopTour(); return; }
+                runTourStep();
+            }
+
+            function runTourStep() {
+                const step = tourSteps[tourStep];
+
+                if (step.component) {
+                    const comp = components.find(c => c.id === step.component);
+                    if (comp) { loadComponent(comp); rebuildMarkers(); }
+                }
+
+                document.getElementById('tour-overlay-title').textContent = step.title[currentLang];
+                document.getElementById('tour-overlay-desc').textContent  = step.desc[currentLang];
+                document.getElementById('tour-overlay-phase').textContent = step.phase[currentLang];
+
+                tourUpdateProgress();
+                clearTimeout(tourTimer);
+                if (!tourPaused) tourTimer = setTimeout(advanceTour, TOUR_STEP_DURATION);
+            }
+
+            function tourUpdateProgress() {
+                const text = `${DICT[currentLang].tour_progress} ${tourStep + 1} ${DICT[currentLang].tour_of} ${tourSteps.length}`;
+                document.getElementById('tour-progress-text').textContent = text;
+                document.getElementById('tour-progress-fill').style.width = `${((tourStep + 1) / tourSteps.length) * 100}%`;
+            }
+
+            document.getElementById('btn-tour').addEventListener('click', () => tourActive ? stopTour() : startTour());
+            document.getElementById('btn-tour-pause')?.addEventListener('click', pauseResumeTour);
+            document.getElementById('btn-tour-exit')?.addEventListener('click', stopTour);
+
+            // ── Welcome Overlay ──
+            const welcomeOverlay = document.getElementById('welcome-overlay');
+            welcomeOverlay.addEventListener('click', () => {
+                welcomeOverlay.classList.add('fade-out');
+                setTimeout(() => welcomeOverlay.style.display = 'none', 950);
+            });
+
+            // ── Init ──
+            rebuildTray();
+            applyLanguage('en');
+        });
+    </script>
+</body>
+</html>
