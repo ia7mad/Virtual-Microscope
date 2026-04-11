@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/blood_smear.png\")",
-      "Bash(python3 -)"
-    ]
-  }
-}
