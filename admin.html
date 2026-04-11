@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microscope Admin — DB Control Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #070b14;
+    --panel:    #0d1421;
+    --panel2:   #111827;
+    --cyan:     #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.15);
+    --cyan-glow:rgba(0,212,255,0.35);
+    --green:    #00cc88;
+    --red:      #ff4466;
+    --yellow:   #f59e0b;
+    --text:     #e0e8f0;
+    --muted:    #6b7d94;
+    --border:   rgba(0,212,255,0.12);
+    --border2:  rgba(255,255,255,0.07);
+    --radius:   10px;
+    --font:     'Inter', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; }
+
+  /* ─── Login Screen ─── */
+  #login-screen {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--bg); z-index: 9999;
+  }
+  .login-box {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+    padding: 2.5rem 2rem; width: 340px; display: flex; flex-direction: column; gap: 1.2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .login-box h1 { font-size: 1.3rem; font-weight: 700; }
+  .login-box h1 span { color: var(--cyan); }
+  .login-box p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+  .login-box input {
+    background: var(--panel2); border: 1px solid var(--border2); color: var(--text);
+    padding: 10px 14px; border-radius: 8px; font-family: inherit; font-size: 0.95rem; width: 100%;
+  }
+  .login-box input:focus { outline: none; border-color: var(--cyan); }
+  .login-box button {
+    background: var(--cyan); color: #000; font-weight: 700; border: none;
+    padding: 11px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.95rem;
+    transition: opacity 0.2s;
+  }
+  .login-box button:hover { opacity: 0.85; }
+  #login-error { color: var(--red); font-size: 0.82rem; display: none; }
+
+  /* ─── App Shell ─── */
+  #admin-app { display: none; height: 100vh; display: none; flex-direction: column; }
+
+  /* Top Bar */
+  #topbar {
+    height: 52px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px; padding: 0 20px; flex-shrink: 0;
+  }
+  #topbar .logo { font-weight: 700; font-size: 1rem; }
+  #topbar .logo span { color: var(--cyan); }
+  #topbar .spacer { flex: 1; }
+  .status-badge {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.5px; padding: 4px 10px;
+    border-radius: 20px; border: 1px solid; display: flex; align-items: center; gap: 6px;
+  }
+  .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-badge.idle   { color: var(--muted);  border-color: rgba(107,125,148,0.4); }
+  .status-badge.idle   .dot { background: var(--muted); }
+  .status-badge.saving { color: var(--yellow); border-color: rgba(245,158,11,0.4); }
+  .status-badge.saving .dot { background: var(--yellow); animation: pulse 1s infinite; }
+  .status-badge.saved  { color: var(--green);  border-color: rgba(0,204,136,0.4); }
+  .status-badge.saved  .dot { background: var(--green); }
+  .status-badge.error  { color: var(--red);    border-color: rgba(255,68,102,0.4); }
+  .status-badge.error  .dot { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .topbar-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border2);
+    color: var(--text); padding: 7px 14px; border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: 0.82rem; font-weight: 600; transition: all 0.15s;
+  }
+  .topbar-btn:hover { background: rgba(255,255,255,0.1); }
+  .topbar-btn.primary { background: var(--cyan); border-color: var(--cyan); color: #000; }
+  .topbar-btn.primary:hover { opacity: 0.85; }
+  .topbar-btn.danger { border-color: rgba(255,68,102,0.4); color: var(--red); }
+  .topbar-btn.danger:hover { background: rgba(255,68,102,0.12); }
+
+  /* ─── Main layout ─── */
+  #main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 280px; min-width: 280px; background: var(--panel); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  #sidebar-header {
+    padding: 14px 16px 10px; border-bottom: 1px solid var(--border2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  #sidebar-header h2 { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); flex: 1; }
+  #sidebar-header span { font-size: 0.75rem; color: var(--muted); }
+  #case-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  #case-list::-webkit-scrollbar { width: 4px; }
+  #case-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .case-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px;
+    cursor: pointer; border: 1px solid transparent; transition: all 0.15s;
+  }
+  .case-item:hover { background: rgba(255,255,255,0.04); }
+  .case-item.active { background: var(--cyan-dim); border-color: var(--cyan-glow); }
+  .case-thumb {
+    width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+    background: #1a2030; flex-shrink: 0; border: 1px solid var(--border2);
+  }
+  .case-thumb-placeholder { width: 40px; height: 40px; border-radius: 6px; background: #1a2030; border: 1px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+  .case-meta { flex: 1; min-width: 0; }
+  .case-name { font-weight: 600; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .case-cat { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .case-marker-count { font-size: 0.68rem; color: var(--cyan); opacity: 0.7; }
+
+  #sidebar-footer { padding: 12px; border-top: 1px solid var(--border2); }
+  #btn-add-new {
+    width: 100%; background: var(--cyan-dim); border: 1px dashed var(--cyan-glow);
+    color: var(--cyan); padding: 10px; border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+  }
+  #btn-add-new:hover { background: rgba(0,212,255,0.22); }
+
+  /* ─── Editor ─── */
+  #editor {
+    flex: 1; display: flex; overflow: hidden;
+  }
+  #editor-empty {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; color: var(--muted);
+  }
+  #editor-empty .icon { font-size: 3rem; opacity: 0.3; }
+  #editor-empty p { font-size: 0.9rem; }
+
+  /* Editor form pane */
+  #editor-form {
+    width: 380px; min-width: 380px; background: var(--panel); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;
+  }
+  #editor-form::-webkit-scrollbar { width: 4px; }
+  #editor-form::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .form-section { display: flex; flex-direction: column; gap: 10px; }
+  .form-section-title {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); padding-bottom: 6px; border-bottom: 1px solid var(--border2);
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+  .field input, .field textarea, .field select {
+    background: var(--panel2); border: 1px solid var(--border2); color: var(--text);
+    padding: 9px 12px; border-radius: 8px; font-family: inherit; font-size: 0.88rem;
+    resize: vertical; transition: border-color 0.15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus {
+    outline: none; border-color: var(--cyan);
+  }
+  .field textarea { min-height: 72px; }
+  .field select option { background: #111827; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed rgba(0,212,255,0.25); border-radius: 10px; padding: 20px;
+    text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--cyan); background: var(--cyan-dim); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-zone p { color: var(--muted); font-size: 0.82rem; pointer-events: none; }
+  .upload-zone .up-icon { font-size: 1.8rem; margin-bottom: 6px; pointer-events: none; }
+
+  .upload-progress {
+    background: var(--panel2); border-radius: 6px; overflow: hidden; display: none; height: 6px;
+  }
+  .upload-progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--cyan), #a855f7);
+    border-radius: 6px; transition: width 0.3s; width: 0%;
+  }
+  .upload-status { font-size: 0.78rem; color: var(--muted); min-height: 18px; }
+
+  /* Current image strip */
+  .current-media {
+    background: #000; border-radius: 8px; overflow: hidden; border: 1px solid var(--border2);
+    display: none; position: relative;
+  }
+  .current-media img, .current-media video {
+    width: 100%; max-height: 160px; object-fit: cover; display: block;
+  }
+  .current-media .remove-media {
+    position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.75);
+    border: 1px solid rgba(255,68,102,0.5); color: var(--red); border-radius: 6px;
+    padding: 3px 8px; font-size: 0.72rem; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .current-media .remove-media:hover { background: rgba(255,68,102,0.2); }
+
+  /* Action buttons */
+  .editor-actions { display: flex; gap: 10px; padding-top: 4px; }
+  .btn-save {
+    flex: 1; background: var(--cyan); color: #000; font-weight: 700; border: none;
+    padding: 11px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.9rem;
+    transition: opacity 0.2s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-delete-case {
+    background: rgba(255,68,102,0.1); border: 1px solid rgba(255,68,102,0.4); color: var(--red);
+    padding: 11px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-delete-case:hover { background: rgba(255,68,102,0.2); }
+
+  /* ─── Marker Editor Pane ─── */
+  #marker-pane {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg);
+  }
+  #marker-pane-header {
+    padding: 12px 18px; border-bottom: 1px solid var(--border2);
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0; background: var(--panel);
+  }
+  #marker-pane-header h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); flex: 1; }
+  .marker-hint { font-size: 0.75rem; color: var(--muted); font-style: italic; }
+  #btn-add-marker, #btn-clear-markers {
+    padding: 6px 12px; border-radius: 7px; cursor: pointer; font-family: inherit;
+    font-size: 0.78rem; font-weight: 600; border: 1px solid; transition: all 0.15s;
+  }
+  #btn-add-marker {
+    background: var(--cyan-dim); border-color: var(--cyan-glow); color: var(--cyan);
+  }
+  #btn-add-marker.placing { background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.5); color: #a855f7; }
+  #btn-add-marker:hover { opacity: 0.8; }
+  #btn-clear-markers { background: transparent; border-color: rgba(255,68,102,0.3); color: var(--red); }
+  #btn-clear-markers:hover { background: rgba(255,68,102,0.1); }
+
+  /* Image canvas area */
+  #marker-canvas-wrap {
+    flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center;
+    padding: 20px; background: #020408;
+  }
+  #marker-canvas {
+    position: relative; display: inline-block; user-select: none;
+    cursor: crosshair;
+  }
+  #marker-canvas img, #marker-canvas video {
+    display: block; max-width: 100%; max-height: calc(100vh - 200px);
+    border-radius: 8px; border: 1px solid var(--border);
+  }
+  #marker-canvas.idle { cursor: default; }
+
+  .m-dot {
+    position: absolute; width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--cyan); background: rgba(0,212,255,0.2);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0,212,255,0.4);
+    cursor: grab; transition: box-shadow 0.15s, border-color 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--cyan);
+    z-index: 10; user-select: none;
+  }
+  .m-dot:hover { box-shadow: 0 0 18px rgba(0,212,255,0.7); border-color: #fff; }
+  .m-dot.dragging { cursor: grabbing; border-color: #fff; background: rgba(255,255,255,0.25); box-shadow: 0 0 18px var(--cyan); }
+  .m-dot.selected { border-color: #fff; background: rgba(255,255,255,0.25); box-shadow: 0 0 18px rgba(255,255,255,0.5); }
+  .m-dot .m-label-tip {
+    position: absolute; left: 32px; top: 50%; transform: translateY(-50%);
+    background: rgba(5,10,20,0.95); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+    font-size: 11px; font-weight: 600; color: #fff; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  }
+
+  /* ─── Crop Modal ─── */
+  #crop-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 10000;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 0;
+  }
+  #crop-modal.open { display: flex; }
+  #crop-topbar {
+    width: 100%; padding: 12px 20px; background: var(--panel);
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px;
+    flex-shrink: 0;
+  }
+  #crop-topbar h3 { font-size: 0.9rem; font-weight: 700; flex: 1; }
+  #crop-topbar .hint { font-size: 0.75rem; color: var(--muted); }
+  .crop-tb-btn {
+    padding: 7px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-size: 0.82rem; font-weight: 600; border: 1px solid; transition: all 0.15s;
+  }
+  #btn-crop-cancel { background: transparent; border-color: var(--border2); color: var(--muted); }
+  #btn-crop-cancel:hover { background: rgba(255,255,255,0.06); }
+  #btn-crop-apply { background: var(--cyan); border-color: var(--cyan); color: #000; }
+  #btn-crop-apply:hover { opacity: 0.85; }
+  #btn-crop-apply:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  #crop-workspace {
+    flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+    padding: 24px; width: 100%;
+  }
+  #crop-frame {
+    position: relative; display: inline-block; flex-shrink: 0;
+  }
+  #crop-img-el {
+    display: block; max-width: 100%; user-select: none; pointer-events: none;
+    border-radius: 4px;
+  }
+  /* Darkened overlay = everything outside the crop rect */
+  #crop-overlay {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  /* The crop selection rect */
+  #crop-rect {
+    position: absolute; border: 2px solid #fff;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.55);
+    cursor: move; z-index: 2;
+  }
+  #crop-rect::before { /* grid lines */
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px) 0 33.3% / 100% 33.4%,
+      linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px) 33.3% 0 / 33.4% 100%;
+    pointer-events: none;
+  }
+  .crop-handle {
+    position: absolute; width: 14px; height: 14px;
+    background: #fff; border: 2px solid rgba(0,212,255,0.8); border-radius: 2px;
+    z-index: 3;
+  }
+  .crop-handle.nw { top: -7px; left: -7px; cursor: nw-resize; }
+  .crop-handle.ne { top: -7px; right: -7px; cursor: ne-resize; }
+  .crop-handle.sw { bottom: -7px; left: -7px; cursor: sw-resize; }
+  .crop-handle.se { bottom: -7px; right: -7px; cursor: se-resize; }
+  .crop-handle.n  { top: -7px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+  .crop-handle.s  { bottom: -7px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+  .crop-handle.w  { left: -7px; top: 50%; transform: translateY(-50%); cursor: w-resize; }
+  .crop-handle.e  { right: -7px; top: 50%; transform: translateY(-50%); cursor: e-resize; }
+
+  #crop-footer {
+    width: 100%; padding: 10px 20px; background: var(--panel);
+    border-top: 1px solid var(--border); display: flex; align-items: center; gap: 14px;
+    flex-shrink: 0; flex-wrap: wrap;
+  }
+  .crop-dim-label { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .crop-dim-label input {
+    width: 72px; background: var(--panel2); border: 1px solid var(--border2); color: var(--text);
+    padding: 5px 8px; border-radius: 6px; font-family: monospace; font-size: 0.82rem; text-align: center;
+  }
+  .crop-dim-label input:focus { outline: none; border-color: var(--cyan); }
+  #crop-lock-ratio { cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--muted); }
+  #crop-lock-ratio input { width: auto; cursor: pointer; }
+  #crop-info { font-size: 0.72rem; color: var(--muted); font-family: monospace; margin-left: auto; }
+
+  /* Marker list below canvas */
+  #marker-list-section {
+    border-top: 1px solid var(--border2); background: var(--panel);
+    flex-shrink: 0; max-height: 220px; overflow-y: auto;
+  }
+  #marker-list-section::-webkit-scrollbar { width: 4px; }
+  #marker-list-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  #marker-list { padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .marker-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    background: var(--panel2); border-radius: 8px; border: 1px solid var(--border2);
+    transition: border-color 0.15s;
+  }
+  .marker-row.selected { border-color: var(--cyan-glow); background: var(--cyan-dim); }
+  .marker-num {
+    width: 22px; height: 22px; border-radius: 50%; background: var(--cyan-dim);
+    border: 1px solid var(--cyan-glow); color: var(--cyan); font-size: 0.7rem;
+    font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .marker-row .marker-fields { flex: 1; display: flex; gap: 8px; }
+  .marker-row input {
+    flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--border2); color: var(--text);
+    padding: 5px 8px; border-radius: 6px; font-family: inherit; font-size: 0.8rem;
+  }
+  .marker-row input:focus { outline: none; border-color: var(--cyan); }
+  .marker-row input[dir="rtl"] { text-align: right; font-family: 'Tajawal', sans-serif; }
+  .marker-pos { font-size: 0.68rem; color: var(--muted); flex-shrink: 0; font-family: monospace; }
+  .btn-del-marker {
+    background: transparent; border: 1px solid rgba(255,68,102,0.3); color: var(--red);
+    width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .btn-del-marker:hover { background: rgba(255,68,102,0.15); }
+
+  /* No media placeholder */
+  #no-media-msg {
+    padding: 40px; text-align: center; color: var(--muted); font-size: 0.88rem;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  #no-media-msg .icon { font-size: 2.5rem; opacity: 0.3; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 20px; font-size: 0.85rem; font-weight: 600; z-index: 9998;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7); display: none; gap: 8px; align-items: center;
+  }
+  #toast.show { display: flex; animation: toast-in 0.3s ease; }
+  @keyframes toast-in { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  #toast.success { border-color: rgba(0,204,136,0.5); color: var(--green); }
+  #toast.error   { border-color: rgba(255,68,102,0.5); color: var(--red); }
+
+  /* Confirm modal */
+  #confirm-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9997;
+    display: none; align-items: center; justify-content: center;
+  }
+  #confirm-modal.show { display: flex; }
+  .confirm-box {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+    padding: 2rem; width: 360px; display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  }
+  .confirm-box h3 { font-size: 1rem; }
+  .confirm-box p { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; }
+  .confirm-actions button {
+    padding: 8px 18px; border-radius: 8px; cursor: pointer; font-family: inherit;
+    font-size: 0.85rem; font-weight: 600; border: 1px solid; transition: all 0.15s;
+  }
+  .btn-confirm-cancel { background: transparent; border-color: var(--border2); color: var(--muted); }
+  .btn-confirm-cancel:hover { background: rgba(255,255,255,0.05); }
+  .btn-confirm-ok { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn-confirm-ok:hover { opacity: 0.85; }
+
+  /* Utility */
+  .hidden { display: none !important; }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.68rem;
+    font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .tag-blood   { background: rgba(239,68,68,0.15);  color: #f87171; }
+  .tag-urine   { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .tag-stool   { background: rgba(180,83,9,0.15);   color: #d97706; }
+  .tag-tissue  { background: rgba(52,211,153,0.15); color: #6ee7b7; }
+  .tag-semen   { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+  .tag-other   { background: rgba(107,114,128,0.15);color: #9ca3af; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
+    background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--cyan); cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Login ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>🔬 Microscope <span>Admin</span></h1>
+    <p>Database control panel for managing specimens, images, and markers.</p>
+    <input type="password" id="pwd-input" placeholder="Admin password" autocomplete="current-password">
+    <button id="btn-login">Unlock Panel</button>
+    <div id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<!-- ── Confirm modal ── -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Confirm Action</h3>
+    <p id="confirm-msg"></p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" id="btn-confirm-cancel">Cancel</button>
+      <button class="btn-confirm-ok" id="btn-confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Admin App ── -->
+<div id="admin-app">
+
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="logo">🔬 Microscope <span>Admin</span></div>
+    <div id="status-badge" class="status-badge idle">
+      <div class="dot"></div>
+      <span id="status-text">Connected</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="topbar-btn" id="btn-refresh" title="Reload from DB">↺ Reload</button>
+    <button class="topbar-btn" id="btn-logout">Lock</button>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <h2>Cases</h2>
+        <span id="case-count">0 cases</span>
+      </div>
+      <div id="case-list"></div>
+      <div id="sidebar-footer">
+        <button id="btn-add-new">＋ Add New Case</button>
+      </div>
+    </aside>
+
+    <!-- Editor -->
+    <div id="editor">
+      <div id="editor-empty">
+        <div class="icon">🧫</div>
+        <p>Select a case to edit, or add a new one.</p>
+      </div>
+
+      <!-- Form pane (hidden until case selected) -->
+      <div id="editor-form" class="hidden">
+
+        <div class="form-section">
+          <div class="form-section-title">Identity</div>
+          <div class="field-row">
+            <div class="field">
+              <label>Name (English)</label>
+              <input type="text" id="f-name-en" placeholder="e.g. Blood Sample">
+            </div>
+            <div class="field">
+              <label>الاسم (عربي)</label>
+              <input type="text" id="f-name-ar" placeholder="مثال: عينة دم" dir="rtl" style="font-family:'Tajawal',sans-serif">
+            </div>
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="f-category">
+              <option value="blood">🩸 Blood</option>
+              <option value="urine">🧪 Urine</option>
+              <option value="stool">💩 Stool</option>
+              <option value="tissue">🫀 Tissue</option>
+              <option value="semen">🧬 Semen</option>
+              <option value="other">🌟 Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Description</div>
+          <div class="field">
+            <label>Description (English)</label>
+            <textarea id="f-desc-en" placeholder="Describe what can be seen in this specimen..."></textarea>
+          </div>
+          <div class="field">
+            <label>الوصف (عربي)</label>
+            <textarea id="f-desc-ar" placeholder="اكتب وصفاً للعينة..." dir="rtl" style="font-family:'Tajawal',sans-serif;text-align:right"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Image / Video</div>
+          <div id="current-media-wrap" class="current-media">
+            <img id="current-img" src="" alt="">
+            <video id="current-vid" autoplay loop muted playsinline style="display:none;"></video>
+            <button class="remove-media" id="btn-remove-media">✕ Remove</button>
+          </div>
+          <button id="btn-open-crop" class="hidden" style="
+            width:100%; background:rgba(0,212,255,0.08); border:1px solid var(--cyan-glow);
+            color:var(--cyan); padding:8px; border-radius:8px; cursor:pointer;
+            font-family:inherit; font-size:0.82rem; font-weight:600; transition:background 0.2s;">
+            ✂ Crop &amp; Resize Image
+          </button>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" accept="image/*,video/mp4,video/webm">
+            <div class="up-icon">📁</div>
+            <p>Click or drag a file here<br><small style="opacity:0.6">JPG · PNG · GIF · MP4 · WebM</small></p>
+          </div>
+          <div class="upload-progress" id="upload-progress">
+            <div class="upload-progress-fill" id="upload-progress-fill"></div>
+          </div>
+          <div class="upload-status" id="upload-status"></div>
+        </div>
+
+        <div class="editor-actions">
+          <button class="btn-save" id="btn-save-case">💾 Save to Database</button>
+          <button class="btn-delete-case hidden" id="btn-delete-case">🗑</button>
+        </div>
+
+      </div>
+
+      <!-- Marker editor pane -->
+      <div id="marker-pane" class="hidden">
+        <div id="marker-pane-header">
+          <h3>Markers</h3>
+          <span class="marker-hint" id="marker-hint">Upload an image first</span>
+          <button id="btn-add-marker" class="hidden">＋ Place Marker</button>
+          <button id="btn-clear-markers" class="hidden">Clear All</button>
+        </div>
+        <div id="marker-canvas-wrap">
+          <div id="marker-canvas" class="idle">
+            <div id="no-media-msg">
+              <div class="icon">🖼</div>
+              <p>Upload an image to place markers on it.</p>
+            </div>
+          </div>
+        </div>
+        <div id="marker-list-section" class="hidden">
+          <div id="marker-list"></div>
+        </div>
+      </div>
+
+    </div><!-- /#editor -->
+  </div><!-- /#main -->
+</div><!-- /#admin-app -->
+
+<!-- ── Crop Modal ── -->
+<div id="crop-modal">
+  <div id="crop-topbar">
+    <h3>✂ Crop &amp; Resize</h3>
+    <span class="hint">Drag the crop box or its handles to select the area.</span>
+    <button class="crop-tb-btn" id="btn-crop-cancel">Cancel</button>
+    <button class="crop-tb-btn" id="btn-crop-apply">Apply &amp; Upload</button>
+  </div>
+  <div id="crop-workspace">
+    <div id="crop-frame">
+      <img id="crop-img-el" alt="crop preview" draggable="false">
+      <div id="crop-rect">
+        <div class="crop-handle nw" data-dir="nw"></div>
+        <div class="crop-handle n"  data-dir="n"></div>
+        <div class="crop-handle ne" data-dir="ne"></div>
+        <div class="crop-handle w"  data-dir="w"></div>
+        <div class="crop-handle e"  data-dir="e"></div>
+        <div class="crop-handle sw" data-dir="sw"></div>
+        <div class="crop-handle s"  data-dir="s"></div>
+        <div class="crop-handle se" data-dir="se"></div>
+      </div>
+    </div>
+  </div>
+  <div id="crop-footer">
+    <label class="crop-dim-label">W <input id="crop-out-w" type="number" min="1" placeholder="px"></label>
+    <label class="crop-dim-label">H <input id="crop-out-h" type="number" min="1" placeholder="px"></label>
+    <label id="crop-lock-ratio"><input type="checkbox" id="chk-lock-ratio" checked> Lock ratio</label>
+    <span id="crop-info">–</span>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// Config
+// ═══════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ddaxqnhubrctawppwwzc.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXhxbmh1YnJjdGF3cHB3d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0OTg4MTYsImV4cCI6MjA5MTA3NDgxNn0.WMdh50NVygfR73-gzazmjgTjXq7IcBvUpAiCd2BNuR4';
+const ADMIN_PASSWORD = '1234';
+const BUCKET = 'microscope-media';
+const TABLE  = 'microscope_config';
+const ROW_ID = 1;
+
+// ═══════════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════════
+let db = null;
+let allSamples = [];       // full array loaded from DB
+let editingId  = null;     // null = new case, string = existing id
+let currentImgUrl = '';    // imgUrl for the case being edited
+let tempMarkers = [];      // [{top,left,label:{en,ar}}]
+let placingMarker = false; // are we in marker-placement mode?
+
+// ═══════════════════════════════════════════════════
+// Supabase init
+// ═══════════════════════════════════════════════════
+try { db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON); }
+catch(e) { console.error('Supabase init failed', e); }
+
+// ═══════════════════════════════════════════════════
+// DOM refs
+// ═══════════════════════════════════════════════════
+const loginScreen   = document.getElementById('login-screen');
+const adminApp      = document.getElementById('admin-app');
+const pwdInput      = document.getElementById('pwd-input');
+const btnLogin      = document.getElementById('btn-login');
+const loginError    = document.getElementById('login-error');
+const btnLogout     = document.getElementById('btn-logout');
+const btnRefresh    = document.getElementById('btn-refresh');
+const caseList      = document.getElementById('case-list');
+const caseCount     = document.getElementById('case-count');
+const btnAddNew     = document.getElementById('btn-add-new');
+const editorEmpty   = document.getElementById('editor-empty');
+const editorForm    = document.getElementById('editor-form');
+const markerPane    = document.getElementById('marker-pane');
+const btnSave       = document.getElementById('btn-save-case');
+const btnDelete     = document.getElementById('btn-delete-case');
+const fileInput     = document.getElementById('file-input');
+const uploadZone    = document.getElementById('upload-zone');
+const uploadProgress= document.getElementById('upload-progress');
+const uploadProgFill= document.getElementById('upload-progress-fill');
+const uploadStatus  = document.getElementById('upload-status');
+const currentMediaWrap = document.getElementById('current-media-wrap');
+const currentImg    = document.getElementById('current-img');
+const currentVid    = document.getElementById('current-vid');
+const btnRemoveMedia= document.getElementById('btn-remove-media');
+const markerCanvas  = document.getElementById('marker-canvas');
+const markerHint    = document.getElementById('marker-hint');
+const btnAddMarker  = document.getElementById('btn-add-marker');
+const btnClearMarkers = document.getElementById('btn-clear-markers');
+const markerListSection = document.getElementById('marker-list-section');
+const markerListEl  = document.getElementById('marker-list');
+const noMediaMsg    = document.getElementById('no-media-msg');
+
+// ═══════════════════════════════════════════════════
+// Login
+// ═══════════════════════════════════════════════════
+function tryLogin() {
+  if (pwdInput.value === ADMIN_PASSWORD) {
+    loginScreen.style.display = 'none';
+    adminApp.style.display = 'flex';
+    adminApp.style.flexDirection = 'column';
+    loadFromDB();
+    subscribeRealtime();
+  } else {
+    loginError.style.display = 'block';
+    pwdInput.value = '';
+    pwdInput.focus();
+  }
+}
+btnLogin.addEventListener('click', tryLogin);
+pwdInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+
+btnLogout.addEventListener('click', () => {
+  adminApp.style.display = 'none';
+  loginScreen.style.display = 'flex';
+  pwdInput.value = '';
+  loginError.style.display = 'none';
+});
+
+// ═══════════════════════════════════════════════════
+// DB Operations
+// ═══════════════════════════════════════════════════
+async function loadFromDB() {
+  setStatus('saving', 'Loading…');
+  try {
+    const { data, error } = await db
+      .from(TABLE).select('samples').eq('id', ROW_ID).single();
+    if (error) throw error;
+    allSamples = Array.isArray(data.samples) ? data.samples : [];
+    renderSidebar();
+    setStatus('saved', `${allSamples.length} cases loaded`);
+    setTimeout(() => setStatus('idle', 'Connected'), 2000);
+  } catch(e) {
+    setStatus('error', 'Load failed');
+    toast('Failed to load from database: ' + e.message, 'error');
+  }
+}
+
+async function saveToDB() {
+  setStatus('saving', 'Saving…');
+  try {
+    const { error } = await db.from(TABLE).upsert({
+      id: ROW_ID,
+      samples: allSamples,
+      updated_at: new Date().toISOString()
+    });
+    if (error) throw error;
+    setStatus('saved', 'Saved ✓');
+    setTimeout(() => setStatus('idle', 'Connected'), 3000);
+    return true;
+  } catch(e) {
+    setStatus('error', 'Save failed');
+    toast('Save failed: ' + e.message, 'error');
+    return false;
+  }
+}
+
+function subscribeRealtime() {
+  if (!db) return;
+  db.channel('admin-realtime')
+    .on('postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: TABLE, filter: `id=eq.${ROW_ID}` },
+      () => { toast('DB updated from another device — reloading…', 'success'); loadFromDB(); }
+    ).subscribe();
+}
+
+// ═══════════════════════════════════════════════════
+// Storage Upload
+// ═══════════════════════════════════════════════════
+async function uploadFile(file) {
+  const ext  = file.name.split('.').pop().toLowerCase() || 'bin';
+  const path = `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+
+  uploadProgress.style.display = 'block';
+  uploadProgFill.style.width = '10%';
+  uploadStatus.textContent = 'Uploading…';
+
+  try {
+    const { error } = await db.storage.from(BUCKET)
+      .upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false });
+    if (error) throw error;
+
+    uploadProgFill.style.width = '100%';
+    const { data: urlData } = db.storage.from(BUCKET).getPublicUrl(path);
+    uploadStatus.textContent = '✓ Upload complete';
+    setTimeout(() => { uploadProgress.style.display = 'none'; uploadStatus.textContent = ''; }, 2000);
+    return urlData.publicUrl;
+  } catch(e) {
+    uploadProgress.style.display = 'none';
+    uploadStatus.textContent = '✗ Upload failed: ' + e.message;
+    return null;
+  }
+}
+
+async function tryDeleteStorageFile(url) {
+  if (!url || !url.includes(BUCKET)) return;
+  // Extract path after bucket name
+  const marker = `/${BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return;
+  const filePath = url.slice(idx + marker.length);
+  try {
+    await db.storage.from(BUCKET).remove([filePath]);
+  } catch(_) { /* non-fatal — orphaned file stays in storage */ }
+}
+
+// ═══════════════════════════════════════════════════
+// Sidebar Render
+// ═══════════════════════════════════════════════════
+function renderSidebar() {
+  caseCount.textContent = `${allSamples.length} case${allSamples.length !== 1 ? 's' : ''}`;
+  caseList.innerHTML = '';
+  allSamples.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'case-item' + (s.id === editingId ? ' active' : '');
+    item.dataset.id = s.id;
+
+    const isVid = isVideoUrl(s.imgUrl);
+    const thumbHtml = s.imgUrl
+      ? (isVid
+          ? `<video class="case-thumb" src="${s.imgUrl}" muted loop playsinline style="object-fit:cover;border-radius:6px;border:1px solid var(--border2);height:40px;flex-shrink:0;" autoplay></video>`
+          : `<img class="case-thumb" src="${s.imgUrl}" alt="">`)
+      : `<div class="case-thumb-placeholder">${catEmoji(s.category)}</div>`;
+
+    const mCount = (s.markers || []).length;
+    item.innerHTML = `
+      ${thumbHtml}
+      <div class="case-meta">
+        <div class="case-name">${s.name?.en || 'Unnamed'}</div>
+        <div class="case-cat">${s.category || 'other'}</div>
+        ${mCount > 0 ? `<div class="case-marker-count">◉ ${mCount} marker${mCount !== 1?'s':''}</div>` : ''}
+      </div>`;
+    item.addEventListener('click', () => openCase(s.id));
+    caseList.appendChild(item);
+  });
+}
+
+function catEmoji(cat) {
+  return {blood:'🩸',urine:'🧪',stool:'💩',tissue:'🫀',semen:'🧬'}[cat] || '🌟';
+}
+
+function isVideoUrl(url) {
+  if (!url) return false;
+  if (url.startsWith('data:video')) return true;
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  return clean.endsWith('.mp4') || clean.endsWith('.webm') || clean.endsWith('.mov');
+}
+
+// ═══════════════════════════════════════════════════
+// Open / New Case
+// ═══════════════════════════════════════════════════
+function openCase(id) {
+  const sample = allSamples.find(s => s.id === id);
+  if (!sample) return;
+
+  editingId = id;
+  currentImgUrl = sample.imgUrl || '';
+  tempMarkers = JSON.parse(JSON.stringify(sample.markers || []));
+
+  document.getElementById('f-name-en').value  = sample.name?.en  || '';
+  document.getElementById('f-name-ar').value  = sample.name?.ar  || '';
+  document.getElementById('f-desc-en').value  = sample.desc?.en  || '';
+  document.getElementById('f-desc-ar').value  = sample.desc?.ar  || '';
+  document.getElementById('f-category').value = sample.category  || 'other';
+
+  showEditorForm(true);
+  renderCurrentMedia();
+  renderMarkerCanvas();
+  renderSidebar();
+}
+
+function openNewCase() {
+  editingId = null;
+  currentImgUrl = '';
+  tempMarkers = [];
+
+  document.getElementById('f-name-en').value  = '';
+  document.getElementById('f-name-ar').value  = '';
+  document.getElementById('f-desc-en').value  = '';
+  document.getElementById('f-desc-ar').value  = '';
+  document.getElementById('f-category').value = 'other';
+
+  showEditorForm(false);
+  renderCurrentMedia();
+  renderMarkerCanvas();
+  renderSidebar();
+}
+
+function showEditorForm(isEdit) {
+  editorEmpty.classList.add('hidden');
+  editorForm.classList.remove('hidden');
+  markerPane.classList.remove('hidden');
+  btnDelete.classList.toggle('hidden', !isEdit);
+}
+
+// ═══════════════════════════════════════════════════
+// Media preview
+// ═══════════════════════════════════════════════════
+const btnOpenCrop = document.getElementById('btn-open-crop');
+
+function renderCurrentMedia() {
+  if (!currentImgUrl) {
+    currentMediaWrap.style.display = 'none';
+    currentImg.src = '';
+    currentVid.src = '';
+    btnOpenCrop.classList.add('hidden');
+    return;
+  }
+  currentMediaWrap.style.display = 'block';
+  if (isVideoUrl(currentImgUrl)) {
+    currentVid.src = currentImgUrl;
+    currentVid.style.display = 'block';
+    currentImg.style.display = 'none';
+    currentVid.load(); currentVid.play().catch(()=>{});
+    btnOpenCrop.classList.add('hidden'); // crop not available for video
+  } else {
+    currentImg.src = currentImgUrl;
+    currentImg.style.display = 'block';
+    currentVid.style.display = 'none';
+    btnOpenCrop.classList.remove('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// File Upload Handler
+// ═══════════════════════════════════════════════════
+fileInput.addEventListener('change', async function() {
+  const file = this.files[0];
+  if (!file) return;
+  const url = await uploadFile(file);
+  if (url) {
+    currentImgUrl = url;
+    renderCurrentMedia();
+    renderMarkerCanvas();
+  }
+  this.value = '';
+});
+
+// Drag-and-drop
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', async e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const url = await uploadFile(file);
+  if (url) { currentImgUrl = url; renderCurrentMedia(); renderMarkerCanvas(); }
+});
+
+btnRemoveMedia.addEventListener('click', () => {
+  currentImgUrl = '';
+  renderCurrentMedia();
+  renderMarkerCanvas();
+});
+
+// ═══════════════════════════════════════════════════
+// Marker Canvas
+// ═══════════════════════════════════════════════════
+function renderMarkerCanvas() {
+  // Clear previous image/dots
+  markerCanvas.querySelectorAll('img,video,.m-dot').forEach(el => el.remove());
+  noMediaMsg.classList.add('hidden'); // will be re-shown if needed
+
+  if (!currentImgUrl) {
+    markerCanvas.classList.add('idle');
+    markerHint.textContent = 'Upload an image first';
+    btnAddMarker.classList.add('hidden');
+    btnClearMarkers.classList.add('hidden');
+    markerListSection.classList.add('hidden');
+    noMediaMsg.classList.remove('hidden');
+    markerCanvas.appendChild(noMediaMsg);
+    return;
+  }
+
+  markerHint.textContent = 'Click "Place Marker" then click on the image';
+  btnAddMarker.classList.remove('hidden');
+  btnClearMarkers.classList.remove('hidden');
+
+  // Insert media element
+  let mediaEl;
+  if (isVideoUrl(currentImgUrl)) {
+    mediaEl = document.createElement('video');
+    mediaEl.src = currentImgUrl;
+    mediaEl.autoplay = true; mediaEl.loop = true; mediaEl.muted = true;
+    mediaEl.setAttribute('playsinline','');
+    mediaEl.load(); mediaEl.play().catch(()=>{});
+  } else {
+    mediaEl = document.createElement('img');
+    mediaEl.src = currentImgUrl;
+    mediaEl.alt = 'specimen';
+    mediaEl.draggable = false;
+  }
+  markerCanvas.appendChild(mediaEl);
+
+  renderMarkerDots();
+  renderMarkerList();
+}
+
+function renderMarkerDots() {
+  markerCanvas.querySelectorAll('.m-dot').forEach(d => d.remove());
+  tempMarkers.forEach((m, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'm-dot';
+    dot.style.top  = m.top;
+    dot.style.left = m.left;
+    dot.dataset.idx = i;
+    dot.textContent = i + 1;
+
+    const tip = document.createElement('div');
+    tip.className = 'm-label-tip';
+    tip.textContent = m.label?.en || `Marker ${i+1}`;
+    dot.appendChild(tip);
+
+    dot.addEventListener('click', e => {
+      e.stopPropagation();
+      selectMarker(i);
+    });
+    markerCanvas.appendChild(dot);
+  });
+}
+
+function renderMarkerList() {
+  markerListSection.classList.toggle('hidden', tempMarkers.length === 0);
+  markerListEl.innerHTML = '';
+  tempMarkers.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'marker-row';
+    row.dataset.idx = i;
+    row.innerHTML = `
+      <div class="marker-num">${i+1}</div>
+      <div class="marker-fields">
+        <input type="text" placeholder="Label (EN)" value="${m.label?.en||''}" data-lang="en" data-idx="${i}">
+        <input type="text" placeholder="التسمية (AR)" dir="rtl" value="${m.label?.ar||''}" data-lang="ar" data-idx="${i}">
+      </div>
+      <span class="marker-pos">${parseFloat(m.left).toFixed(1)}%, ${parseFloat(m.top).toFixed(1)}%</span>
+      <button class="btn-del-marker" data-idx="${i}" title="Delete marker">✕</button>`;
+
+    // Live label editing
+    row.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const idx  = +inp.dataset.idx;
+        const lang = inp.dataset.lang;
+        if (!tempMarkers[idx]) return;
+        if (!tempMarkers[idx].label) tempMarkers[idx].label = {};
+        tempMarkers[idx].label[lang] = inp.value;
+        // Update dot tooltip live
+        const dot = markerCanvas.querySelector(`.m-dot[data-idx="${idx}"] .m-label-tip`);
+        if (dot && lang === 'en') dot.textContent = inp.value;
+      });
+    });
+    row.querySelector('.btn-del-marker').addEventListener('click', () => {
+      tempMarkers.splice(i, 1);
+      renderMarkerDots();
+      renderMarkerList();
+    });
+    row.addEventListener('click', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      selectMarker(i);
+    });
+    markerListEl.appendChild(row);
+  });
+}
+
+function selectMarker(idx) {
+  markerCanvas.querySelectorAll('.m-dot').forEach((d,i) => d.classList.toggle('selected', i===idx));
+  markerListEl.querySelectorAll('.marker-row').forEach((r,i) => r.classList.toggle('selected', i===idx));
+  const row = markerListEl.children[idx];
+  if (row) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ─── Marker Drag-to-Move ───────────────────────────
+let _dragIdx = -1, _dragMoved = false;
+let _dragOffX = 0, _dragOffY = 0;
+
+function renderMarkerDots() {
+  markerCanvas.querySelectorAll('.m-dot').forEach(d => d.remove());
+  tempMarkers.forEach((m, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'm-dot';
+    dot.style.top  = m.top;
+    dot.style.left = m.left;
+    dot.dataset.idx = i;
+    dot.textContent = i + 1;
+
+    const tip = document.createElement('div');
+    tip.className = 'm-label-tip';
+    tip.textContent = m.label?.en || `Marker ${i+1}`;
+    dot.appendChild(tip);
+
+    dot.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation();
+      _dragIdx   = i;
+      _dragMoved = false;
+      const mediaEl = markerCanvas.querySelector('img,video');
+      if (!mediaEl) return;
+      const mRect = mediaEl.getBoundingClientRect();
+      const dotLeft = parseFloat(m.left) / 100 * mRect.width;
+      const dotTop  = parseFloat(m.top)  / 100 * mRect.height;
+      _dragOffX = e.clientX - (mRect.left + dotLeft);
+      _dragOffY = e.clientY - (mRect.top  + dotTop);
+      dot.classList.add('dragging');
+      document.body.style.cursor = 'grabbing';
+    });
+
+    markerCanvas.appendChild(dot);
+  });
+}
+
+window.addEventListener('mousemove', e => {
+  if (_dragIdx === -1) return;
+  _dragMoved = true;
+  const mediaEl = markerCanvas.querySelector('img,video');
+  if (!mediaEl) return;
+  const mRect = mediaEl.getBoundingClientRect();
+  const x = Math.max(0, Math.min(mRect.width,  e.clientX - mRect.left - _dragOffX + (parseFloat(tempMarkers[_dragIdx].left)/100*mRect.width  - (parseFloat(tempMarkers[_dragIdx].left)/100*mRect.width))));
+  const y = Math.max(0, Math.min(mRect.height, e.clientY - mRect.top  - _dragOffY + (parseFloat(tempMarkers[_dragIdx].top) /100*mRect.height - (parseFloat(tempMarkers[_dragIdx].top) /100*mRect.height))));
+
+  // Simpler: recalc absolute pointer position relative to media
+  const absX = Math.max(0, Math.min(mRect.width,  e.clientX - mRect.left - _dragOffX));
+  const absY = Math.max(0, Math.min(mRect.height, e.clientY - mRect.top  - _dragOffY));
+
+  const leftPct = (absX / mRect.width  * 100).toFixed(2) + '%';
+  const topPct  = (absY / mRect.height * 100).toFixed(2) + '%';
+
+  tempMarkers[_dragIdx].left = leftPct;
+  tempMarkers[_dragIdx].top  = topPct;
+
+  // Move dot DOM element directly (no full re-render)
+  const dot = markerCanvas.querySelector(`.m-dot[data-idx="${_dragIdx}"]`);
+  if (dot) { dot.style.left = leftPct; dot.style.top = topPct; }
+
+  // Update position readout in the list
+  const posEl = markerListEl.children[_dragIdx]?.querySelector('.marker-pos');
+  if (posEl) posEl.textContent = `${parseFloat(leftPct).toFixed(1)}%, ${parseFloat(topPct).toFixed(1)}%`;
+});
+
+window.addEventListener('mouseup', e => {
+  if (_dragIdx === -1) return;
+  const dot = markerCanvas.querySelector(`.m-dot[data-idx="${_dragIdx}"]`);
+  if (dot) dot.classList.remove('dragging');
+  document.body.style.cursor = '';
+  if (!_dragMoved) selectMarker(_dragIdx); // treat as click if no movement
+  _dragIdx = -1; _dragMoved = false;
+});
+
+// Placement mode
+btnAddMarker.addEventListener('click', () => {
+  placingMarker = !placingMarker;
+  btnAddMarker.classList.toggle('placing', placingMarker);
+  btnAddMarker.textContent = placingMarker ? '✕ Cancel Placement' : '＋ Place Marker';
+  markerCanvas.classList.toggle('idle', !placingMarker);
+});
+
+markerCanvas.addEventListener('click', e => {
+  if (!placingMarker) return;
+  if (e.target.classList.contains('m-dot') || e.target.classList.contains('m-label-tip')) return;
+
+  const mediaEl = markerCanvas.querySelector('img,video');
+  if (!mediaEl) return;
+  const rect = mediaEl.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const leftPct = ((x / rect.width)  * 100).toFixed(2) + '%';
+  const topPct  = ((y / rect.height) * 100).toFixed(2) + '%';
+
+  tempMarkers.push({ top: topPct, left: leftPct, label: { en: '', ar: '' } });
+  renderMarkerDots();
+  renderMarkerList();
+
+  const newIdx = tempMarkers.length - 1;
+  const row = markerListEl.children[newIdx];
+  if (row) {
+    markerListSection.scrollTop = markerListSection.scrollHeight;
+    setTimeout(() => { const inp = row.querySelector('input'); if (inp) inp.focus(); }, 50);
+  }
+  selectMarker(newIdx);
+  placingMarker = false;
+  btnAddMarker.classList.remove('placing');
+  btnAddMarker.textContent = '＋ Place Marker';
+  markerCanvas.classList.add('idle');
+});
+
+// ─── Crop & Resize System ─────────────────────────
+const cropModal   = document.getElementById('crop-modal');
+const cropImgEl   = document.getElementById('crop-img-el');
+const cropFrame   = document.getElementById('crop-frame');
+const cropRectEl  = document.getElementById('crop-rect');
+const cropOutW    = document.getElementById('crop-out-w');
+const cropOutH    = document.getElementById('crop-out-h');
+const chkLockRatio= document.getElementById('chk-lock-ratio');
+const cropInfo    = document.getElementById('crop-info');
+
+let _cRx=0,_cRy=0,_cRw=0,_cRh=0; // crop rect in display px (relative to image)
+let _cImgW=0,_cImgH=0;             // image display size
+let _cNatW=0,_cNatH=0;             // image natural size
+let _cDrag=null,_cDragStart=null;  // dragging state
+let _cMinSize=20;                  // min crop px
+
+function openCropModal() {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    _cNatW = img.naturalWidth;
+    _cNatH = img.naturalHeight;
+
+    // Calculate display size (fit in workspace)
+    const maxW = window.innerWidth  * 0.88;
+    const maxH = window.innerHeight * 0.70;
+    const scale = Math.min(1, maxW / _cNatW, maxH / _cNatH);
+    _cImgW = Math.round(_cNatW * scale);
+    _cImgH = Math.round(_cNatH * scale);
+
+    cropImgEl.style.width  = _cImgW + 'px';
+    cropImgEl.style.height = _cImgH + 'px';
+    cropImgEl.src = img.src;
+
+    // Default crop = full image with 10% inset
+    const inset = Math.round(Math.min(_cImgW, _cImgH) * 0.1);
+    _cRx = inset; _cRy = inset;
+    _cRw = _cImgW - inset * 2;
+    _cRh = _cImgH - inset * 2;
+    applyRectCSS();
+    updateCropInfo();
+    cropModal.classList.add('open');
+  };
+  img.src = currentImgUrl;
+}
+
+function applyRectCSS() {
+  cropRectEl.style.left   = _cRx + 'px';
+  cropRectEl.style.top    = _cRy + 'px';
+  cropRectEl.style.width  = _cRw + 'px';
+  cropRectEl.style.height = _cRh + 'px';
+}
+
+function updateCropInfo() {
+  // Convert display px back to natural px
+  const scaleX = _cNatW / _cImgW;
+  const scaleY = _cNatH / _cImgH;
+  const natX = Math.round(_cRx * scaleX);
+  const natY = Math.round(_cRy * scaleY);
+  const natW = Math.round(_cRw * scaleX);
+  const natH = Math.round(_cRh * scaleY);
+  cropInfo.textContent = `Selection: ${natW} × ${natH} px (at ${natX}, ${natY})`;
+  // Sync output size inputs
+  cropOutW.value = natW;
+  cropOutH.value = natH;
+}
+
+// Crop rect drag + resize
+cropRectEl.addEventListener('mousedown', e => {
+  if (e.target.classList.contains('crop-handle')) return; // handled separately
+  e.preventDefault();
+  _cDrag = 'move';
+  _cDragStart = { mx: e.clientX, my: e.clientY, rx: _cRx, ry: _cRy, rw: _cRw, rh: _cRh };
+});
+
+document.querySelectorAll('.crop-handle').forEach(h => {
+  h.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation();
+    _cDrag = e.currentTarget.dataset.dir;
+    _cDragStart = { mx: e.clientX, my: e.clientY, rx: _cRx, ry: _cRy, rw: _cRw, rh: _cRh };
+  });
+});
+
+window.addEventListener('mousemove', e => {
+  if (!_cDrag || !_cDragStart) return;
+  const dx = e.clientX - _cDragStart.mx;
+  const dy = e.clientY - _cDragStart.my;
+  const { rx, ry, rw, rh } = _cDragStart;
+
+  let nx=rx, ny=ry, nw=rw, nh=rh;
+
+  if (_cDrag === 'move') {
+    nx = Math.max(0, Math.min(_cImgW - nw, rx + dx));
+    ny = Math.max(0, Math.min(_cImgH - nh, ry + dy));
+  } else {
+    // Resize from handle
+    if (_cDrag.includes('e')) { nw = Math.max(_cMinSize, rw + dx); }
+    if (_cDrag.includes('s')) { nh = Math.max(_cMinSize, rh + dy); }
+    if (_cDrag.includes('w')) { nx = rx + dx; nw = Math.max(_cMinSize, rw - dx); if (nw <= _cMinSize) nx = rx + rw - _cMinSize; }
+    if (_cDrag.includes('n')) { ny = ry + dy; nh = Math.max(_cMinSize, rh - dy); if (nh <= _cMinSize) ny = ry + rh - _cMinSize; }
+    // Clamp to image bounds
+    if (nx < 0) { nw += nx; nx = 0; }
+    if (ny < 0) { nh += ny; ny = 0; }
+    if (nx + nw > _cImgW) nw = _cImgW - nx;
+    if (ny + nh > _cImgH) nh = _cImgH - ny;
+    nw = Math.max(_cMinSize, nw);
+    nh = Math.max(_cMinSize, nh);
+  }
+
+  _cRx=nx; _cRy=ny; _cRw=nw; _cRh=nh;
+  applyRectCSS();
+  updateCropInfo();
+});
+
+window.addEventListener('mouseup', () => { if (_cDrag) { _cDrag=null; _cDragStart=null; } });
+
+// Output dimension inputs — sync with lock ratio
+cropOutW.addEventListener('input', () => {
+  const w = parseInt(cropOutW.value) || 1;
+  if (chkLockRatio.checked && cropOutH.value) {
+    const ratio = _cRh / _cRw;
+    cropOutH.value = Math.round(w * ratio * (_cNatH/_cImgH) / (_cNatW/_cImgW));
+  }
+});
+cropOutH.addEventListener('input', () => {
+  const h = parseInt(cropOutH.value) || 1;
+  if (chkLockRatio.checked && cropOutW.value) {
+    const ratio = _cRw / _cRh;
+    cropOutW.value = Math.round(h * ratio * (_cNatW/_cImgW) / (_cNatH/_cImgH));
+  }
+});
+
+document.getElementById('btn-crop-cancel').addEventListener('click', () => cropModal.classList.remove('open'));
+
+document.getElementById('btn-crop-apply').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-crop-apply');
+  btn.disabled = true; btn.textContent = '⏳ Processing…';
+
+  const scaleX = _cNatW / _cImgW;
+  const scaleY = _cNatH / _cImgH;
+  const sx = Math.round(_cRx * scaleX);
+  const sy = Math.round(_cRy * scaleY);
+  const sw = Math.round(_cRw * scaleX);
+  const sh = Math.round(_cRh * scaleY);
+  const outW = parseInt(cropOutW.value) || sw;
+  const outH = parseInt(cropOutH.value) || sh;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+
+  const srcImg = new Image();
+  srcImg.crossOrigin = 'anonymous';
+  srcImg.onload = async () => {
+    ctx.drawImage(srcImg, sx, sy, sw, sh, 0, 0, outW, outH);
+    canvas.toBlob(async blob => {
+      const file = new File([blob], `crop_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      cropModal.classList.remove('open');
+      const url = await uploadFile(file);
+      if (url) {
+        currentImgUrl = url;
+        renderCurrentMedia();
+        renderMarkerCanvas();
+        toast('Crop applied and uploaded!', 'success');
+      }
+      btn.disabled = false; btn.textContent = 'Apply & Upload';
+    }, 'image/jpeg', 0.92);
+  };
+  srcImg.src = currentImgUrl;
+});
+
+btnOpenCrop.addEventListener('click', openCropModal);
+btnOpenCrop.addEventListener('mouseenter', () => { btnOpenCrop.style.background = 'rgba(0,212,255,0.16)'; });
+btnOpenCrop.addEventListener('mouseleave', () => { btnOpenCrop.style.background = 'rgba(0,212,255,0.08)'; });
+
+btnClearMarkers.addEventListener('click', () => {
+  if (tempMarkers.length === 0) return;
+  confirm2('Clear all markers?', 'This will remove all ' + tempMarkers.length + ' marker(s) from this case.', 'Clear All', () => {
+    tempMarkers = [];
+    renderMarkerDots();
+    renderMarkerList();
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// Save Case
+// ═══════════════════════════════════════════════════
+btnSave.addEventListener('click', async () => {
+  const nameEn = document.getElementById('f-name-en').value.trim();
+  const nameAr = document.getElementById('f-name-ar').value.trim();
+  const descEn = document.getElementById('f-desc-en').value.trim();
+  const descAr = document.getElementById('f-desc-ar').value.trim();
+  const cat    = document.getElementById('f-category').value;
+
+  if (!nameEn || !nameAr) { toast('Both English and Arabic names are required.', 'error'); return; }
+  if (!currentImgUrl)     { toast('Please upload an image or video first.', 'error'); return; }
+
+  btnSave.disabled = true;
+  btnSave.textContent = '⏳ Saving…';
+
+  const specimen = {
+    id:       editingId || ('custom_' + Date.now()),
+    category: cat,
+    name:     { en: nameEn, ar: nameAr },
+    desc:     { en: descEn || nameEn, ar: descAr || nameAr },
+    imgUrl:   currentImgUrl,
+    markers:  tempMarkers
+  };
+
+  if (editingId) {
+    const idx = allSamples.findIndex(s => s.id === editingId);
+    if (idx !== -1) allSamples[idx] = specimen;
+    else allSamples.push(specimen);
+  } else {
+    allSamples.push(specimen);
+    editingId = specimen.id;
+  }
+
+  const ok = await saveToDB();
+  btnSave.disabled = false;
+  btnSave.textContent = '💾 Save to Database';
+
+  if (ok) {
+    toast('Case saved successfully!', 'success');
+    renderSidebar();
+    // Re-highlight in sidebar
+    document.querySelectorAll('.case-item').forEach(el => el.classList.toggle('active', el.dataset.id === editingId));
+    btnDelete.classList.remove('hidden');
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// Delete Case
+// ═══════════════════════════════════════════════════
+btnDelete.addEventListener('click', () => {
+  const s = allSamples.find(s => s.id === editingId);
+  if (!s) return;
+  const isStorageImg = s.imgUrl && s.imgUrl.includes(SUPABASE_URL);
+  confirm2(
+    `Delete "${s.name?.en || 'this case'}"?`,
+    `This will permanently remove the case from the database.${isStorageImg ? ' The uploaded image will also be deleted from storage.' : ''}`,
+    'Delete Case',
+    async () => {
+      const imgUrl = s.imgUrl;
+      allSamples = allSamples.filter(x => x.id !== editingId);
+      const ok = await saveToDB();
+      if (ok) {
+        if (isStorageImg) await tryDeleteStorageFile(imgUrl);
+        toast('Case deleted.', 'success');
+        editingId = null;
+        currentImgUrl = '';
+        tempMarkers = [];
+        editorEmpty.classList.remove('hidden');
+        editorForm.classList.add('hidden');
+        markerPane.classList.add('hidden');
+        renderSidebar();
+      }
+    }
+  );
+});
+
+// ═══════════════════════════════════════════════════
+// Buttons
+// ═══════════════════════════════════════════════════
+btnAddNew.addEventListener('click', openNewCase);
+btnRefresh.addEventListener('click', loadFromDB);
+
+// ═══════════════════════════════════════════════════
+// Status Badge
+// ═══════════════════════════════════════════════════
+function setStatus(type, msg) {
+  const badge = document.getElementById('status-badge');
+  badge.className = `status-badge ${type}`;
+  document.getElementById('status-text').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════
+// Toast
+// ═══════════════════════════════════════════════════
+let _toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type==='success' ? '✓ ' : '✗ ') + msg;
+  el.className = 'show ' + type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════
+// Confirm modal
+// ═══════════════════════════════════════════════════
+let _confirmCallback = null;
+function confirm2(title, msg, okLabel, cb) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('btn-confirm-ok').textContent = okLabel;
+  _confirmCallback = cb;
+  document.getElementById('confirm-modal').classList.add('show');
+}
+document.getElementById('btn-confirm-cancel').addEventListener('click', () => {
+  document.getElementById('confirm-modal').classList.remove('show');
+  _confirmCallback = null;
+});
+document.getElementById('btn-confirm-ok').addEventListener('click', () => {
+  document.getElementById('confirm-modal').classList.remove('show');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+});
+</script>
+</body>
+</html>
