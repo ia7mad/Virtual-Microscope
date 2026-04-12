@@ -129,6 +129,23 @@
             overflow-y: auto;
             order: 2;
             /* Always second (right) */
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        min-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.35s ease,
+                        padding 0.5s ease,
+                        box-shadow 0.5s ease;
+        }
+
+        /* Tour mode — sidebar slides away, eyepiece goes full width */
+        body.tour-active .controls-section {
+            width: 0 !important;
+            min-width: 0 !important;
+            opacity: 0;
+            padding: 0;
+            overflow: hidden;
+            pointer-events: none;
+            border-left: none;
+            box-shadow: none;
         }
 
         .controls-section::-webkit-scrollbar {
@@ -3982,6 +3999,7 @@
             function startTour() {
                 tourActive = true; tourPaused = false; tourStep = 0; tourPhase = 'loading';
                 clearTimeout(_kioskTimer);
+                document.body.classList.add('tour-active');
                 const btnTour = document.getElementById('btn-tour');
                 const bar = document.getElementById('tour-control-bar');
                 if (btnTour) { btnTour.classList.add('active'); document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_exit; }
@@ -3992,6 +4010,7 @@
 
             function stopTour() {
                 tourActive = false; tourPaused = false;
+                document.body.classList.remove('tour-active');
                 _tourClearTimer();
                 if (isIdentifyActive) toggleIdentify();
                 const overlay = document.getElementById('tour-overlay');
