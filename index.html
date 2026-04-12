@@ -129,23 +129,6 @@
             overflow-y: auto;
             order: 2;
             /* Always second (right) */
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        min-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                        opacity 0.35s ease,
-                        padding 0.5s ease,
-                        box-shadow 0.5s ease;
-        }
-
-        /* Tour mode — sidebar slides away, eyepiece goes full width */
-        body.tour-active .controls-section {
-            width: 0 !important;
-            min-width: 0 !important;
-            opacity: 0;
-            padding: 0;
-            overflow: hidden;
-            pointer-events: none;
-            border-left: none;
-            box-shadow: none;
         }
 
         .controls-section::-webkit-scrollbar {
@@ -1576,6 +1559,314 @@
             display: none;
         }
 
+        /* === Dial + Slider combined controls === */
+        .dial-ctrl-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0.5rem 0;
+        }
+
+        .dial-ctrl-row + .dial-ctrl-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            margin-top: 0.2rem;
+        }
+
+        .dial-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .dial-label {
+            font-size: 0.5rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(139, 155, 180, 0.45);
+        }
+
+        /* The rotating knob body */
+        .dial-face {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            cursor: grab;
+            position: relative;
+            user-select: none;
+            touch-action: none;
+            will-change: transform;
+            /* Milled/ridged ring texture */
+            background:
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(255, 255, 255, 0.045) 0deg 3.5deg,
+                    rgba(0, 0, 0, 0.18) 3.5deg 9deg
+                ),
+                radial-gradient(circle at 38% 32%, #2d3f55 0%, #131f2e 55%, #0b1520 100%);
+            border: 1.5px solid rgba(0, 212, 255, 0.2);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                0 0 0 4px rgba(0, 212, 255, 0.07),
+                inset 0 2px 5px rgba(255, 255, 255, 0.07),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+                0 6px 18px rgba(0, 0, 0, 0.7);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .dial-face:hover {
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                0 0 0 4px rgba(0, 212, 255, 0.18),
+                inset 0 2px 5px rgba(255, 255, 255, 0.09),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+                0 6px 22px rgba(0, 0, 0, 0.8);
+        }
+
+        .dial-face.dragging {
+            cursor: grabbing;
+            border-color: rgba(0, 212, 255, 0.6);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                0 0 0 4px rgba(0, 212, 255, 0.28),
+                inset 0 2px 5px rgba(255, 255, 255, 0.09),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+                0 6px 22px rgba(0, 0, 0, 0.8),
+                0 0 18px rgba(0, 212, 255, 0.18);
+        }
+
+        /* Indicator mark — cyan line at "12 o'clock", rotates with the dial */
+        .dial-face::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2.5px;
+            height: 10px;
+            border-radius: 2px;
+            background: var(--medical-cyan);
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.9);
+        }
+
+        /* Center pivot dot */
+        .dial-face::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.45);
+        }
+
+        /* Lamp dial — amber indicator instead of cyan */
+        .dial-face-lamp::before {
+            background: #ffc44d;
+            box-shadow: 0 0 8px rgba(255, 185, 50, 0.9);
+        }
+
+        .dial-face-lamp::after {
+            background: rgba(255, 185, 50, 0.2);
+            border-color: rgba(255, 185, 50, 0.45);
+        }
+
+        .dial-face-lamp:hover {
+            border-color: rgba(255, 185, 50, 0.4);
+        }
+
+        .dial-face-lamp.dragging {
+            border-color: rgba(255, 185, 50, 0.6);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                0 0 0 4px rgba(255, 185, 50, 0.22),
+                inset 0 2px 5px rgba(255, 255, 255, 0.09),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.5),
+                0 6px 22px rgba(0, 0, 0, 0.8),
+                0 0 18px rgba(255, 185, 50, 0.15);
+        }
+
+        /* === Dual concentric focus knobs === */
+        .dual-knob-container {
+            position: relative;
+            width: 76px;
+            height: 76px;
+            flex-shrink: 0;
+        }
+
+        /* Outer coarse ring — wide, heavily ridged, darker */
+        .coarse-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            will-change: transform;
+            background:
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(255, 255, 255, 0.055) 0deg 2.5deg,
+                    rgba(0, 0, 0, 0.25) 2.5deg 7deg
+                ),
+                radial-gradient(circle at 38% 30%, #243040 0%, #0e1a28 60%, #08121d 100%);
+            border: 2px solid rgba(0, 212, 255, 0.18);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.7),
+                0 0 0 4px rgba(0, 212, 255, 0.06),
+                inset 0 3px 6px rgba(255, 255, 255, 0.06),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+                0 8px 24px rgba(0, 0, 0, 0.75);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .coarse-ring:hover {
+            border-color: rgba(0, 212, 255, 0.38);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.7),
+                0 0 0 4px rgba(0, 212, 255, 0.16),
+                inset 0 3px 6px rgba(255, 255, 255, 0.07),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+                0 8px 28px rgba(0, 0, 0, 0.8);
+        }
+
+        .coarse-ring.dragging {
+            cursor: grabbing;
+            border-color: rgba(0, 212, 255, 0.55);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.7),
+                0 0 0 4px rgba(0, 212, 255, 0.26),
+                inset 0 3px 6px rgba(255, 255, 255, 0.08),
+                inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+                0 8px 28px rgba(0, 0, 0, 0.85),
+                0 0 20px rgba(0, 212, 255, 0.16);
+        }
+
+        /* Coarse indicator — wider mark, slightly dimmer */
+        .coarse-ring::before {
+            content: '';
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 11px;
+            border-radius: 2px;
+            background: rgba(0, 212, 255, 0.75);
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+        }
+
+        /* Static wrapper to center the fine knob without affecting its rotation */
+        .fine-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            /* Thin separator gap between coarse ring and fine knob */
+            border-radius: 50%;
+        }
+
+        /* Inner fine knob — smaller, smoother, slightly lighter */
+        .fine-knob {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: grab;
+            pointer-events: all;
+            user-select: none;
+            touch-action: none;
+            will-change: transform;
+            background:
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(255, 255, 255, 0.04) 0deg 5deg,
+                    rgba(0, 0, 0, 0.12) 5deg 14deg
+                ),
+                radial-gradient(circle at 40% 32%, #344a62 0%, #1a2d42 55%, #101e2e 100%);
+            border: 1.5px solid rgba(0, 212, 255, 0.3);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                inset 0 2px 4px rgba(255, 255, 255, 0.09),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.45),
+                0 3px 10px rgba(0, 0, 0, 0.6);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .fine-knob:hover {
+            border-color: rgba(0, 212, 255, 0.55);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.45),
+                0 3px 14px rgba(0, 0, 0, 0.7),
+                0 0 12px rgba(0, 212, 255, 0.14);
+        }
+
+        .fine-knob.dragging {
+            cursor: grabbing;
+            border-color: rgba(0, 212, 255, 0.75);
+            box-shadow:
+                0 0 0 2px rgba(0, 0, 0, 0.65),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.45),
+                0 3px 14px rgba(0, 0, 0, 0.7),
+                0 0 16px rgba(0, 212, 255, 0.28);
+        }
+
+        /* Fine knob indicator — brighter, thinner */
+        .fine-knob::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 7px;
+            border-radius: 1px;
+            background: var(--medical-cyan);
+            box-shadow: 0 0 8px rgba(0, 212, 255, 1);
+        }
+
+        /* Fine knob center dot */
+        .fine-knob::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.25);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+        }
+
+        /* Labels row: Coarse (left) Fine (right) */
+        .dual-knob-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 76px;
+            margin-top: 2px;
+        }
+
+        .dual-knob-labels span {
+            font-size: 0.46rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(139, 155, 180, 0.4);
+        }
+
         /* ====== Eyepiece Drag Hint ====== */
         .eyepiece-hint {
             position: absolute;
@@ -2048,18 +2339,6 @@
                 -webkit-backdrop-filter: none !important;
                 background: rgba(4, 8, 18, 0.97) !important;
             }
-
-            /* ── Tour card hidden (too small), control bar adjusted ── */
-            .tour-overlay {
-                display: none !important;
-            }
-
-            .tour-control-bar {
-                bottom: 4px;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background: rgba(4, 8, 18, 0.97) !important;
-            }
         }
 
         /* Shrink slightly on tablet */
@@ -2408,48 +2687,76 @@
             flex-shrink: 0;
         }
 
+        /* ── Unified tour panel — top-left corner, grows downward ── */
         .tour-overlay {
             position: absolute;
-            bottom: 70px;
-            right: 20px;
-            left: auto;
-            transform: none;
-            width: min(340px, 36%);
+            top: 66px;
+            left: 20px;
+            right: auto;
+            bottom: auto;
+            width: min(320px, calc(100% - 48px));
             z-index: 200;
-            pointer-events: none;
-            animation: tour-card-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+            pointer-events: all;
+            animation: tour-card-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         @keyframes tour-card-in {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateX(-12px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
         .tour-overlay-inner {
-            background: rgba(4, 8, 18, 0.92);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(168, 85, 247, 0.35);
-            border-radius: 14px;
-            padding: 18px 22px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+            background: rgba(4, 8, 18, 0.93);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            border-radius: 16px;
+            padding: 16px 18px 14px;
+            box-shadow:
+                0 12px 48px rgba(0, 0, 0, 0.85),
+                0 0 0 1px rgba(168, 85, 247, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* Single-column layout: badge → title → desc → phase, then controls row */
+        .tour-overlay-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .tour-info {
+            width: 100%;
+        }
+
+        /* Controls row: progress (left) + buttons (right) */
+        .tour-side {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 11px;
+            border-top: 1px solid rgba(168, 85, 247, 0.15);
         }
 
         .tour-overlay-badge {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .tour-overlay-badge span:last-child {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 800;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -2457,26 +2764,27 @@
         }
 
         .tour-overlay-title {
-            font-size: 1.15rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #fff;
-            margin: 0 0 8px;
+            margin: 0 0 6px;
             line-height: 1.3;
         }
 
         .tour-overlay-desc {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             color: #c4cdd8;
-            line-height: 1.65;
-            margin: 0 0 10px;
+            line-height: 1.6;
+            margin: 0;
         }
 
         .tour-overlay-phase {
-            font-size: 0.7rem;
+            font-size: 0.63rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: rgba(168, 85, 247, 0.7);
+            margin-top: 7px;
         }
 
         /* Mobile identify toggle — hidden by default, shown only on phones via media query */
@@ -2484,34 +2792,23 @@
             display: none;
         }
 
+        /* Control bar absorbed into overlay — kept as empty div for JS compat */
         .tour-control-bar {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 201;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            background: rgba(4, 8, 18, 0.9);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            border-radius: 40px;
-            padding: 8px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+            display: none !important;
         }
 
         .tour-progress-wrap {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            min-width: 160px;
+            gap: 5px;
+            flex: 1;
+            min-width: 0;
         }
 
         .tour-progress-text {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 700;
-            color: rgba(200, 200, 220, 0.7);
+            color: rgba(200, 200, 220, 0.65);
             font-family: 'Courier New', monospace;
         }
 
@@ -2533,6 +2830,7 @@
         .tour-btns {
             display: flex;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .tour-ctrl-btn {
@@ -2560,11 +2858,15 @@
             color: #ff6666;
         }
 
+        body.lang-ar .tour-overlay-badge {
+            flex-direction: row-reverse;
+        }
+
         @media (max-width: 1024px) {
             .tour-overlay {
-                bottom: 56px;
-                right: 12px;
-                width: min(300px, 42%);
+                top: 62px;
+                left: 16px;
+                width: min(290px, calc(100% - 32px));
             }
 
             .tour-overlay-title {
@@ -2574,21 +2876,62 @@
             .tour-overlay-desc {
                 font-size: 0.76rem;
             }
+        }
 
-            .tour-control-bar {
-                bottom: 8px;
-                gap: 10px;
-                padding: 6px 12px;
+        @keyframes tour-card-in-mobile {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(12px);
             }
 
-            .tour-progress-wrap {
-                min-width: 120px;
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
             }
         }
 
+        /* Mobile: switch to bottom-center strip */
         @media (max-width: 600px) {
             .tour-overlay {
-                display: none !important;
+                top: auto;
+                right: auto;
+                left: 50%;
+                bottom: 8px;
+                transform: translateX(-50%);
+                width: calc(100% - 16px);
+                animation-name: tour-card-in-mobile;
+            }
+
+            .tour-overlay-body {
+                flex-direction: row;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .tour-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .tour-side {
+                flex-direction: column;
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                border-left: 1px solid rgba(168, 85, 247, 0.15);
+                padding-left: 12px;
+            }
+
+            .tour-overlay-title {
+                font-size: 0.8rem;
+            }
+
+            .tour-overlay-desc {
+                display: none;
+            }
+
+            .tour-progress-wrap {
+                width: 90px;
             }
         }
 
@@ -2737,31 +3080,38 @@
             </div>
         </div>
 
-        <!-- Guided Tour overlay card -->
+        <!-- Guided Tour unified panel (info + controls in one bottom-center card) -->
         <div id="tour-overlay" class="tour-overlay" style="display:none;">
             <div class="tour-overlay-inner">
-                <div class="tour-overlay-badge">
-                    <span>🔬</span>
-                    <span id="tour-overlay-label">Guided Tour</span>
+                <div class="tour-overlay-body">
+                    <!-- Left: specimen info -->
+                    <div class="tour-info">
+                        <div class="tour-overlay-badge">
+                            <span>🔬</span>
+                            <span id="tour-overlay-label">Guided Tour</span>
+                        </div>
+                        <h2 id="tour-overlay-title" class="tour-overlay-title"></h2>
+                        <p id="tour-overlay-desc" class="tour-overlay-desc"></p>
+                        <div class="tour-overlay-phase" id="tour-overlay-phase"></div>
+                    </div>
+                    <!-- Right: progress + controls -->
+                    <div class="tour-side">
+                        <div class="tour-progress-wrap">
+                            <span id="tour-progress-text" class="tour-progress-text"></span>
+                            <div class="tour-progress-track">
+                                <div class="tour-progress-fill" id="tour-progress-fill"></div>
+                            </div>
+                        </div>
+                        <div class="tour-btns">
+                            <button type="button" id="btn-tour-pause" class="tour-ctrl-btn">⏸</button>
+                            <button type="button" id="btn-tour-exit" class="tour-ctrl-btn tour-ctrl-exit">✕</button>
+                        </div>
+                    </div>
                 </div>
-                <h2 id="tour-overlay-title" class="tour-overlay-title"></h2>
-                <p id="tour-overlay-desc" class="tour-overlay-desc"></p>
-                <div class="tour-overlay-phase" id="tour-overlay-phase"></div>
             </div>
         </div>
-        <!-- Guided Tour control bar -->
-        <div id="tour-control-bar" class="tour-control-bar" style="display:none;">
-            <div class="tour-progress-wrap">
-                <span id="tour-progress-text" class="tour-progress-text">Slide 1 of 8</span>
-                <div class="tour-progress-track">
-                    <div class="tour-progress-fill" id="tour-progress-fill"></div>
-                </div>
-            </div>
-            <div class="tour-btns">
-                <button type="button" id="btn-tour-pause" class="tour-ctrl-btn">⏸</button>
-                <button type="button" id="btn-tour-exit" class="tour-ctrl-btn tour-ctrl-exit">✕</button>
-            </div>
-        </div>
+        <!-- Empty div kept for JS compatibility (bar refs are no-ops now) -->
+        <div id="tour-control-bar" style="display:none;"></div>
     </div>
 
     <div class="controls-section">
@@ -2800,16 +3150,29 @@
         </div>
 
         <div class="control-group">
-            <div class="sliders-col">
-                <!-- Focus Slider -->
-                <div class="ctrl-slider-group">
+            <!-- Focus: dual concentric knob (coarse outer + fine inner) + slider -->
+            <div class="dial-ctrl-row">
+                <div class="dial-wrap">
+                    <div class="dual-knob-container">
+                        <!-- Outer coarse ring -->
+                        <div class="coarse-ring" id="coarse-dial"></div>
+                        <!-- Inner fine knob — centering handled by wrapper so transform:rotate works cleanly -->
+                        <div class="fine-center">
+                            <div class="fine-knob" id="fine-dial"></div>
+                        </div>
+                    </div>
+                    <div class="dual-knob-labels">
+                        <span id="lbl-coarse-knob">Coarse</span>
+                        <span id="lbl-fine-knob">Fine</span>
+                    </div>
+                </div>
+                <div class="ctrl-slider-group" style="flex:1;min-width:0;">
                     <div class="ctrl-slider-header">
-                        <span class="ctrl-slider-label" id="lbl-focus">Fine Focus</span>
+                        <span class="ctrl-slider-label" id="lbl-focus">Focus</span>
                         <span class="ctrl-slider-value" id="focus-readout">--</span>
                     </div>
                     <div class="ctrl-slider-wrap">
-                        <input type="range" id="focus-slider" class="ctrl-slider focus-ctrl" min="0" max="100"
-                            value="20">
+                        <input type="range" id="focus-slider" class="ctrl-slider focus-ctrl" min="0" max="100" value="20">
                     </div>
                     <div class="ctrl-slider-ends">
                         <span id="lbl-focus-min">Blurred</span>
@@ -2817,15 +3180,20 @@
                         <span id="lbl-focus-max">Blurred</span>
                     </div>
                 </div>
-                <!-- Lamp Slider -->
-                <div class="ctrl-slider-group">
+            </div>
+            <!-- Lamp: dial + slider -->
+            <div class="dial-ctrl-row">
+                <div class="dial-wrap">
+                    <div class="dial-face dial-face-lamp" id="light-dial"></div>
+                    <span class="dial-label" id="lbl-lamp-dial">Lamp</span>
+                </div>
+                <div class="ctrl-slider-group" style="flex:1;min-width:0;">
                     <div class="ctrl-slider-header">
                         <span class="ctrl-slider-label" id="lbl-lamp">Lamp Brightness</span>
                         <span class="ctrl-slider-value" id="light-readout">100%</span>
                     </div>
                     <div class="ctrl-slider-wrap">
-                        <input type="range" id="light-slider" class="ctrl-slider light-ctrl" min="20" max="200"
-                            value="100">
+                        <input type="range" id="light-slider" class="ctrl-slider light-ctrl" min="20" max="200" value="100">
                     </div>
                     <div class="ctrl-slider-ends">
                         <span>Dim</span>
@@ -2833,7 +3201,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Kept in DOM so RotaryKnob init doesn't crash; immediately hidden -->
+            <!-- Legacy knob divs kept for JS compat -->
             <div id="focus-knob" style="display:none"></div>
             <div id="light-knob" style="display:none"></div>
         </div>
@@ -3187,6 +3555,132 @@
             // ==========================================
             // Rotary Knob Class
             // ==========================================
+            // Dual concentric focus knob — coarse (outer) + fine (inner)
+            // Both share the same focus value. Coarse moves fast, fine moves slow.
+            class DualFocusKnob {
+                constructor({ coarseEl, fineEl, min, max, defaultVal, onUpdate }) {
+                    this.coarseEl = coarseEl;
+                    this.fineEl   = fineEl;
+                    this.min = min;
+                    this.max = max;
+                    this.value = Math.max(min, Math.min(max, defaultVal));
+                    this.onUpdate = onUpdate;
+                    this.coarseRot = 0;
+                    this.fineRot   = 0;
+                    this._dragging = null; // 'coarse' | 'fine' | null
+                    this._lastAngle = 0;
+                    this._initRotations();
+                    this._attachEvents();
+                }
+
+                _pctToRot(pct) { return -135 + pct * 270; }
+
+                _initRotations() {
+                    const pct = (this.value - this.min) / (this.max - this.min);
+                    this.coarseRot = this._pctToRot(pct);
+                    this.fineRot   = this._pctToRot(pct);
+                    this._draw();
+                }
+
+                _draw() {
+                    this.coarseEl.style.transform = `rotate(${this.coarseRot}deg)`;
+                    this.fineEl.style.transform   = `rotate(${this.fineRot}deg)`;
+                }
+
+                setValue(val) {
+                    const prev = this.value;
+                    this.value = Math.max(this.min, Math.min(this.max, val));
+                    const delta = this.value - prev;
+                    // Proportional rotation: full range = 270°
+                    const degPerUnit = 270 / (this.max - this.min);
+                    this.coarseRot += delta * degPerUnit;
+                    this.fineRot   += delta * degPerUnit;
+                    this._draw();
+                }
+
+                _center(el) {
+                    const r = el.getBoundingClientRect();
+                    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+                }
+
+                _angle(el, cx, cy) {
+                    const c = this._center(el);
+                    return Math.atan2(cy - c.y, cx - c.x) * (180 / Math.PI);
+                }
+
+                _startDrag(which, cx, cy) {
+                    this._dragging = which;
+                    const el = which === 'coarse' ? this.coarseEl : this.fineEl;
+                    this._lastAngle = this._angle(el, cx, cy);
+                    el.classList.add('dragging');
+                }
+
+                _moveDrag(cx, cy) {
+                    if (!this._dragging) return;
+                    const el = this._dragging === 'coarse' ? this.coarseEl : this.fineEl;
+                    let delta = this._angle(el, cx, cy) - this._lastAngle;
+                    this._lastAngle = this._angle(el, cx, cy);
+                    if (delta > 180) delta -= 360;
+                    if (delta < -180) delta += 360;
+
+                    // Coarse: large fast steps. Fine: small precise steps.
+                    const sensitivity = this._dragging === 'coarse' ? 2.8 : 0.45;
+                    const range = this.max - this.min;
+                    const change = (delta / 270) * range * sensitivity;
+
+                    this.value = Math.max(this.min, Math.min(this.max, this.value + change));
+
+                    if (this._dragging === 'coarse') {
+                        this.coarseRot += delta * 2.8;
+                        this.fineRot   += delta * 0.4; // sympathetic micro-movement
+                    } else {
+                        this.fineRot   += delta;
+                        this.coarseRot += delta * 0.15; // barely perceptible coarse drift
+                    }
+
+                    this._draw();
+                    this.onUpdate(Math.round(this.value));
+                }
+
+                _endDrag() {
+                    if (this._dragging === 'coarse') this.coarseEl.classList.remove('dragging');
+                    if (this._dragging === 'fine')   this.fineEl.classList.remove('dragging');
+                    this._dragging = null;
+                }
+
+                _attachEvents() {
+                    // Mouse
+                    this.coarseEl.addEventListener('mousedown', e => {
+                        e.preventDefault();
+                        this._startDrag('coarse', e.clientX, e.clientY);
+                    });
+                    this.fineEl.addEventListener('mousedown', e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this._startDrag('fine', e.clientX, e.clientY);
+                    });
+                    window.addEventListener('mousemove', e => this._moveDrag(e.clientX, e.clientY));
+                    window.addEventListener('mouseup',   () => this._endDrag());
+
+                    // Touch
+                    const topts = { passive: false };
+                    this.coarseEl.addEventListener('touchstart', e => {
+                        e.preventDefault();
+                        this._startDrag('coarse', e.touches[0].clientX, e.touches[0].clientY);
+                    }, topts);
+                    this.fineEl.addEventListener('touchstart', e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this._startDrag('fine', e.touches[0].clientX, e.touches[0].clientY);
+                    }, topts);
+                    window.addEventListener('touchmove', e => {
+                        if (this._dragging) this._moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+                    }, { passive: true });
+                    window.addEventListener('touchend',    () => this._endDrag());
+                    window.addEventListener('touchcancel', () => this._endDrag());
+                }
+            }
+
             class RotaryKnob {
                 constructor({ el, min, max, defaultVal, onUpdate }) {
                     this.el = el;
@@ -3985,7 +4479,9 @@
 
                 } else if (tourPhase === 'transitioning') {
                     if (isIdentifyActive) toggleIdentify();
-                    if (overlay) overlay.style.display = 'none';
+                    // Clear text but keep panel visible so controls remain accessible
+                    if (titleEl2) titleEl2.textContent = '';
+                    if (descEl2) descEl2.textContent = '';
                     _tourClearTimer();
                     _tourTimer = setTimeout(() => {
                         tourStep = (tourStep + 1) % samples.length;
@@ -3999,25 +4495,21 @@
             function startTour() {
                 tourActive = true; tourPaused = false; tourStep = 0; tourPhase = 'loading';
                 clearTimeout(_kioskTimer);
-                document.body.classList.add('tour-active');
                 const btnTour = document.getElementById('btn-tour');
-                const bar = document.getElementById('tour-control-bar');
+                const overlay = document.getElementById('tour-overlay');
                 if (btnTour) { btnTour.classList.add('active'); document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_exit; }
-                if (bar) bar.style.display = 'flex';
+                if (overlay) overlay.style.display = 'block'; // show panel immediately so controls are visible
                 _tourUpdateProgress();
                 _tourRunPhase();
             }
 
             function stopTour() {
                 tourActive = false; tourPaused = false;
-                document.body.classList.remove('tour-active');
                 _tourClearTimer();
                 if (isIdentifyActive) toggleIdentify();
                 const overlay = document.getElementById('tour-overlay');
-                const bar = document.getElementById('tour-control-bar');
                 const btnTour = document.getElementById('btn-tour');
                 if (overlay) overlay.style.display = 'none';
-                if (bar) bar.style.display = 'none';
                 if (btnTour) { btnTour.classList.remove('active'); document.getElementById('lbl-btn-tour').textContent = DICT[currentLang].tour_btn_start; }
                 _resetKioskTimer();
             }
@@ -4079,11 +4571,41 @@
                 subscribeToSupabaseChanges();
             });
 
-            // Wire up precision sliders (replaced rotary knobs)
-            focusKnob = null; // updateFilters() reads focusSlider directly when null
-            lightKnob = null;
-            focusSlider.addEventListener('input', () => updateFilters());
-            lightSlider.addEventListener('input', () => updateFilters());
+            // Wire up dials — visual knobs that rotate in sync with sliders
+            const lightDialEl = document.getElementById('light-dial');
+
+            // Focus: dual concentric knob (coarse outer + fine inner)
+            focusKnob = new DualFocusKnob({
+                coarseEl: document.getElementById('coarse-dial'),
+                fineEl:   document.getElementById('fine-dial'),
+                min: 0, max: 100,
+                defaultVal: parseInt(focusSlider.value, 10),
+                onUpdate: (val) => {
+                    focusSlider.value = val;
+                    updateFilters();
+                }
+            });
+
+            // Lamp: single rotary dial
+            lightKnob = new RotaryKnob({
+                el: lightDialEl,
+                min: 20, max: 200,
+                defaultVal: parseInt(lightSlider.value, 10),
+                onUpdate: (val) => {
+                    lightSlider.value = val;
+                    updateFilters();
+                }
+            });
+
+            // Slider → dial sync (dragging the slider rotates the dials)
+            focusSlider.addEventListener('input', () => {
+                focusKnob.setValue(parseInt(focusSlider.value, 10));
+                updateFilters();
+            });
+            lightSlider.addEventListener('input', () => {
+                lightKnob.setValue(parseInt(lightSlider.value, 10));
+                updateFilters();
+            });
 
             updateFilters();
             window.addEventListener('resize', updateMiniMap);
