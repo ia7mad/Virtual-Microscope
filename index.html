@@ -2878,60 +2878,34 @@
             }
         }
 
-        @keyframes tour-card-in-mobile {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(12px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
-        }
-
-        /* Mobile: switch to bottom-center strip */
+        /* Mobile: two-button pill in top-right corner — doesn't block eyepiece */
         @media (max-width: 600px) {
             .tour-overlay {
-                top: auto;
-                right: auto;
-                left: 50%;
-                bottom: 8px;
-                transform: translateX(-50%);
-                width: calc(100% - 16px);
-                animation-name: tour-card-in-mobile;
+                top: 12px;
+                right: 12px;
+                left: auto;
+                bottom: auto;
+                transform: none;
+                width: auto;
+                animation-name: tour-card-in-rtl;
             }
 
-            .tour-overlay-body {
-                flex-direction: row;
-                gap: 12px;
-                align-items: center;
+            .tour-overlay-inner {
+                padding: 6px 8px;
             }
 
-            .tour-info {
-                flex: 1;
-                min-width: 0;
-            }
-
-            .tour-side {
-                flex-direction: column;
-                margin-top: 0;
-                padding-top: 0;
-                border-top: none;
-                border-left: 1px solid rgba(168, 85, 247, 0.15);
-                padding-left: 12px;
-            }
-
-            .tour-overlay-title {
-                font-size: 0.8rem;
-            }
-
-            .tour-overlay-desc {
+            /* Hide everything except the two action buttons */
+            .tour-info,
+            .tour-progress-wrap {
                 display: none;
             }
 
-            .tour-progress-wrap {
-                width: 90px;
+            .tour-side {
+                flex-direction: row;
+                margin-top: 0;
+                padding-top: 0;
+                border-top: none;
+                gap: 8px;
             }
         }
 
