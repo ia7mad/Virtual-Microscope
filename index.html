@@ -347,8 +347,14 @@
                 /* Backdrop blackout */
                 0 0 0 100vw rgba(0, 0, 0, 0.95);
             overflow: hidden;
+            /* Force a true circular clip — overflow:hidden + border-radius
+               can fail on iOS Safari when children use transforms (panning),
+               causing the slide image and markers to leak outside the lens */
+            clip-path: circle(50% at 50% 50%);
+            -webkit-clip-path: circle(50% at 50% 50%);
             position: relative;
             background: #000;
+            isolation: isolate;
             cursor: grab;
             z-index: 1;
         }
