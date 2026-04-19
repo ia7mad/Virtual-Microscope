@@ -2861,10 +2861,50 @@
                 display: none !important;
             }
             #mobile-identify-toggle {
+                display: flex !important;
+                position: absolute;
                 bottom: max(8px, env(safe-area-inset-bottom, 8px));
                 right: max(8px, env(safe-area-inset-right, 8px));
+                z-index: 150;
+                align-items: center;
+                gap: 6px;
+                background: rgba(5, 8, 16, 0.88);
+                border: 1px solid rgba(0, 212, 255, 0.35);
+                border-radius: 18px;
                 padding: 5px 12px 5px 9px;
                 min-height: 34px;
+                cursor: pointer;
+                pointer-events: auto;
+                transition: border-color 0.2s, background 0.2s;
+            }
+            #mobile-identify-toggle.active {
+                background: rgba(0, 212, 255, 0.15);
+                border-color: var(--medical-cyan);
+                box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+            }
+            #mobile-identify-toggle .mobile-id-pip {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: rgba(139, 155, 180, 0.4);
+                transition: background 0.2s;
+                flex-shrink: 0;
+            }
+            #mobile-identify-toggle.active .mobile-id-pip {
+                background: var(--medical-cyan);
+                box-shadow: 0 0 6px var(--medical-cyan);
+            }
+            #mobile-identify-toggle .mobile-id-label {
+                font-size: 0.68rem;
+                font-weight: 700;
+                color: rgba(139, 155, 180, 0.85);
+                font-family: 'Inter', sans-serif;
+                letter-spacing: 0.3px;
+                line-height: 1;
+                transition: color 0.2s;
+            }
+            #mobile-identify-toggle.active .mobile-id-label {
+                color: var(--medical-cyan);
             }
             header h1 {
                 font-size: 1rem;
