@@ -347,15 +347,23 @@
                 /* Backdrop blackout */
                 0 0 0 100vw rgba(0, 0, 0, 0.95);
             overflow: hidden;
-            /* Force a true circular clip — overflow:hidden + border-radius
-               can fail on iOS Safari when children use transforms (panning),
-               causing the slide image and markers to leak outside the lens */
-            clip-path: circle(50% at 50% 50%);
-            -webkit-clip-path: circle(50% at 50% 50%);
             position: relative;
             background: #000;
-            isolation: isolate;
             cursor: grab;
+            z-index: 1;
+        }
+
+        /* Inner clipping layer — keeps the slide image and markers inside the
+           round lens on iOS Safari (where overflow:hidden + border-radius can
+           fail when children use transforms). Sits inside #eyepiece, so the
+           eyepiece's chrome barrel box-shadow stays fully visible. */
+        .eyepiece-clip {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            clip-path: circle(50% at 50% 50%);
+            -webkit-clip-path: circle(50% at 50% 50%);
             z-index: 1;
         }
 
@@ -3615,11 +3623,13 @@
         <div class="microscope-assembly">
             <div class="assembly-ring"></div>
             <div id="eyepiece">
-                <div id="slide-container">
-                    <img id="sample-image" src="" alt="Microscope Sample" draggable="false">
-                    <video id="sample-video" autoplay loop muted playsinline webkit-playsinline
-                        style="display:none;"></video>
-                    <div id="markers-layer"></div>
+                <div class="eyepiece-clip">
+                    <div id="slide-container">
+                        <img id="sample-image" src="" alt="Microscope Sample" draggable="false">
+                        <video id="sample-video" autoplay loop muted playsinline webkit-playsinline
+                            style="display:none;"></video>
+                        <div id="markers-layer"></div>
+                    </div>
                 </div>
                 <div class="turret-shadow"></div>
                 <div class="crosshair crosshair-v"></div>
