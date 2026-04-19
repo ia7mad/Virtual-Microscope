@@ -5303,6 +5303,82 @@
             // Wire up dials — visual knobs that rotate in sync with sliders
             const lightDialEl = document.getElementById('light-dial');
 
+            // ==========================================
+            // Microscope Dial Sound (Web Audio API)
+            // Synthesises a mechanical tick/click entirely in-browser —
+            // no audio files needed.
+            // ==========================================
+            let _audioCtx = null;
+            function _getCtx() {
+                if (!_audioCtx) {
+                    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (_audioCtx.state === 'suspended') _audioCtx.resume();
+                return _audioCtx;
+            }
+
+            function _playDialSound(type) {
+                try {
+                    const ctx = _getCtx();
+                    const now = ctx.currentTime;
+
+                    // Short white-noise burst → bandpass filter → fast decay envelope
+                    const bufLen = Math.ceil(ctx.sampleRate * 0.05);
+                    const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+                    const data = buf.getChannelData(0);
+                    for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buf;
+
+                    const bp = ctx.createBiquadFilter();
+                    bp.type = 'bandpass';
+                    // Focus → higher-pitched crisp click; lamp → warmer lower click
+                    bp.frequency.value = type === 'focus' ? 2400 : 800;
+                    bp.Q.value         = type === 'focus' ? 5    : 2.5;
+
+                    const ng = ctx.createGain();
+                    ng.gain.setValueAtTime(type === 'focus' ? 0.22 : 0.14, now);
+                    ng.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+                    noise.connect(bp);
+                    bp.connect(ng);
+                    ng.connect(ctx.destination);
+                    noise.start(now);
+                    noise.stop(now + 0.05);
+
+                    // Focus click also gets a low mechanical "thud" tone
+                    if (type === 'focus') {
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(130, now);
+                        osc.frequency.exponentialRampToValueAtTime(45, now + 0.03);
+                        const og = ctx.createGain();
+                        og.gain.setValueAtTime(0.28, now);
+                        og.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+                        osc.connect(og);
+                        og.connect(ctx.destination);
+                        osc.start(now);
+                        osc.stop(now + 0.04);
+                    }
+                } catch (e) { /* silently ignore if AudioContext unavailable */ }
+            }
+
+            // Throttle: minimum ms between sounds, and only when value actually changed
+            const _dialSound = {
+                focus: { lastT: 0, lastV: -1 },
+                lamp:  { lastT: 0, lastV: -1 }
+            };
+            function _triggerDialSound(type, rawVal) {
+                const s   = _dialSound[type];
+                const now = Date.now();
+                if (now - s.lastT < 55) return;   // cap at ~18 clicks/sec
+                if (rawVal === s.lastV) return;
+                s.lastT = now;
+                s.lastV = rawVal;
+                _playDialSound(type);
+            }
+
             // Focus: dual concentric knob (coarse outer + fine inner)
             focusKnob = new DualFocusKnob({
                 coarseEl: document.getElementById('coarse-dial'),
@@ -5312,6 +5388,7 @@
                 onUpdate: (val) => {
                     focusSlider.value = val;
                     updateFilters();
+                    _triggerDialSound('focus', val);
                 }
             });
 
@@ -5323,17 +5400,22 @@
                 onUpdate: (val) => {
                     lightSlider.value = val;
                     updateFilters();
+                    _triggerDialSound('lamp', val);
                 }
             });
 
             // Slider → dial sync (dragging the slider rotates the dials)
             focusSlider.addEventListener('input', () => {
-                focusKnob.setValue(parseInt(focusSlider.value, 10));
+                const v = parseInt(focusSlider.value, 10);
+                focusKnob.setValue(v);
                 updateFilters();
+                _triggerDialSound('focus', v);
             });
             lightSlider.addEventListener('input', () => {
-                lightKnob.setValue(parseInt(lightSlider.value, 10));
+                const v = parseInt(lightSlider.value, 10);
+                lightKnob.setValue(v);
                 updateFilters();
+                _triggerDialSound('lamp', v);
             });
 
             updateFilters();
