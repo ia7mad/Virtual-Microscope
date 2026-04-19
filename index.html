@@ -1056,28 +1056,30 @@
 
         @media (max-width: 600px) {
             .viewport-section {
-                height: 44vh;
-                height: 44dvh;
-                min-height: 240px;
+                height: 50vh;
+                height: 50dvh;
+                min-height: 300px;
+                padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 50px));
+                padding-bottom: 64px;
             }
 
             #eyepiece {
-                width: 84vw;
-                height: 84vw;
-                max-width: 420px;
-                max-height: 420px;
-                border-width: 6px;
+                width: 64vw;
+                height: 64vw;
+                max-width: 300px;
+                max-height: 300px;
+                border-width: 5px;
             }
 
             .microscope-assembly {
-                transform: scale(0.9);
+                transform: scale(0.92);
             }
 
             .assembly-ring {
-                top: -44px;
-                left: -44px;
-                right: -44px;
-                bottom: -44px;
+                top: -28px;
+                left: -28px;
+                right: -28px;
+                bottom: -28px;
             }
 
             .controls-section {
@@ -2660,20 +2662,22 @@
                 color: var(--medical-cyan);
             }
 
-            /* ── Push the eyepiece section below the top bar (account for notch) ── */
+            /* ── Push the eyepiece section below the top bar (account for notch)
+                  AND leave room at the bottom for the Explain pill ── */
             .viewport-section {
-                padding-top: calc(38px + env(safe-area-inset-top, 0px));
-                height: calc(48dvh + env(safe-area-inset-top, 0px));
-                min-height: 270px;
+                padding-top: calc(44px + env(safe-area-inset-top, 0px));
+                padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+                height: calc(56dvh + env(safe-area-inset-top, 0px));
+                min-height: 340px;
             }
 
-            /* ── Eyepiece: sized to fit within the padded area ── */
+            /* ── Eyepiece: sized so its full chrome border fits inside the padded area ── */
             #eyepiece {
-                width: 76vw;
-                height: 76vw;
-                max-width: 370px;
-                max-height: 370px;
-                border-width: 6px;
+                width: 62vw;
+                height: 62vw;
+                max-width: 290px;
+                max-height: 290px;
+                border-width: 5px;
             }
 
             /* ── Hide desktop HUD and GPU-heavy effects ── */
@@ -2861,6 +2865,97 @@
             /* Hide the analysis HUD overlay in this cramped layout */
             #analysis-hud {
                 display: none;
+            }
+        }
+
+        /* ====== Tablet landscape (iPad etc.) — side-by-side, clamped eyepiece ====== */
+        @media (min-width: 601px) and (max-width: 1366px) and (orientation: landscape) and (min-height: 600px) and (max-height: 1100px) {
+            body {
+                flex-direction: row;
+                height: 100vh;
+                height: 100dvh;
+                overflow: hidden;
+            }
+            .viewport-section {
+                flex: 1;
+                width: auto;
+                height: 100dvh;
+                min-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                order: 1;
+                background: #000;
+                touch-action: none;
+                overflow: hidden;
+            }
+            /* Clamp eyepiece so it fits BOTH the available width and the viewport height,
+               leaving room for the chrome barrel + assembly ring */
+            #eyepiece {
+                width: min(78vh, calc(100vw - 540px));
+                height: min(78vh, calc(100vw - 540px));
+                max-width: 620px;
+                max-height: 620px;
+                border-width: 6px;
+            }
+            .microscope-assembly {
+                transform: scale(1);
+            }
+            .assembly-ring {
+                top: -34px;
+                left: -34px;
+                right: -34px;
+                bottom: -34px;
+            }
+            .controls-section {
+                width: 420px;
+                min-width: 420px;
+                height: 100dvh;
+                border-top: none;
+                border-left: 1px solid var(--border-color);
+                padding:
+                    max(1rem, env(safe-area-inset-top))
+                    max(1rem, env(safe-area-inset-right))
+                    max(1.2rem, env(safe-area-inset-bottom))
+                    1rem;
+                order: 2;
+                overflow-y: auto;
+            }
+            /* Restore desktop-style lang switch position (top-left, pill) */
+            .lang-switch {
+                position: fixed;
+                top: max(12px, env(safe-area-inset-top, 12px));
+                left: max(12px, env(safe-area-inset-left, 12px));
+                right: auto;
+                width: auto;
+                height: auto;
+                background: rgba(0, 0, 0, 0.7);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                padding: 0;
+                z-index: 200;
+            }
+            .lang-switch button {
+                padding: 6px 12px;
+                min-height: 32px;
+            }
+            /* The compact mobile HUD strip and Explain pill belong on phones, not iPad */
+            #mobile-hud,
+            #mobile-identify-toggle {
+                display: none !important;
+            }
+            #mini-map-container,
+            #scale-bar {
+                display: block;
+            }
+        }
+
+        /* ====== Hide Guided Tour on touch devices (mobile + tablet) ====== */
+        @media (pointer: coarse), (max-width: 1024px) {
+            #btn-tour {
+                display: none !important;
+            }
+            .tour-overlay {
+                display: none !important;
             }
         }
 
