@@ -3247,6 +3247,21 @@
             font-weight: 600;
         }
 
+        /* Round clip wrapper so the turret sweep stays inside the eyepiece on
+           Safari (overflow:hidden + border-radius doesn't clip transformed
+           children there). Lives above the slide but below crosshairs/lens
+           vignette so the sweep reads dramatically across the lens. */
+        .turret-clip {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            overflow: hidden;
+            clip-path: circle(50% at 50% 50%);
+            -webkit-clip-path: circle(50% at 50% 50%);
+            pointer-events: none;
+            z-index: 15;
+        }
+
         /* Immersion: Turret Shadow for Lens Change */
         .turret-shadow {
             position: absolute;
@@ -3777,6 +3792,8 @@
                             style="display:none;"></video>
                         <div id="markers-layer"></div>
                     </div>
+                </div>
+                <div class="turret-clip">
                     <div class="turret-shadow"></div>
                 </div>
                 <div class="crosshair crosshair-v"></div>
