@@ -3367,47 +3367,74 @@
             color: #fff;
         }
 
-        /* ── Credit Badge ── */
+        /* ── Credit Footer ── */
         .credit-badge {
-            position: sticky;
-            bottom: 0;
-            margin-top: auto;
-            padding: 10px 0 6px;
+            /* No sticky — sits naturally at the bottom of the scrollable content */
+            margin-top: 2.5rem;
+            padding: 18px 0 20px;
             display: flex;
-            justify-content: center;
-            background: linear-gradient(to bottom, transparent, var(--dark-bg) 55%);
-        }
-
-        .credit-line {
-            display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 7px;
-            padding: 6px 14px 6px 10px;
-            border-radius: 100px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(0, 212, 255, 0.12);
-            font-size: 11px;
-            color: rgba(180, 200, 220, 0.6);
-            letter-spacing: 0.03em;
+            gap: 10px;
+            border-top: 1px solid rgba(0, 212, 255, 0.1);
+            position: relative;
+            overflow: hidden;
             user-select: none;
-            transition: border-color 0.3s, color 0.3s;
         }
 
-        .credit-line:hover {
-            border-color: rgba(0, 212, 255, 0.35);
-            color: rgba(200, 225, 240, 0.85);
+        /* Subtle cyan glow line at top edge */
+        .credit-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(0, 212, 255, 0.45) 30%,
+                rgba(0, 212, 255, 0.45) 70%,
+                transparent);
+            filter: blur(0.5px);
         }
 
-        .credit-line strong {
-            color: rgba(0, 212, 255, 0.8);
+        .credit-label {
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: rgba(0, 212, 255, 0.4);
+            font-family: 'Courier New', monospace;
+        }
+
+        .credit-names {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .credit-name {
+            font-size: 0.78rem;
             font-weight: 600;
+            color: rgba(220, 235, 248, 0.75);
+            letter-spacing: 0.02em;
         }
 
-        .credit-icon {
-            width: 14px;
-            height: 14px;
-            color: rgba(0, 212, 255, 0.55);
+        .credit-sep {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(0, 212, 255, 0.35);
             flex-shrink: 0;
+        }
+
+        .credit-year {
+            font-size: 0.6rem;
+            color: rgba(139, 155, 180, 0.35);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1.5px;
         }
 
         /* ── Unified tour panel — top-left corner, grows downward ── */
@@ -3634,10 +3661,12 @@
 
         @media (max-width: 1024px) {
             .credit-badge {
-                position: static;
-                margin-top: 10px;
-                padding: 6px 0 12px;
-                background: none;
+                margin-top: 1.5rem;
+                padding: 14px 0 24px;
+                gap: 8px;
+            }
+            .credit-name {
+                font-size: 0.72rem;
             }
         }
     </style>
@@ -3971,16 +4000,15 @@
         </div>
 
         <div class="credit-badge">
-            <span class="credit-line">
-                <svg class="credit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path
-                        d="M9.75 3.5h4.5M12 3.5v3M9 6.5c-2.5 0-4 1.5-4 3.5 0 1.5.75 2.8 2 3.5L8 20h8l1-6.5c1.25-.7 2-2 2-3.5 0-2-1.5-3.5-4-3.5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                    <line x1="7" y1="20" x2="17" y2="20" stroke-linecap="round" />
-                    <line x1="8" y1="17" x2="16" y2="17" stroke-linecap="round" stroke-dasharray="2 2" />
-                </svg>
-                <span>Created by <strong>Ahmed & Hussin & Mohammed</strong></span>
-            </span>
+            <div class="credit-label">Created by</div>
+            <div class="credit-names">
+                <span class="credit-name">Ahmed</span>
+                <span class="credit-sep"></span>
+                <span class="credit-name">Hussin</span>
+                <span class="credit-sep"></span>
+                <span class="credit-name">Mohammed</span>
+            </div>
+            <div class="credit-year">Virtual Microscope · 2026</div>
         </div>
 
         <!-- Hidden in showcase: Raw technical metrics -->
