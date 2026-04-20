@@ -4310,7 +4310,12 @@
             let isDragging = false;
             let startMouseX = 0, startMouseY = 0;
             let translateX = 0, translateY = 0;
-            let currentMagnification = 0.25;
+            // Mobile eyepieces are ~half the size of desktop, so the same data-zoom
+            // values look ~2× too magnified. Apply a viewport-aware multiplier so
+            // 10x reads as a true low-power view on phones.
+            const getZoomFactor = () => (window.innerWidth <= 768 ? 0.55 : 1);
+            const resolveMag = (raw) => raw * getZoomFactor();
+            let currentMagnification = resolveMag(0.25);
             let currentSample = samples[0];
             let isIdentifyActive = false;
             let distanceFocus = 0;
@@ -5088,7 +5093,7 @@
                     zoomBtns.forEach(b => b.classList.remove('active'));
                     target.classList.add('active');
 
-                    currentMagnification = parseFloat(target.dataset.zoom);
+                    currentMagnification = resolveMag(parseFloat(target.dataset.zoom));
                     scaleBarText.textContent = target.dataset.scale;
                     scaleBarBar.style.width = target.dataset.bar;
 
@@ -5474,6 +5479,16 @@
 
             updateFilters();
             window.addEventListener('resize', updateMiniMap);
+
+            // Re-resolve magnification when crossing the mobile/desktop breakpoint
+            // (e.g. rotating a phone) so the active lens still matches its true field of view.
+            window.addEventListener('resize', () => {
+                const activeBtn = document.querySelector('.lens-btn.active');
+                if (!activeBtn) return;
+                currentMagnification = resolveMag(parseFloat(activeBtn.dataset.zoom));
+                clampPan();
+                applyTransform();
+            });
 
             // ==========================================
             // Eyepiece drag hint — dismiss on first pan
