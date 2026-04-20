@@ -3931,6 +3931,24 @@
         </div>
 
         <div class="control-group">
+            <label id="lbl-lenses">Microscope Objective Lenses</label>
+            <div class="objective-lenses">
+                <button type="button" id="btn-10x" class="lens-btn lens-10x active" data-zoom="0.25" data-scale="100 µm"
+                    data-bar="80px">
+                    10x <span class="lens-label lbl-pow-low">Low Power</span>
+                </button>
+                <button type="button" id="btn-40x" class="lens-btn lens-40x" data-zoom="0.7" data-scale="25 µm"
+                    data-bar="150px">
+                    40x <span class="lens-label lbl-pow-high">High Power</span>
+                </button>
+                <button type="button" id="btn-100x" class="lens-btn lens-100x" data-zoom="1.8" data-scale="10 µm"
+                    data-bar="250px">
+                    100x <span class="lens-label lbl-pow-oil">Oil Immersion</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="control-group">
             <!-- Focus: dual concentric knob (coarse outer + fine inner) + slider -->
             <div class="dial-ctrl-row">
                 <div class="dial-wrap">
@@ -3985,24 +4003,6 @@
             <!-- Legacy knob divs kept for JS compat -->
             <div id="focus-knob" style="display:none"></div>
             <div id="light-knob" style="display:none"></div>
-        </div>
-
-        <div class="control-group">
-            <label id="lbl-lenses">Microscope Objective Lenses</label>
-            <div class="objective-lenses">
-                <button type="button" id="btn-10x" class="lens-btn lens-10x active" data-zoom="0.25" data-scale="100 µm"
-                    data-bar="80px">
-                    10x <span class="lens-label lbl-pow-low">Low Power</span>
-                </button>
-                <button type="button" id="btn-40x" class="lens-btn lens-40x" data-zoom="0.7" data-scale="25 µm"
-                    data-bar="150px">
-                    40x <span class="lens-label lbl-pow-high">High Power</span>
-                </button>
-                <button type="button" id="btn-100x" class="lens-btn lens-100x" data-zoom="1.8" data-scale="10 µm"
-                    data-bar="250px">
-                    100x <span class="lens-label lbl-pow-oil">Oil Immersion</span>
-                </button>
-            </div>
         </div>
 
         <div class="control-group">
