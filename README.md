@@ -21,7 +21,7 @@
 
 ## What it is
 
-A faithful simulation of a clinical light microscope, optimised for teaching. Built for the **Al Baha Health Cluster — National Laboratory Day 2026** showcase.
+A faithful simulation of a clinical light microscope, optimised for teaching.
 
 Hand a phone, tablet, or laptop to anyone — they immediately know what to do: a round eyepiece with a real specimen image inside, three objective lenses to switch between, coarse + fine focus dials, a lamp brightness knob, drag-to-pan, and a one-tap **Identify Structures** mode that labels what they're looking at.
 
@@ -95,6 +95,6 @@ The whole UI is bilingual (English + Arabic). Language is toggled via `body.lang
 
 ## Credits
 
-Created by **Ahmed · Hussin · Mohammed** for the Al Baha Health Cluster, National Laboratory Day 2026.
+Created by **Ahmed · Hussin · Mohammed**.
 
 [![WhatsApp](https://img.shields.io/badge/Contact-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/966550905017)

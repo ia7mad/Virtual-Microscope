@@ -1,6 +1,6 @@
 # Virtual Microscope
 
-An interactive, browser-based laboratory microscope simulator built for medical and biology education. Designed for the **Al Baha Health Cluster — National Laboratory Day** showcase, deployed at **[virtual-microscope.online](https://virtual-microscope.online)**.
+An interactive, browser-based laboratory microscope simulator built for medical and biology education. Deployed at **[virtual-microscope.online](https://virtual-microscope.online)**.
 
 The whole experience runs in a single HTML file with no build step: open it in any modern browser (desktop, tablet, or phone) and you have a working microscope.
 
@@ -229,6 +229,6 @@ Other accessibility details:
 
 ## Credits
 
-Created by **Ahmed · Hussin · Mohammed** for the Al Baha Health Cluster, National Laboratory Day 2026.
+Created by **Ahmed · Hussin · Mohammed**.
 
 Contact the team: [WhatsApp +966 55 090 5017](https://wa.me/966550905017).
