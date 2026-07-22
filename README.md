@@ -4,12 +4,12 @@
 
 ### An interactive, browser-based laboratory microscope simulator for medical and biology education
 
-[![Live Site](https://img.shields.io/badge/live-virtual--microscope.online-00d4ff?style=for-the-badge)](https://virtual-microscope.online)
+[![Live Site](https://img.shields.io/badge/live-GitHub%20Pages-00d4ff?style=for-the-badge)](https://ia7mad.github.io/Virtual-Microscope/)
 [![GitHub Pages](https://img.shields.io/badge/hosted%20on-GitHub%20Pages-181717?style=for-the-badge&logo=github)](https://github.com/ia7mad/Virtual-Microscope)
 [![Bilingual](https://img.shields.io/badge/i18n-English%20%2F%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9-success?style=for-the-badge)](#internationalization)
 [![No Build](https://img.shields.io/badge/dependencies-zero-brightgreen?style=for-the-badge)](#tech-stack)
 
-**[Open the live demo &rarr;](https://virtual-microscope.online)**
+**[Open the live demo &rarr;](https://ia7mad.github.io/Virtual-Microscope/)**
 
 <br>
 
@@ -55,7 +55,7 @@ Specimens are stored in **Supabase Storage** and fetched at load time, with the 
 - **Vanilla HTML / CSS / JavaScript** — no framework, no bundler.
 - **Web Audio API** — synthesised dial-click and lens-change sounds.
 - **Supabase** — live specimen list + admin curator panel.
-- **GitHub Pages** — static hosting on `virtual-microscope.online` via the [CNAME](CNAME) file.
+- **GitHub Pages** — static hosting at `ia7mad.github.io/Virtual-Microscope`.
 
 The whole runtime is a single ~5 700-line [index.html](index.html). Keeping it monolithic is deliberate: the showcase laptop must be able to open the file with zero dependencies.
 
@@ -77,7 +77,6 @@ Virtual-Microscope/
 ├── admin.html        Curator panel for editing specimens
 ├── PROJECT.md        Full technical documentation
 ├── README.md         This file
-├── CNAME             virtual-microscope.online
 ├── gen_qr.py         Generates the showcase QR-code SVG
 ├── preview.svg       Social-share preview (used as hero above)
 ├── qr-showcase.svg   QR code for the showcase poster

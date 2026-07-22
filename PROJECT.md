@@ -1,6 +1,6 @@
 # Virtual Microscope
 
-An interactive, browser-based laboratory microscope simulator built for medical and biology education. Deployed at **[virtual-microscope.online](https://virtual-microscope.online)**.
+An interactive, browser-based laboratory microscope simulator built for medical and biology education. Deployed at **[ia7mad.github.io/Virtual-Microscope](https://ia7mad.github.io/Virtual-Microscope/)**.
 
 The whole experience runs in a single HTML file with no build step: open it in any modern browser (desktop, tablet, or phone) and you have a working microscope.
 
@@ -32,9 +32,9 @@ It is single-purpose by design: no logins, no progress tracking, no quizzes — 
 
 ## Live demo & repository
 
-- **Production:** [https://virtual-microscope.online](https://virtual-microscope.online)
+- **Production:** [https://ia7mad.github.io/Virtual-Microscope/](https://ia7mad.github.io/Virtual-Microscope/)
 - **Repository:** [https://github.com/ia7mad/Virtual-Microscope](https://github.com/ia7mad/Virtual-Microscope)
-- **Deployment:** GitHub Pages on the `master` branch, served from a custom domain via the [CNAME](CNAME) file.
+- **Deployment:** GitHub Pages on the `master` branch, served from the default `github.io` domain.
 
 ## Feature tour
 
@@ -146,7 +146,6 @@ Key implementation choices that show up across the file:
 Virtual-Microscope-master/
 ├── index.html        Main app (~5 700 lines: HTML + CSS + JS)
 ├── admin.html        Curator panel for editing specimens (~1 500 lines)
-├── CNAME             virtual-microscope.online
 ├── gen_qr.py         Generates the showcase QR-code SVG
 ├── preview.svg       Social-share preview
 ├── qr-showcase.svg   QR code for the showcase poster
@@ -194,7 +193,7 @@ Writes go directly to Supabase (`microscope-media` bucket + a `specimens` table)
 
 - Push to `master` on [github.com/ia7mad/Virtual-Microscope](https://github.com/ia7mad/Virtual-Microscope).
 - GitHub Pages serves the repository root.
-- The [CNAME](CNAME) file binds the site to `virtual-microscope.online`.
+- No CNAME file: the site is served from the default `github.io` domain. To attach a custom domain later, add a `CNAME` file containing the bare hostname and set the same value in Settings → Pages.
 
 Deploy = `git push origin master`. There is no CI step.
 
