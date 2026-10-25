@@ -30,6 +30,9 @@ test('all eight default slides use existing local images', () => {
     for (const image of defaults) {
         assert.ok(image.startsWith('assets/'), image);
         assert.ok(fs.existsSync(path.join(__dirname, '..', image)), image);
+        assert.ok(image.endsWith('.jpg'), image);
+        const bytes = fs.readFileSync(path.join(__dirname, '..', image));
+        assert.equal(bytes.readUInt16BE(0), 0xffd8, 'JPEG signature must match extension');
     }
     assert.ok(!/<script[^>]+src=/.test(html), 'No parser-blocking SDK dependency');
     new vm.Script(script);
@@ -38,13 +41,13 @@ test('all eight default slides use existing local images', () => {
 test('old cloud URLs migrate to the exact bundled images, including clinical cases', () => {
     const { media } = harness();
     const images = fs.readdirSync(path.join(__dirname, '../assets')).filter(p => p.endsWith('.png'));
-    images.push(...fs.readdirSync(path.join(__dirname, '../assets/cases')).map(p => 'cases/' + p));
+    images.push(...fs.readdirSync(path.join(__dirname, '../assets/cases')).filter(p => p.endsWith('.png')).map(p => 'cases/' + p));
     assert.equal(images.length, 13);
     for (const image of images) {
-        assert.equal(media.localUrl(legacy + image + '?t=123#preview'), 'assets/' + image);
+        assert.equal(media.localUrl(legacy + image + '?t=123#preview'), 'assets/' + image.replace(/\.png$/, '.jpg'));
     }
-    assert.equal(media.localUrl('assets/blood_smear.png'), 'assets/blood_smear.png');
-    assert.equal(harness('file:///demo/index.html').media.localUrl(legacy + images[0]), 'assets/' + images[0]);
+    assert.equal(media.localUrl('assets/blood_smear.png'), 'assets/blood_smear.jpg');
+    assert.equal(harness('file:///demo/index.html').media.localUrl(legacy + images[0]), 'assets/' + images[0].replace(/\.png$/, '.jpg'));
 });
 
 test('custom uploads and unrelated specimens keep their identity', () => {
@@ -62,7 +65,7 @@ test('legacy cache metadata is retained; malformed rows cannot break boot', () =
         { id: 'empty', imgUrl: '' }];
     const normalized = media.normalizeSamples(cache);
     assert.equal(normalized.length, 1);
-    assert.equal(normalized[0].imgUrl, 'assets/blood_smear.png');
+    assert.equal(normalized[0].imgUrl, 'assets/blood_smear.jpg');
     assert.equal(normalized[0].name.en, 'Blood');
     assert.equal(normalized[0].notes, 'keep me');
     assert.equal(normalized[0].markers.length, 1);
@@ -76,7 +79,7 @@ test('successful image load clears its deadline', () => {
     const img = { naturalWidth: 1024 };
     let ready = 0;
     h.media.loadImage(img, legacy + 'blood_smear.png', { ready: () => ready++ });
-    assert.equal(img.src, 'assets/blood_smear.png');
+    assert.equal(img.src, 'assets/blood_smear.jpg');
     img.onload();
     assert.equal(ready, 1);
     assert.equal(h.timers.size, 0);
@@ -88,7 +91,7 @@ test('transient failure retries once with cache bypass, then reports failure', (
     let failures = 0;
     h.media.loadImage(img, 'assets/blood_smear.png', { failed: () => failures++ });
     img.onerror();
-    assert.match(img.src, /\/Virtual-Microscope\/assets\/blood_smear.png\?_microscope_retry=/);
+    assert.match(img.src, /\/Virtual-Microscope\/assets\/blood_smear.jpg\?_microscope_retry=/);
     img.onerror();
     assert.equal(failures, 1);
     assert.equal(h.timers.size, 0);

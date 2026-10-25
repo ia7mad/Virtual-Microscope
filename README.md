@@ -80,7 +80,7 @@ Virtual-Microscope/
 ├── gen_qr.py         Generates the showcase QR-code SVG
 ├── preview.svg       Social-share preview (used as hero above)
 ├── qr-showcase.svg   QR code for the showcase poster
-└── assets/           Specimen images (PNG)
+└── assets/           Specimen images (JPEG; legacy .png aliases retained)
     └── cases/        Extra clinical cases
 ```
 
@@ -116,3 +116,5 @@ GitHub Actions runs the same checks on pushes and pull requests. They cover bund
 ### Backend availability
 
 On 2026-10-25, DNS queries for the configured project `ddaxqnhubrctawppwwzc.supabase.co` and the former custom domain `virtual-microscope.online` returned NXDOMAIN. Use **https://ia7mad.github.io/Virtual-Microscope/** for the public app. Restoring curator access and media that exist only in cloud storage requires restoring the original Supabase project (or migrating its data and uploads to a working backend). This frontend repair does not recreate unavailable cloud data.
+
+Bundled images are JPEG files and now use `.jpg` URLs so their HTTP content type matches their bytes. The original `.png` paths remain available for older direct links, and the app migrates cached paths to `.jpg`.

@@ -4126,7 +4126,13 @@
                     if (url.hostname === 'ddaxqnhubrctawppwwzc.supabase.co' &&
                         url.pathname.startsWith(prefix)) {
                         const path = decodeURIComponent(url.pathname.slice(prefix.length));
-                        if (bundled.has(path)) return 'assets/' + path;
+                        if (bundled.has(path)) return 'assets/' + path.replace(/\.png$/, '.jpg');
+                    }
+                    const assetRoot = new URL('assets/', document.baseURI);
+                    if (url.protocol === assetRoot.protocol && url.host === assetRoot.host &&
+                        url.pathname.startsWith(assetRoot.pathname)) {
+                        const path = decodeURIComponent(url.pathname.slice(assetRoot.pathname.length));
+                        if (bundled.has(path)) return 'assets/' + path.replace(/\.png$/, '.jpg');
                     }
                 } catch (_) { /* retain the original URL for normal error handling */ }
                 return value;
@@ -4300,7 +4306,7 @@
                         en: 'A standard human blood sample. You can see many red blood cells that carry oxygen throughout the body, a few white blood cells that fight diseases, and tiny platelets that stop bleeding.',
                         ar: 'هذه عينة من دم الإنسان الطبيعي. تشاهد هنا خلايا الدم الحمراء التي تنقل الأكسجين لجميع أنحاء الجسم، وخلايا الدم البيضاء التي تدافع عن الجسم ضد الأمراض، والصفائح الدموية الصغيرة التي تساعد على وقف النزيف.'
                     },
-                    imgUrl: 'assets/blood_smear.png',
+                    imgUrl: 'assets/blood_smear.jpg',
                     markers: [
                         { top: '54.10%', left: '48.33%', label: { en: 'red blood cell', ar: 'خلية دم حمراء' } }
                     ]
@@ -4312,7 +4318,7 @@
                         en: 'A blood sample from a patient with Malaria. Notice the tiny purple rings inside the red blood cells — those are the living malaria parasites feeding inside the cells.',
                         ar: 'عينة دم مأخوذة من مريض مصاب بالملاريا. لاحظ الحلقات الأرجوانية الصغيرة داخل خلايا الدم الحمراء — هذه هي طفيليات الملاريا التي تعيش وتتغذى داخل الخلايا وتسبب المرض.'
                     },
-                    imgUrl: 'assets/malaria_smear.png',
+                    imgUrl: 'assets/malaria_smear.jpg',
                     markers: [
                         { top: '50.57%', left: '37.25%', label: { en: 'Malaria Parasite', ar: 'طفيلي الملاريا' } },
                         { top: '62.28%', left: '55.75%', label: { en: 'Healthy red blood cell', ar: 'خلية دم حمراء سليمة' } }
@@ -4325,7 +4331,7 @@
                         en: 'Cells from the tip of an onion root. These cells are dividing rapidly — you can see them in the middle of splitting their DNA to create new cells.',
                         ar: 'خلايا من طرف جذر نبات البصل. هذه الخلايا تنقسم بسرعة كبيرة — يمكنك مشاهدتها وهي تنسخ مادتها الوراثية وتنقسم لتكوّن خلايا جديدة.'
                     },
-                    imgUrl: 'assets/onion_mitosis.png',
+                    imgUrl: 'assets/onion_mitosis.jpg',
                     markers: [
                         { top: '49.0%', left: '49.5%', label: { en: 'Dividing Cell', ar: 'خلية تنقسم' } },
                         { top: '51.0%', left: '50.5%', label: { en: 'Splitting DNA', ar: 'انفصال المادة الوراثية' } },
@@ -4339,7 +4345,7 @@
                         en: 'A mix of different bacteria stained to reveal their shapes. Purple round ones and pink rod-shaped ones. This test helps doctors figure out which germ is causing an infection.',
                         ar: 'خليط من أنواع مختلفة من البكتيريا تم صبغها لإظهار أشكالها. البكتيريا الكروية البنفسجية والبكتيريا العصوية الوردية. هذا الفحص يساعد الأطباء في تحديد نوع الجرثومة المسببة للعدوى.'
                     },
-                    imgUrl: 'assets/gram_stain.png',
+                    imgUrl: 'assets/gram_stain.jpg',
                     markers: [
                         { top: '40.76%', left: '35.14%', label: { en: 'Round bacteria (Cocci)', ar: 'بكتيريا كروية' } },
                         { top: '52.18%', left: '33.65%', label: { en: 'Rod bacteria (Bacilli)', ar: 'بكتيريا عصوية' } }
@@ -4352,7 +4358,7 @@
                         en: 'Examination of urine under a microscope. You can see geometric crystals (calcium oxalate), which are common but can sometimes indicate a tendency toward kidney stones.',
                         ar: 'فحص عينة من البول تحت المجهر. تشاهد هنا بلورات هندسية الشكل (أوكسالات الكالسيوم)، وهي شائعة الظهور ولكنها قد تشير أحياناً إلى القابلية لتكون حصوات الكلى.'
                     },
-                    imgUrl: 'assets/urine_crystals.png',
+                    imgUrl: 'assets/urine_crystals.jpg',
                     markers: [
                         { top: '73.01%', left: '48.22%', label: { en: 'Amorphous sediment', ar: 'رواسب غير متبلورة' } },
                         { top: '50.16%', left: '50.52%', label: { en: 'Calcium Oxalate', ar: 'أوكسالات الكالسيوم' } }
@@ -4365,7 +4371,7 @@
                         en: 'A thin slice of liver tissue stained with H&E. The pink areas are the cells\' bodies (cytoplasm) and the purple dots are the control centers (nuclei). Doctors study these to find diseases in organs.',
                         ar: 'شريحة رقيقة جداً من نسيج الكبد مصبوغة بصبغة (H&E). المناطق الوردية هي أجسام الخلايا (السيتوبلازم) والنقاط الأرجوانية هي مراكز التحكم (النواة). يدرس الأطباء هذه الشرائح للكشف عن الأمراض في الأعضاء.'
                     },
-                    imgUrl: 'assets/histopathology.png',
+                    imgUrl: 'assets/histopathology.jpg',
                     markers: [
                         { top: '49.62%', left: '57.69%', label: { en: 'Hepatocyte Nucleus', ar: 'نواة الخلية الكبدية' } },
                         { top: '41.51%', left: '57.78%', label: { en: 'Hepatocyte Cytoplasm', ar: 'سيتوبلازم الخلية الكبدية' } },
@@ -4379,7 +4385,7 @@
                         en: 'A sample from a patient suffering from a parasite infection. The large golden-brown object with the bumpy shell is an Ascaris lumbricoides egg. Finding these in stool confirms a roundworm infection in the intestines.',
                         ar: 'عينة من مريض يعاني من عدوى طفيلية. الجسم الكبير ذو اللون الذهبي المائل للبني والقشرة المتعرجة هو بويضة دودة الإسكارس. العثور عليها في البراز يؤكد وجود هذه الديدان الأسطوانية في الأمعاء.'
                     },
-                    imgUrl: 'assets/stool.png',
+                    imgUrl: 'assets/stool.jpg',
                     markers: [
                         { top: '48.0%', left: '52.0%', label: { en: 'Ascaris Egg', ar: 'بويضة الإسكارس' } },
                         { top: '65.0%', left: '30.0%', label: { en: 'Fecal Debris', ar: 'مخلفات برازية' } }
@@ -4392,7 +4398,7 @@
                         en: 'A healthy human semen sample viewed under phase contrast. You can see numerous spermatozoa (sperm cells), each featuring an oval head that contains DNA and a long whip-like tail used for swimming towards the egg.',
                         ar: 'عينة سائل منوي بشري سليم تحت المجهر. يمكنك رؤية أعداد كبيرة من الحيوانات المنوية، كل منها يحتوي على رأس بيضاوي يحمل المادة الوراثية، وذيل طويل يشبه السوط يستخدم للسباحة نحو البويضة.'
                     },
-                    imgUrl: 'assets/semen.png',
+                    imgUrl: 'assets/semen.jpg',
                     markers: [
                         { top: '55.0%', left: '45.0%', label: { en: 'Spermatozoon (Sperm)', ar: 'حيوان منوي' } },
                         { top: '51.0%', left: '42.0%', label: { en: 'Sperm Head', ar: 'رأس الحيوان المنوي' } },
