@@ -96,7 +96,7 @@ The default slide tray ships with the following cases, each with English + Arabi
 
 Plus extra clinical cases under [assets/cases/](assets/cases/): blood schistocytes, sickle cell, urine calcium oxalate, urine yeast.
 
-Specimen images are stored in **Supabase Storage** (`microscope-media/specimens/...`) and fetched at load time. Local copies live in [assets/](assets/) as a fallback.
+Built-in specimen images load from [assets/](assets/) on the same origin as the app. Known legacy Supabase Storage URLs (`microscope-media/specimens/...`) are migrated to these local files when reading the browser cache or live data. Custom uploads still require a working storage backend.
 
 ## Tech stack
 
@@ -177,7 +177,7 @@ No build step. Either:
    ```
    then open `http://localhost:8000/index.html`.
 
-Specimens load from Supabase by default; if the network is offline, the bundled `samples[]` array in [index.html](index.html#L4176) keeps the app fully usable.
+The bundled `samples[]` array and local images render immediately. Optional Supabase curation sync runs after boot; neither its SDK nor its API can block the built-in library. Invalid or empty cache data falls back to the bundled specimens.
 
 ## Admin panel
 

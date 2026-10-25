@@ -32,8 +32,19 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Tajawal:wght@400;500;700&display=swap"
         rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        #media-status {
+            position: absolute; z-index: 30; top: 45%; left: 12%; right: 12%;
+            padding: 12px; border-radius: 12px; text-align: center;
+            background: rgba(5, 10, 18, .94); color: #e2e8f0; font-size: .85rem;
+        }
+        #media-status[hidden], #media-retry[hidden] { display: none; }
+        #media-retry {
+            display: block; margin: 8px auto 0; padding: 6px 14px;
+            border: 1px solid #00d4ff; border-radius: 8px;
+            color: #00d4ff; background: transparent; cursor: pointer;
+        }
+        .lens-slide img { width: 100%; height: 100%; object-fit: cover; }
         :root {
             --bg-deep: #050505;
             --bg-panel: rgba(15, 18, 24, 0.85);
@@ -3806,7 +3817,11 @@
                 <div class="chromatic-overlay" id="chromatic-overlay"></div>
                 <div class="iris-overlay" id="iris-overlay"></div>
             </div>
-            <div class="condenser-beam"></div>
+                <div id="media-status" role="status" hidden>
+                    <span id="media-status-text"></span>
+                    <button id="media-retry" type="button" hidden>Retry</button>
+                </div>
+                <div class="condenser-beam"></div>
             <div id="mini-map-container">
                 <img id="mini-map-img" src="" alt="Full Slide">
                 <video id="mini-map-vid" autoplay loop muted playsinline webkit-playsinline
@@ -4073,11 +4088,115 @@
         const _SUPABASE_URL = 'https://ddaxqnhubrctawppwwzc.supabase.co';
         const _SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkYXhxbmh1YnJjdGF3cHB3d3pjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0OTg4MTYsImV4cCI6MjA5MTA3NDgxNn0.WMdh50NVygfR73-gzazmjgTjXq7IcBvUpAiCd2BNuR4';
         let _supabase = null;
-        try {
-            _supabase = supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON);
-        } catch (e) {
-            console.warn('[Supabase] Client init failed — offline mode active.', e);
+        function connectOptionalBackend() {
+            return new Promise(resolve => {
+                const script = document.createElement('script');
+                const finish = client => {
+                    clearTimeout(timer);
+                    script.onload = script.onerror = null;
+                    if (!client) script.remove();
+                    resolve(client);
+                };
+                const timer = setTimeout(() => finish(null), 6000);
+                script.async = true;
+                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0';
+                script.onload = () => {
+                    try { finish(window.supabase.createClient(_SUPABASE_URL, _SUPABASE_ANON)); }
+                    catch (_) { finish(null); }
+                };
+                script.onerror = () => finish(null);
+                document.head.appendChild(script);
+            });
         }
+
+        // Media helpers are shared by the stage, thumbnails and welcome lens.
+        const MicroscopeMedia = (() => {
+            const bundled = new Set([
+                'blood_smear.png', 'malaria_smear.png', 'onion_mitosis.png',
+                'gram_stain.png', 'urine_crystals.png', 'histopathology.png',
+                'stool.png', 'semen.png', 'polarized_crystals.png',
+                'cases/blood_schistocytes.png', 'cases/blood_sickle_cell.png',
+                'cases/urine_calcium_oxalate.png', 'cases/urine_yeast.png'
+            ]);
+            function localUrl(value) {
+                if (typeof value !== 'string') return '';
+                try {
+                    const url = new URL(value, document.baseURI);
+                    const prefix = '/storage/v1/object/public/microscope-media/specimens/';
+                    if (url.hostname === 'ddaxqnhubrctawppwwzc.supabase.co' &&
+                        url.pathname.startsWith(prefix)) {
+                        const path = decodeURIComponent(url.pathname.slice(prefix.length));
+                        if (bundled.has(path)) return 'assets/' + path;
+                    }
+                } catch (_) { /* retain the original URL for normal error handling */ }
+                return value;
+            }
+            function normalizeSamples(value) {
+                if (!Array.isArray(value)) return [];
+                return value.filter(sample => sample && typeof sample.id === 'string' &&
+                    sample.id && typeof sample.imgUrl === 'string' && sample.imgUrl.trim())
+                    .map(sample => {
+                        const name = sample.name || {};
+                        const desc = sample.desc || {};
+                        return { ...sample, imgUrl: localUrl(sample.imgUrl),
+                            name: { en: String(name.en || name.ar || sample.id),
+                                    ar: String(name.ar || name.en || sample.id) },
+                            desc: { en: String(desc.en || desc.ar || ''),
+                                    ar: String(desc.ar || desc.en || '') },
+                            markers: (Array.isArray(sample.markers) ? sample.markers : [])
+                                .filter(mark => mark && mark.label && mark.top && mark.left)
+                                .map(mark => ({ ...mark, label: {
+                                    en: String(mark.label.en || mark.label.ar || ''),
+                                    ar: String(mark.label.ar || mark.label.en || '')
+                                }}))
+                        };
+                    });
+            }
+            const pending = new WeakMap();
+            function loadImage(img, value, { ready = () => {}, failed = () => {}, timeout = 15000 } = {}) {
+                if (pending.has(img)) pending.get(img)();
+                let timer;
+                let attempt = 0;
+                let cancelled = false;
+                const source = localUrl(value);
+                const cleanup = () => {
+                    clearTimeout(timer);
+                    img.onload = img.onerror = null;
+                };
+                const cancel = () => { cancelled = true; cleanup(); };
+                pending.set(img, cancel);
+                const fail = () => {
+                    if (cancelled) return;
+                    cleanup();
+                    // Retry a transient failure once, bypassing a cached error response.
+                    if (attempt++ === 0 && !/^(data:|blob:)/i.test(source)) {
+                        try {
+                            const retry = new URL(source, document.baseURI);
+                            if (/^https?:$/.test(retry.protocol)) {
+                                retry.searchParams.set('_microscope_retry', Date.now());
+                                start(retry.href);
+                                return;
+                            }
+                        } catch (_) { }
+                    }
+                    failed();
+                };
+                const start = url => {
+                    img.onload = () => {
+                        if (cancelled) return;
+                        cleanup();
+                        if (img.naturalWidth > 0) ready(img.src);
+                        else fail();
+                    };
+                    img.onerror = fail;
+                    timer = setTimeout(fail, timeout);
+                    img.src = url;
+                };
+                start(source);
+                return cancel;
+            }
+            return { localUrl, normalizeSamples, loadImage };
+        })();
 
         document.addEventListener('DOMContentLoaded', () => {
             // ==========================================
@@ -4181,7 +4300,7 @@
                         en: 'A standard human blood sample. You can see many red blood cells that carry oxygen throughout the body, a few white blood cells that fight diseases, and tiny platelets that stop bleeding.',
                         ar: 'هذه عينة من دم الإنسان الطبيعي. تشاهد هنا خلايا الدم الحمراء التي تنقل الأكسجين لجميع أنحاء الجسم، وخلايا الدم البيضاء التي تدافع عن الجسم ضد الأمراض، والصفائح الدموية الصغيرة التي تساعد على وقف النزيف.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/blood_smear.png',
+                    imgUrl: 'assets/blood_smear.png',
                     markers: [
                         { top: '54.10%', left: '48.33%', label: { en: 'red blood cell', ar: 'خلية دم حمراء' } }
                     ]
@@ -4193,7 +4312,7 @@
                         en: 'A blood sample from a patient with Malaria. Notice the tiny purple rings inside the red blood cells — those are the living malaria parasites feeding inside the cells.',
                         ar: 'عينة دم مأخوذة من مريض مصاب بالملاريا. لاحظ الحلقات الأرجوانية الصغيرة داخل خلايا الدم الحمراء — هذه هي طفيليات الملاريا التي تعيش وتتغذى داخل الخلايا وتسبب المرض.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/malaria_smear.png',
+                    imgUrl: 'assets/malaria_smear.png',
                     markers: [
                         { top: '50.57%', left: '37.25%', label: { en: 'Malaria Parasite', ar: 'طفيلي الملاريا' } },
                         { top: '62.28%', left: '55.75%', label: { en: 'Healthy red blood cell', ar: 'خلية دم حمراء سليمة' } }
@@ -4206,7 +4325,7 @@
                         en: 'Cells from the tip of an onion root. These cells are dividing rapidly — you can see them in the middle of splitting their DNA to create new cells.',
                         ar: 'خلايا من طرف جذر نبات البصل. هذه الخلايا تنقسم بسرعة كبيرة — يمكنك مشاهدتها وهي تنسخ مادتها الوراثية وتنقسم لتكوّن خلايا جديدة.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/onion_mitosis.png',
+                    imgUrl: 'assets/onion_mitosis.png',
                     markers: [
                         { top: '49.0%', left: '49.5%', label: { en: 'Dividing Cell', ar: 'خلية تنقسم' } },
                         { top: '51.0%', left: '50.5%', label: { en: 'Splitting DNA', ar: 'انفصال المادة الوراثية' } },
@@ -4220,7 +4339,7 @@
                         en: 'A mix of different bacteria stained to reveal their shapes. Purple round ones and pink rod-shaped ones. This test helps doctors figure out which germ is causing an infection.',
                         ar: 'خليط من أنواع مختلفة من البكتيريا تم صبغها لإظهار أشكالها. البكتيريا الكروية البنفسجية والبكتيريا العصوية الوردية. هذا الفحص يساعد الأطباء في تحديد نوع الجرثومة المسببة للعدوى.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/gram_stain.png',
+                    imgUrl: 'assets/gram_stain.png',
                     markers: [
                         { top: '40.76%', left: '35.14%', label: { en: 'Round bacteria (Cocci)', ar: 'بكتيريا كروية' } },
                         { top: '52.18%', left: '33.65%', label: { en: 'Rod bacteria (Bacilli)', ar: 'بكتيريا عصوية' } }
@@ -4233,7 +4352,7 @@
                         en: 'Examination of urine under a microscope. You can see geometric crystals (calcium oxalate), which are common but can sometimes indicate a tendency toward kidney stones.',
                         ar: 'فحص عينة من البول تحت المجهر. تشاهد هنا بلورات هندسية الشكل (أوكسالات الكالسيوم)، وهي شائعة الظهور ولكنها قد تشير أحياناً إلى القابلية لتكون حصوات الكلى.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/urine_crystals.png',
+                    imgUrl: 'assets/urine_crystals.png',
                     markers: [
                         { top: '73.01%', left: '48.22%', label: { en: 'Amorphous sediment', ar: 'رواسب غير متبلورة' } },
                         { top: '50.16%', left: '50.52%', label: { en: 'Calcium Oxalate', ar: 'أوكسالات الكالسيوم' } }
@@ -4246,7 +4365,7 @@
                         en: 'A thin slice of liver tissue stained with H&E. The pink areas are the cells\' bodies (cytoplasm) and the purple dots are the control centers (nuclei). Doctors study these to find diseases in organs.',
                         ar: 'شريحة رقيقة جداً من نسيج الكبد مصبوغة بصبغة (H&E). المناطق الوردية هي أجسام الخلايا (السيتوبلازم) والنقاط الأرجوانية هي مراكز التحكم (النواة). يدرس الأطباء هذه الشرائح للكشف عن الأمراض في الأعضاء.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/histopathology.png',
+                    imgUrl: 'assets/histopathology.png',
                     markers: [
                         { top: '49.62%', left: '57.69%', label: { en: 'Hepatocyte Nucleus', ar: 'نواة الخلية الكبدية' } },
                         { top: '41.51%', left: '57.78%', label: { en: 'Hepatocyte Cytoplasm', ar: 'سيتوبلازم الخلية الكبدية' } },
@@ -4260,7 +4379,7 @@
                         en: 'A sample from a patient suffering from a parasite infection. The large golden-brown object with the bumpy shell is an Ascaris lumbricoides egg. Finding these in stool confirms a roundworm infection in the intestines.',
                         ar: 'عينة من مريض يعاني من عدوى طفيلية. الجسم الكبير ذو اللون الذهبي المائل للبني والقشرة المتعرجة هو بويضة دودة الإسكارس. العثور عليها في البراز يؤكد وجود هذه الديدان الأسطوانية في الأمعاء.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/stool.png',
+                    imgUrl: 'assets/stool.png',
                     markers: [
                         { top: '48.0%', left: '52.0%', label: { en: 'Ascaris Egg', ar: 'بويضة الإسكارس' } },
                         { top: '65.0%', left: '30.0%', label: { en: 'Fecal Debris', ar: 'مخلفات برازية' } }
@@ -4273,7 +4392,7 @@
                         en: 'A healthy human semen sample viewed under phase contrast. You can see numerous spermatozoa (sperm cells), each featuring an oval head that contains DNA and a long whip-like tail used for swimming towards the egg.',
                         ar: 'عينة سائل منوي بشري سليم تحت المجهر. يمكنك رؤية أعداد كبيرة من الحيوانات المنوية، كل منها يحتوي على رأس بيضاوي يحمل المادة الوراثية، وذيل طويل يشبه السوط يستخدم للسباحة نحو البويضة.'
                     },
-                    imgUrl: 'https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/specimens/semen.png',
+                    imgUrl: 'assets/semen.png',
                     markers: [
                         { top: '55.0%', left: '45.0%', label: { en: 'Spermatozoon (Sperm)', ar: 'حيوان منوي' } },
                         { top: '51.0%', left: '42.0%', label: { en: 'Sperm Head', ar: 'رأس الحيوان المنوي' } },
@@ -4570,16 +4689,19 @@
             // rebuildUI=true rebuilds the slide tray and reloads the sample.
             async function loadFromSupabase(rebuildUI = true) {
                 if (!_supabase) return false;
+                const controller = new AbortController();
+                const timer = setTimeout(() => controller.abort(), 8000);
                 try {
                     const { data, error } = await _supabase
                         .from('microscope_config')
                         .select('samples')
                         .eq('id', 1)
-                        .single();
+                        .single()
+                        .abortSignal(controller.signal);
                     if (error || !data) return false;
 
-                    const remote = data.samples;
-                    if (!Array.isArray(remote) || remote.length === 0) return false;
+                    const remote = MicroscopeMedia.normalizeSamples(data.samples);
+                    if (remote.length === 0) return true; // Backend is reachable; retain local defaults.
 
                     samples = remote;
                     samples.forEach(s => { if (!s.category) s.category = baseCats[s.id] || 'other'; });
@@ -4601,6 +4723,8 @@
                 } catch (e) {
                     console.warn('[Supabase] Load failed:', e);
                     return false;
+                } finally {
+                    clearTimeout(timer);
                 }
             }
 
@@ -4726,6 +4850,8 @@
                 const mlblLamp = document.getElementById('mlbl-lamp');
                 if (mlblLamp) mlblLamp.textContent = DICT[lang].hud_lamp;
 
+                if (typeof mediaState !== 'undefined') showMediaStatus(mediaState);
+
                 // Tour text
                 const lblBtnTour = document.getElementById('lbl-btn-tour');
                 if (lblBtnTour) lblBtnTour.textContent = tourActive ? DICT[lang].tour_btn_exit : DICT[lang].tour_btn_start;
@@ -4737,11 +4863,33 @@
             btnEn.addEventListener('click', () => applyLanguage('en'));
             btnAr.addEventListener('click', () => applyLanguage('ar'));
 
+            const mediaStatus = document.getElementById('media-status');
+            const mediaStatusText = document.getElementById('media-status-text');
+            const mediaRetry = document.getElementById('media-retry');
+            let mediaState = '';
+            let cancelStageImage = () => {};
+            let cancelStageVideo = () => {};
+            function showMediaStatus(state) {
+                mediaState = state;
+                mediaStatus.hidden = !state;
+                mediaStatusText.textContent = currentLang === 'ar'
+                    ? (state === 'error' ? 'تعذر تحميل العينة. حاول مرة أخرى.' : 'جارٍ تحميل العينة...')
+                    : (state === 'error' ? 'Could not load this specimen. Please retry.' : 'Loading specimen...');
+                mediaRetry.hidden = state !== 'error';
+                mediaRetry.textContent = currentLang === 'ar' ? 'إعادة المحاولة' : 'Retry';
+            }
+            mediaRetry.addEventListener('click', () => loadSample(currentSample, false));
+
             // ==========================================
             // Sample Loading
             // ==========================================
             function loadSample(sample, resetView = true) {
+                cancelStageImage();
+                cancelStageVideo();
                 currentSample = sample;
+                showMediaStatus('loading');
+                sampleImage.style.visibility = 'hidden';
+                miniMapImg.style.visibility = 'hidden';
 
                 titleEl.textContent = sample.name[currentLang];
                 descEl.textContent = sample.desc[currentLang];
@@ -4751,6 +4899,17 @@
                 if (isVid) {
                     sampleImage.style.display = 'none';
                     // Set src BEFORE making visible — required on iOS
+                    let videoTimer;
+                    const ready = () => { clearTimeout(videoTimer); showMediaStatus(''); };
+                    const failed = () => { clearTimeout(videoTimer); showMediaStatus('error'); };
+                    sampleVideo.addEventListener('loadeddata', ready);
+                    sampleVideo.addEventListener('error', failed);
+                    videoTimer = setTimeout(failed, 30000);
+                    cancelStageVideo = () => {
+                        clearTimeout(videoTimer);
+                        sampleVideo.removeEventListener('loadeddata', ready);
+                        sampleVideo.removeEventListener('error', failed);
+                    };
                     sampleVideo.src = sample.imgUrl;
                     sampleVideo.style.display = 'block';
                     sampleVideo.load();
@@ -4764,11 +4923,22 @@
                     sampleVideo.pause();
                     sampleVideo.style.display = 'none';
                     sampleImage.style.display = 'block';
-                    sampleImage.src = sample.imgUrl;
+                    sampleVideo.removeAttribute('src');
+                    sampleVideo.load();
+                    cancelStageImage = MicroscopeMedia.loadImage(sampleImage, sample.imgUrl, {
+                        ready: url => {
+                            sampleImage.style.visibility = 'visible';
+                            miniMapImg.src = url;
+                            miniMapImg.style.visibility = 'visible';
+                            showMediaStatus('');
+                        },
+                        failed: () => showMediaStatus('error')
+                    });
                     miniMapVid.pause();
                     miniMapVid.style.display = 'none';
                     miniMapImg.style.display = 'block';
-                    miniMapImg.src = sample.imgUrl;
+                    miniMapVid.removeAttribute('src');
+                    miniMapVid.load();
                 }
 
                 // Rebuild markers
@@ -4878,7 +5048,14 @@
                             if (vid) { vid.load(); vid.play().catch(() => { }); }
                         });
                     } else {
-                        item.innerHTML = `<img src="${sample.imgUrl}" alt="thumb"><span>${shortName}</span>`;
+                        const thumb = document.createElement('img');
+                        thumb.alt = shortName;
+                        const label = document.createElement('span');
+                        label.textContent = shortName;
+                        item.append(thumb, label);
+                        MicroscopeMedia.loadImage(thumb, sample.imgUrl, {
+                            failed: () => { thumb.style.visibility = 'hidden'; }
+                        });
                     }
                     item.addEventListener('click', () => {
                         if (currentSample.id !== sample.id) loadSample(sample);
@@ -5343,37 +5520,31 @@
             // ==========================================
             // Boot — localStorage first (instant), then Supabase (authoritative)
             // ==========================================
-            // Cache-bust: if any cached sample still uses a relative assets/ path,
-            // it was saved before cross-platform storage was set up — discard it
-            // so we always reload from Supabase with absolute URLs.
             try {
                 const savedData = localStorage.getItem('microscope_data');
                 if (savedData) {
-                    const parsed = JSON.parse(savedData);
-                    const hasRelativePaths = Array.isArray(parsed) &&
-                        parsed.some(s => s.imgUrl && s.imgUrl.startsWith('assets/'));
-                    if (hasRelativePaths) {
-                        localStorage.removeItem('microscope_data');
-                        console.log('[Boot] Cleared stale localStorage cache (relative image paths).');
-                    } else if (Array.isArray(parsed) && parsed.length > 0) {
-                        samples = parsed;
+                    const cached = MicroscopeMedia.normalizeSamples(JSON.parse(savedData));
+                    if (cached.length) {
+                        samples = cached;
+                        localStorage.setItem('microscope_data', JSON.stringify(samples));
                     }
                 }
-                samples.forEach(s => { if (!s.category) s.category = baseCats[s.id] || 'other'; });
-                currentSample = samples[0];
             } catch (e) {
-                console.warn('Could not parse localStorage data.', e);
+                console.warn('Could not read local specimen cache; using bundled samples.', e);
             }
+            samples.forEach(s => { if (!s.category) s.category = baseCats[s.id] || 'other'; });
+            currentSample = samples[0];
 
             initTray();
             loadSample(samples[0], true);
             applyLanguage('ar');
 
-            // Async: load from Supabase (authoritative source)
-            // If Supabase is empty and we have local data, seed the cloud first.
-            loadFromSupabase(true).then(() => {
-                // Subscribe to real-time so admin.html saves propagate here instantly
-                subscribeToSupabaseChanges();
+            // Optional curation sync starts after the working local UI has rendered.
+            connectOptionalBackend().then(client => {
+                _supabase = client;
+                if (client) loadFromSupabase(true).then(loaded => {
+                    if (loaded) subscribeToSupabaseChanges();
+                });
             });
 
             // Wire up dials — visual knobs that rotate in sync with sliders
@@ -5576,7 +5747,12 @@
                 imgSamples.forEach((s, i) => {
                     const slide = document.createElement('div');
                     slide.className = 'lens-slide' + (i === 0 ? ' active' : '');
-                    slide.style.backgroundImage = "url('" + s.imgUrl + "')";
+                    const preview = document.createElement('img');
+                    preview.alt = (s.name && s.name.en) || s.id;
+                    slide.appendChild(preview);
+                    MicroscopeMedia.loadImage(preview, s.imgUrl, {
+                        failed: () => { preview.style.visibility = 'hidden'; }
+                    });
                     slide.dataset.nameEn = (s.name && s.name.en) || s.id || 'Specimen';
                     slide.dataset.nameAr = (s.name && s.name.ar) || s.id || 'عينة';
                     apertureHost.appendChild(slide);

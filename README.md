@@ -48,7 +48,7 @@ Eight specimens ship by default, each with English + Arabic name, description, a
 
 Plus extra clinical cases: blood schistocytes, sickle cell, urine calcium oxalate, urine yeast.
 
-Specimens are stored in **Supabase Storage** and fetched at load time, with the bundled [assets/](assets/) acting as fallback.
+The eight built-in specimens load directly from the bundled [assets/](assets/) on the same host as the app. They work without Supabase or a CDN. Supabase optionally supplies curated cases and custom uploads; known legacy storage URLs are migrated to the exact bundled image, including in older browser caches.
 
 ## Tech stack
 
@@ -97,3 +97,22 @@ The whole UI is bilingual (English + Arabic). Language is toggled via `body.lang
 Created by **Ahmed · Hussin · Mohammed**.
 
 [![WhatsApp](https://img.shields.io/badge/Contact-WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/966550905017)
+
+
+## Image loading and verification
+
+Built-in images, tray thumbnails, the welcome lens and the mini-map use the bundled files. Failed image requests retry once with a fresh URL; the stage shows a loading state and a Retry button if the request fails or stalls. Switching slides cancels the previous request handlers. Invalid cached specimen rows are ignored.
+
+The optional Supabase SDK loads asynchronously with a six-second deadline; fetching the curated specimen list has an eight-second abort deadline. A failed backend leaves the local library usable. Custom upload URLs are preserved and are never replaced by a different specimen based on its ID or filename.
+
+Run the regression checks with Node.js 22 or newer:
+
+```bash
+node --test tests/media.test.cjs
+```
+
+GitHub Actions runs the same checks on pushes and pull requests. They cover bundled assets, legacy cache migration, unknown uploads, retries, stalled requests, cancellation and a blocked SDK.
+
+### Backend availability
+
+On 2026-10-25, DNS queries for the configured project `ddaxqnhubrctawppwwzc.supabase.co` and the former custom domain `virtual-microscope.online` returned NXDOMAIN. Use **https://ia7mad.github.io/Virtual-Microscope/** for the public app. Restoring curator access and media that exist only in cloud storage requires restoring the original Supabase project (or migrating its data and uploads to a working backend). This frontend repair does not recreate unavailable cloud data.
