@@ -1,0 +1,436 @@
+[
+  {
+    "id": "blood",
+    "desc": {
+      "en": "A standard human blood sample. You can see many red blood cells that carry oxygen throughout the body, a few white blood cells that fight diseases, and tiny platelets that stop bleeding.",
+      "ar": "هذه عينة من دم الإنسان الطبيعي. تشاهد هنا خلايا الدم الحمراء التي تنقل الأكسجين لجميع أنحاء الجسم، وخلايا الدم البيضاء التي تدافع عن الجسم ضد الأمراض، والصفائح الدموية الصغيرة التي تساعد على وقف النزيف."
+    },
+    "name": {
+      "en": "Normal Blood Sample",
+      "ar": "عينة دم طبيعية"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775839995026_p1j0d891km.jpg",
+    "markers": [
+      {
+        "top": "38.79%",
+        "left": "49.30%",
+        "label": {
+          "en": "red blood cell",
+          "ar": "خلية دم حمراء"
+        }
+      },
+      {
+        "top": "52.63%",
+        "left": "28.36%",
+        "label": {
+          "en": "Eosinophil",
+          "ar": "الخلية الحمضية"
+        }
+      },
+      {
+        "top": "53.61%",
+        "left": "77.39%",
+        "label": {
+          "en": "Monocyte",
+          "ar": "الخلية الوحيدة"
+        }
+      },
+      {
+        "top": "23.69%",
+        "left": "22.95%",
+        "label": {
+          "en": "Neutrophils",
+          "ar": "الخلايا المتعادلة"
+        }
+      },
+      {
+        "top": "48.44%",
+        "left": "64.18%",
+        "label": {
+          "en": "Lymphocyte",
+          "ar": "الخلية اللمفاوية"
+        }
+      },
+      {
+        "top": "56.34%",
+        "left": "44.69%",
+        "label": {
+          "en": "Platelet",
+          "ar": "صفيحة دموية"
+        }
+      }
+    ],
+    "category": "blood"
+  },
+  {
+    "id": "malaria",
+    "desc": {
+      "en": "A blood sample from a patient with Malaria. Notice the tiny purple rings inside the red blood cells — those are the living malaria parasites feeding inside the cells.",
+      "ar": "عينة دم مأخوذة من مريض مصاب بالملاريا. لاحظ الحلقات الأرجوانية الصغيرة داخل خلايا الدم الحمراء — هذه هي طفيليات الملاريا التي تعيش وتتغذى داخل الخلايا وتسبب المرض."
+    },
+    "name": {
+      "en": "Malaria Infection",
+      "ar": "عدوى الملاريا"
+    },
+    "imgUrl": "assets/malaria_smear.jpg",
+    "markers": [
+      {
+        "top": "50.57%",
+        "left": "37.25%",
+        "label": {
+          "en": "Malaria Parasite",
+          "ar": "طفيلي الملاريا"
+        }
+      },
+      {
+        "top": "62.28%",
+        "left": "55.75%",
+        "label": {
+          "en": "Healthy red blood cell",
+          "ar": "خلية دم حمراء سليمة"
+        }
+      }
+    ],
+    "category": "blood"
+  },
+  {
+    "id": "bacteria",
+    "desc": {
+      "en": "A mix of different bacteria stained to reveal their shapes. Purple round ones and pink rod-shaped ones. This test helps doctors figure out which germ is causing an infection.",
+      "ar": "خليط من أنواع مختلفة من البكتيريا تم صبغها لإظهار أشكالها. البكتيريا الكروية البنفسجية والبكتيريا العصوية الوردية. هذا الفحص يساعد الأطباء في تحديد نوع الجرثومة المسببة للعدوى."
+    },
+    "name": {
+      "en": "Bacteria (Gram Stain)",
+      "ar": "بكتيريا (صبغة جرام)"
+    },
+    "imgUrl": "assets/gram_stain.jpg",
+    "markers": [
+      {
+        "top": "40.76%",
+        "left": "35.14%",
+        "label": {
+          "en": "Round bacteria (Cocci)",
+          "ar": "بكتيريا كروية"
+        }
+      },
+      {
+        "top": "52.18%",
+        "left": "33.65%",
+        "label": {
+          "en": "Rod bacteria (Bacilli)",
+          "ar": "بكتيريا عصوية"
+        }
+      }
+    ],
+    "category": "urine"
+  },
+  {
+    "id": "urine",
+    "desc": {
+      "en": "Examination of urine under a microscope. You can see geometric crystals (calcium oxalate), which are common but can sometimes indicate a tendency toward kidney stones.",
+      "ar": "فحص عينة من البول تحت المجهر. تشاهد هنا بلورات هندسية الشكل (أوكسالات الكالسيوم)، وهي شائعة الظهور ولكنها قد تشير أحياناً إلى القابلية لتكون حصوات الكلى."
+    },
+    "name": {
+      "en": "Calcium oxalate",
+      "ar": "اوكسالات الكالسيوم"
+    },
+    "imgUrl": "assets/urine_crystals.jpg",
+    "markers": [
+      {
+        "top": "73.01%",
+        "left": "48.22%",
+        "label": {
+          "en": "Amorphous sediment",
+          "ar": "رواسب غير متبلورة"
+        }
+      },
+      {
+        "top": "50.16%",
+        "left": "50.52%",
+        "label": {
+          "en": "Calcium Oxalate",
+          "ar": "أوكسالات الكالسيوم"
+        }
+      }
+    ],
+    "category": "urine"
+  },
+  {
+    "id": "histo",
+    "desc": {
+      "en": "A thin slice of liver tissue stained with H&E. The pink areas are the cells' bodies (cytoplasm) and the purple dots are the control centers (nuclei). Doctors study these to find diseases in organs.",
+      "ar": "شريحة رقيقة جداً من نسيج الكبد مصبوغة بصبغة (H&E). المناطق الوردية هي أجسام الخلايا (السيتوبلازم) والنقاط الأرجوانية هي مراكز التحكم (النواة). يدرس الأطباء هذه الشرائح للكشف عن الأمراض في الأعضاء."
+    },
+    "name": {
+      "en": "Histopathology (Liver Tissue)",
+      "ar": "الأنسجة (نسيج الكبد)"
+    },
+    "imgUrl": "assets/histopathology.jpg",
+    "markers": [
+      {
+        "top": "49.62%",
+        "left": "57.69%",
+        "label": {
+          "en": "Hepatocyte Nucleus",
+          "ar": "نواة الخلية الكبدية"
+        }
+      },
+      {
+        "top": "41.51%",
+        "left": "57.78%",
+        "label": {
+          "en": "Hepatocyte Cytoplasm",
+          "ar": "سيتوبلازم الخلية الكبدية"
+        }
+      },
+      {
+        "top": "51.05%",
+        "left": "42.64%",
+        "label": {
+          "en": "Cell Arrangement",
+          "ar": "ترتيب الخلايا"
+        }
+      }
+    ],
+    "category": "tissue"
+  },
+  {
+    "id": "stool_sample",
+    "desc": {
+      "en": "A sample from a patient suffering from a parasite infection. The large golden-brown object with the bumpy shell is an Ascaris lumbricoides egg. Finding these in stool confirms a roundworm infection in the intestines.",
+      "ar": "عينة من مريض يعاني من عدوى طفيلية. الجسم الكبير ذو اللون الذهبي المائل للبني والقشرة المتعرجة هو بويضة دودة الإسكارس. العثور عليها في البراز يؤكد وجود هذه الديدان الأسطوانية في الأمعاء."
+    },
+    "name": {
+      "en": "Stool Sample (Parasite Egg)",
+      "ar": "عينة براز (بويضة طفيلي)"
+    },
+    "imgUrl": "assets/stool.jpg",
+    "markers": [
+      {
+        "top": "48.0%",
+        "left": "52.0%",
+        "label": {
+          "en": "Ascaris Egg",
+          "ar": "بويضة الإسكارس"
+        }
+      },
+      {
+        "top": "65.0%",
+        "left": "30.0%",
+        "label": {
+          "en": "Fecal Debris",
+          "ar": "مخلفات برازية"
+        }
+      }
+    ],
+    "category": "stool"
+  },
+  {
+    "id": "semen_sample",
+    "desc": {
+      "en": "A healthy human semen sample viewed under phase contrast. You can see numerous spermatozoa (sperm cells), each featuring an oval head that contains DNA and a long whip-like tail used for swimming towards the egg.",
+      "ar": "عينة سائل منوي بشري سليم تحت المجهر. يمكنك رؤية أعداد كبيرة من الحيوانات المنوية، كل منها يحتوي على رأس بيضاوي يحمل المادة الوراثية، وذيل طويل يشبه السوط يستخدم للسباحة نحو البويضة."
+    },
+    "name": {
+      "en": "Normal Semen",
+      "ar": "سائل منوي طبيعي"
+    },
+    "imgUrl": "assets/semen.jpg",
+    "markers": [
+      {
+        "top": "46.52%",
+        "left": "50.46%",
+        "label": {
+          "en": "Spermatozoon (Sperm)",
+          "ar": "حيوان منوي"
+        }
+      },
+      {
+        "top": "52.56%",
+        "left": "47.36%",
+        "label": {
+          "en": "Sperm Head",
+          "ar": "رأس الحيوان المنوي"
+        }
+      },
+      {
+        "top": "40.12%",
+        "left": "54.14%",
+        "label": {
+          "en": "Sperm Tail (Flagellum)",
+          "ar": "ذيل الحيوان المنوي (سوط)"
+        }
+      }
+    ],
+    "category": "semen"
+  },
+  {
+    "id": "custom_1775723794836",
+    "desc": {
+      "en": "Sperm movement under microscope",
+      "ar": "حركة الحيوانات المنوية تحت المجهر"
+    },
+    "name": {
+      "en": "sperm",
+      "ar": "حيوانات منوية"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775723758160_v6yensmytmk.mp4",
+    "markers": [],
+    "category": "semen"
+  },
+  {
+    "id": "custom_1775737794389",
+    "desc": {
+      "en": "Helicobacter pylori (H. pylori) is a gram-negative, microaerobic, coiled bacterium commonly found in the stomach. Its coiled shape is believed to have evolved to penetrate the stomach lining and cause infection. The bacterium was first identified in 1982 by Australian physicians.",
+      "ar": "جرثومة المعدة، هي بكتيريا سالبة الجرام، أليفة الهواء القليل، ملوية توجد عادة في المعدة. يعتقد أن شكلها الملوي قد تطور لاختراق البطانة المخاطية للمعدة وبالتالي الإصابة بالعدوى. تُعُرِّفَ على البكتيريا لأول مرة في عام 1982 من قبل الأطباء الأستراليين"
+    },
+    "name": {
+      "en": "H.pylori",
+      "ar": "جرثومة المعدة"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775865343323_nqg5egg6h79.png",
+    "markers": [],
+    "category": "stool"
+  },
+  {
+    "id": "custom_1775837798105",
+    "desc": {
+      "en": "Yeast in Urine (Candida): Small, oval-shaped cells that are often seen with budding (small daughter cells) or pseudohyphae (long branches). Their presence usually indicates a fungal infection, and they are very common in patients with Diabetes or those taking long-term antibiotics. They can sometimes be mistaken for Red Blood Cells (RBCs) but do not dissolve in acetic acid.",
+      "ar": "خلايا الخميرة في البول (الكانديدا): هي خلايا بيضاوية صغيرة تظهر غالباً مع وجود تبرعم (خلايا صغيرة ناشئة) أو خيوط فطرية كاذبة (فروع طويلة). يشير وجودها عادةً إلى عدوى فطرية، وهي شائعة جداً لدى مرضى السكري أو الأشخاص الذين يتناولون المضادات الحيوية لفترات طويلة. قد يتم الخلط بينها وبين كرات الدم الحمراء أحياناً، لكنها لا تذوب في حمض الخليك."
+    },
+    "name": {
+      "en": "كانديدا",
+      "ar": "candida"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775837735148_lepkj8gzx7r.png",
+    "markers": [
+      {
+        "top": "50.48%",
+        "left": "34.70%",
+        "label": {
+          "en": "Candida",
+          "ar": "كانديدا"
+        }
+      }
+    ],
+    "category": "urine"
+  },
+  {
+    "id": "custom_1775840962642",
+    "desc": {
+      "en": "Appearance: Red blood cells (RBCs) that have lost their round shape and become crescent or sickle-shaped (Drepanocytes). You may also see \"Target cells\" in the background.\nCause: A genetic mutation in Hemoglobin S which causes cells to stiffen and deform when oxygen is low.\nClinical Note: These cells are rigid and can block blood flow in small vessels, leading to severe pain and anemia.",
+      "ar": "المظهر: تظهر خلايا الدم الحمراء فاقدة لشكلها الدائري وتتحول إلى شكل الهلال أو المنجلي (الخلايا المنجلية). قد تلاحظ أيضاً وجود \"الخلايا الهدفية\" في الخلفية.\nالسبب: طفرة جينية في \"هيموجلوبين S\" تتسبب في تيبس الخلايا وتشوهها عندما تنخفض مستويات الأوكسجين.\nملاحظة سريرية: هذه الخلايا صلبة ويمكن أن تسد تدفق الدم في الأوعية الصغيرة، مما يؤدي إلى آلام شديدة وفقر دم."
+    },
+    "name": {
+      "en": "sicklecellanemia",
+      "ar": "الأنيميا المنجلية"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775840877093_ojuwdx5m1he.jpg",
+    "markers": [
+      {
+        "top": "49.21%",
+        "left": "50.14%",
+        "label": {
+          "en": "sicklecell",
+          "ar": "خلية منجلية"
+        }
+      },
+      {
+        "top": "37.75%",
+        "left": "37.61%",
+        "label": {
+          "en": "normal red blood cell ",
+          "ar": "خلية دم حمراء طبيعية"
+        }
+      }
+    ],
+    "category": "blood"
+  },
+  {
+    "id": "custom_1775857728445",
+    "desc": {
+      "en": "G6PD deficiency, also known as favism, is a chronic genetic disorder affecting red blood cells. It involves a defect in the enzyme responsible for protecting red blood cells, causing them to die prematurely.",
+      "ar": "أنيميا الفول أو تكسر الدم الفولي؛ هو اضطراب جيني وراثي مزمن يؤثر على خلايا الدم الحمراء. حيث يحدث خلل للأنزيم المسؤول على حماية خلايا الدم الحمراء مما يتسبب ذلك في موت الخلية قبل وقتها."
+    },
+    "name": {
+      "en": "G6PD",
+      "ar": "تكسر الدم الفولي"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775857650245_u7ih1au7oc.jpg",
+    "markers": [
+      {
+        "top": "45.48%",
+        "left": "45.41%",
+        "label": {
+          "en": "خلية دم حمراء متضررة",
+          "ar": "خلية دم حمراء متضررة"
+        }
+      },
+      {
+        "top": "29.49%",
+        "left": "59.76%",
+        "label": {
+          "en": "خلية دم حمراء طبيعية",
+          "ar": "خلية دم حمراء طبيعية"
+        }
+      }
+    ],
+    "category": "blood"
+  },
+  {
+    "id": "custom_1775867324645",
+    "desc": {
+      "en": "Tissues that cover the body's external surfaces, lines cavities and hollow organs, form glands, and act as a first line of defense for filtration, protection, and absorption",
+      "ar": "أنسجة تغطي أسطح الجسم الخارجية، تبطن التجاويف والأعضاء المجوفة، وتكون الغدد، وتعمل كخط دفاع أول للترشيح، الحماية، والامتصاص"
+    },
+    "name": {
+      "en": "Epithelia cell",
+      "ar": "خلايا طلائية"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775867311751_v0a3iyz5gt.jpg",
+    "markers": [],
+    "category": "urine"
+  },
+  {
+    "id": "custom_1775867609007",
+    "desc": {
+      "en": "It is an infection caused by germs (often E. coli) entering the urinary tract, causing symptoms such as burning during urination, an urgent need to urinate, and lower abdominal pain.",
+      "ar": "هي عدوى ناتجة عن دخول جراثيم (غالبًا الإشريكية القولونية) إلى الجهاز البولي، وتسبب أعراضًا مثل حرقان البول، الحاجة الملحة للتبول، وآلام أسفل البطن."
+    },
+    "name": {
+      "en": "Bacteria",
+      "ar": "البكتيريا"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775867599918_wcl7g182ef.jpg",
+    "markers": [],
+    "category": "urine"
+  },
+  {
+    "id": "custom_1775868735147",
+    "desc": {
+      "en": "Purines are a waste product of purine breakdown and are normally excreted by the kidneys. Elevated levels may indicate gout or kidney stones.",
+      "ar": "ناتج فضلات تكسير البيورينات، وتفرزه الكلى بشكل طبيعي. تشير المستويات المرتفعة  إلى احتمالية وجود نقرس، أو حصوات كلى"
+    },
+    "name": {
+      "en": "Uric acid",
+      "ar": "حمض اليوريك"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775869561862_duwg0fo1r1r.png",
+    "markers": [],
+    "category": "urine"
+  },
+  {
+    "id": "custom_1775870124658",
+    "desc": {
+      "en": "A type of mineral salt that precipitates as fine granules under a microscope when urine is analyzed. These precipitates do not have a specific crystalline shape, therefore they are called amorphous.",
+      "ar": "نوع من الأملاح المعدنية التي تترسب على شكل حبيبات دقيقة تحت المجهر عند إجراء تحليل البول  لا تمتلك هذه الترسبات شكلاً بلورياً محدداً لذلك تسمى غير متبلورة"
+    },
+    "name": {
+      "en": "Amorphous",
+      "ar": "الاملاح"
+    },
+    "imgUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775870406644_jooxsoy79b8.png",
+    "markers": [],
+    "category": "urine"
+  }
+]

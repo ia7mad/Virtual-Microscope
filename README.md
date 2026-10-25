@@ -103,7 +103,11 @@ Created by **Ahmed · Hussin · Mohammed**.
 
 Built-in images, tray thumbnails, the welcome lens and the mini-map use the bundled files. Failed image requests retry once with a fresh URL; the stage shows a loading state and a Retry button if the request fails or stalls. Switching slides cancels the previous request handlers. Invalid cached specimen rows are ignored.
 
-The optional Supabase SDK loads asynchronously with a six-second deadline; fetching the curated specimen list has an eight-second abort deadline. A failed backend leaves the local library usable. Custom upload URLs are preserved and are never replaced by a different specimen based on its ID or filename.
+The optional Supabase SDK loads asynchronously with a six-second deadline; fetching the curated specimen list has an eight-second abort deadline. A failed backend leaves the local library usable. Unknown custom uploads remain untouched. Ten exact unavailable upload URLs observed in the existing visitor library now map to locally hosted, licensed microscopy replacements. Matching never uses a case name or ID.
+
+The repair changes media, descriptions and reviewed annotations only. It does not append the repair catalogue to the eight defaults or change a visitor's case names, IDs, categories or order. The previous media, description and markers remain in `mediaRepairOriginal`; before rewriting a changed cache, its raw content is also backed up once in `microscope_media_backup_v1`. Repeat loads preserve subsequent note/marker edits. No cache clearing is required.
+
+See [media sources and licenses](assets/recovered/SOURCES.md) and the [repair audit](MEDIA-REPAIR-AUDIT.md). Replacement images retain native proportions, and their marker positions and high-power centering use the same geometry. Their displayed magnification is a simulation, without a calibrated micrometre scale.
 
 Run the regression checks with Node.js 22 or newer:
 
@@ -115,6 +119,6 @@ GitHub Actions runs the same checks on pushes and pull requests. They cover bund
 
 ### Backend availability
 
-On 2026-10-25, DNS queries for the configured project `ddaxqnhubrctawppwwzc.supabase.co` and the former custom domain `virtual-microscope.online` returned NXDOMAIN. Use **https://ia7mad.github.io/Virtual-Microscope/** for the public app. Restoring curator access and media that exist only in cloud storage requires restoring the original Supabase project (or migrating its data and uploads to a working backend). This frontend repair does not recreate unavailable cloud data.
+On 2026-10-25, the configured project `ddaxqnhubrctawppwwzc.supabase.co` and former custom domain `virtual-microscope.online` were unavailable. Use **https://ia7mad.github.io/Virtual-Microscope/** for the public app. The observed broken visitor media have local replacements; curator access and any unknown cloud-only uploads still require the original project or a separately configured backend. This repair does not recreate unavailable cloud data.
 
 Bundled images are JPEG files and now use `.jpg` URLs so their HTTP content type matches their bytes. The original `.png` paths remain available for older direct links, and the app migrates cached paths to `.jpg`.

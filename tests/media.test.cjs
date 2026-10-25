@@ -156,3 +156,54 @@ test('optional SDK still connects when available', async () => {
     assert.equal(await promise, client);
     assert.equal(h.timers.size, 0);
 });
+
+test('all observed visitor cases retain identity, category, order and original metadata', () => {
+    const { media } = harness();
+    const cache = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/legacy-cache.json'), 'utf8'));
+    const before = JSON.stringify(cache);
+    const result = media.normalizeSamples(cache);
+    assert.equal(result.length, 16);
+    assert.deepEqual(result.map(s => s.id), cache.map(s => s.id));
+    for (let i = 0; i < cache.length; i++) {
+        assert.deepEqual(JSON.parse(JSON.stringify(result[i].name)), cache[i].name);
+        assert.equal(result[i].category, cache[i].category);
+        if (cache[i].imgUrl.includes('/uploads/')) {
+            assert.ok(result[i].imgUrl.startsWith('assets/recovered/'));
+            assert.equal(result[i].mediaRepairOriginal.imgUrl, cache[i].imgUrl);
+            assert.deepEqual(JSON.parse(JSON.stringify(result[i].mediaRepairOriginal.markers)), cache[i].markers);
+            assert.deepEqual(JSON.parse(JSON.stringify(result[i].mediaRepairOriginal.desc)), cache[i].desc);
+        } else {
+            assert.equal(result[i].imgUrl, cache[i].imgUrl);
+            assert.deepEqual(JSON.parse(JSON.stringify(result[i].markers)), cache[i].markers);
+        }
+    }
+    assert.equal(JSON.stringify(cache), before);
+    assert.equal(JSON.stringify(media.normalizeSamples(result)), JSON.stringify(result), 'Migration is idempotent');
+    const edited = { ...result[10], desc: { en: 'Visitor edited note', ar: 'ملاحظة' } };
+    assert.equal(media.normalizeSamples([edited])[0].desc.en, 'Visitor edited note');
+});
+
+test('repair catalogue resolves exact uploads, not names, IDs or unrelated hosts', () => {
+    const { media } = harness();
+    const rows = JSON.parse(fs.readFileSync(path.join(__dirname, '../assets/recovered/manifest.json'), 'utf8'));
+    assert.equal(rows.length, 10);
+    for (const row of rows) {
+        assert.equal(media.localUrl(row.legacyUrl + '?old-cache=1#preview'), row.imgUrl);
+        const bytes = fs.readFileSync(path.join(__dirname, '..', row.imgUrl));
+        assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'), row.mediaCredit.sha256);
+        for (const url of [row.legacyUrl.replace('ddaxqnhubrctawppwwzc.supabase.co', 'example.org'),
+            row.legacyUrl.replace('/uploads/', '/other/')]) assert.equal(media.localUrl(url), url);
+    }
+    const custom = { id: 'blood', name: { en: 'Normal Blood' }, imgUrl: 'https://example.org/custom.jpg', markers: [] };
+    assert.equal(media.normalizeSamples([custom])[0].imgUrl, custom.imgUrl);
+});
+
+test('native annotations fit full rectangular images without square-crop drift', () => {
+    const { media } = harness();
+    assert.equal(JSON.stringify(media.contentBox(1280, 960)), JSON.stringify({ x: 0, y: 0.125, w: 1, h: 0.75 }));
+    assert.equal(JSON.stringify(media.contentBox(600, 1200)), JSON.stringify({ x: 0.25, y: 0, w: 0.5, h: 1 }));
+    const point = media.focusPoint({ mediaCredit: { width: 1200, height: 600 },
+        markers: [{ left: '40%', top: '20%' }, { left: '90%', top: '80%' }] });
+    assert.equal(point.x, 0.4);
+    assert.equal(point.y, 0.35, 'High-power view and Identify center on the same fitted landmark');
+});

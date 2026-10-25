@@ -1,0 +1,347 @@
+[
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775839995026_p1j0d891km.jpg",
+    "imgUrl": "assets/recovered/normal_blood.jpg",
+    "desc": {
+      "en": "Giemsa-stained blood film from a healthy adult: red cells, white cells and small purple platelets. This field does not show every white-cell subtype.",
+      "ar": "لطاخة دم لشخص بالغ سليم مصبوغة بجيمسا: خلايا حمراء وخلايا بيضاء وصفائح بنفسجية صغيرة. لا يعرض هذا الحقل جميع أنواع الخلايا البيضاء."
+    },
+    "markers": [
+      {
+        "left": "52.2%",
+        "top": "49.5%",
+        "label": {
+          "en": "Red blood cell",
+          "ar": "خلية دم حمراء"
+        }
+      },
+      {
+        "left": "37.5%",
+        "top": "50%",
+        "label": {
+          "en": "White blood cell",
+          "ar": "خلية دم بيضاء"
+        }
+      },
+      {
+        "left": "40.9%",
+        "top": "87%",
+        "label": {
+          "en": "Neutrophil",
+          "ar": "خلية متعادلة"
+        }
+      },
+      {
+        "left": "27.9%",
+        "top": "37.6%",
+        "label": {
+          "en": "Platelet",
+          "ar": "صفيحة دموية"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Keith Chambers",
+      "source": "https://commons.wikimedia.org/wiki/File:Normal_Adult_Blood_Smear.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "note": "Original file, unchanged.",
+      "width": 1280,
+      "height": 960,
+      "sha256": "ab73c96ca933bdd78e913a0eb6b80d97200ad367481e3bb2b56577574d60d4eb"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775723758160_v6yensmytmk.mp4",
+    "imgUrl": "assets/recovered/sperm.mp4",
+    "desc": {
+      "en": "Human sperm moving under a light microscope. The video demonstrates movement; it is not a measurement of fertility or a clinical semen analysis.",
+      "ar": "حركة حيوانات منوية بشرية تحت المجهر الضوئي. يوضح الفيديو الحركة؛ ولا يمثل قياساً للخصوبة أو تحليلاً سريرياً للسائل المنوي."
+    },
+    "markers": [],
+    "mediaCredit": {
+      "author": "Clopedia12",
+      "source": "https://commons.wikimedia.org/wiki/File:Human_sperm_under_microscope.webm",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "note": "Transcoded from original WebM to H.264 MP4; no scene cuts or speed changes.",
+      "width": 640,
+      "height": 480,
+      "sha256": "e11eea0a2a081986e28303abd483c18a19306dd2b0208c82a667846a42040712"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775865343323_nqg5egg6h79.png",
+    "imgUrl": "assets/recovered/h_pylori.jpg",
+    "desc": {
+      "en": "Electron micrograph of Helicobacter pylori with multiple flagella, using negative staining. This is an electron-microscopy view, not a stool wet mount.",
+      "ar": "صورة بالمجهر الإلكتروني لجرثومة المعدة مع أسواط متعددة باستخدام الصبغ السلبي. هذه صورة إلكترونية وليست فحصاً رطباً للبراز."
+    },
+    "markers": [
+      {
+        "left": "31%",
+        "top": "33%",
+        "label": {
+          "en": "Bacterial body",
+          "ar": "جسم البكتيريا"
+        }
+      },
+      {
+        "left": "66%",
+        "top": "76%",
+        "label": {
+          "en": "Flagella",
+          "ar": "أسواط"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Yutaka Tsutsumi, M.D.\nProfessor\nDepartment of Pathology Fujita Health University School of Medicine",
+      "source": "https://commons.wikimedia.org/wiki/File:EMpylori.jpg",
+      "license": "Copyrighted free use",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/File:EMpylori.jpg",
+      "note": "Original file, unchanged.",
+      "width": 600,
+      "height": 400,
+      "sha256": "908618ab22762828fc132f6cc740b6dd7152a588f9c741476562e85900efdbf3"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775837735148_lepkj8gzx7r.png",
+    "imgUrl": "assets/recovered/urine_yeast.jpg",
+    "desc": {
+      "en": "Urine sediment from a fungal urinary tract infection, with oval yeast cells and leukocytes. Budding supports yeast identification; microscopy alone does not establish the Candida species.",
+      "ar": "رواسب بول من عدوى بولية فطرية تظهر خلايا خميرة بيضاوية وخلايا بيضاء. يساعد التبرعم في تمييز الخمائر، ولا يحدد المجهر وحده نوع الكانديدا."
+    },
+    "markers": [
+      {
+        "left": "51%",
+        "top": "56%",
+        "label": {
+          "en": "Budding yeast",
+          "ar": "خميرة متبرعمة"
+        }
+      },
+      {
+        "left": "49.2%",
+        "top": "47%",
+        "label": {
+          "en": "Leukocyte",
+          "ar": "خلية دم بيضاء"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Ajay Kumar Chaurasiya",
+      "source": "https://commons.wikimedia.org/wiki/File:Fungal_UTI_picture_of_urine_microscopy_showing_plenty_of_yeast_cells_and_pus_cells.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "note": "Original file, unchanged.",
+      "width": 3264,
+      "height": 2448,
+      "sha256": "b1d75109053602f5bd6f44bfe5ec03c5efccdbcd0544dce776d407e4ff06640e"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775840877093_ojuwdx5m1he.jpg",
+    "imgUrl": "assets/recovered/sickle_cell.jpg",
+    "desc": {
+      "en": "Blood film from sickle-cell anemia showing elongated sickle cells and target cells with a central hemoglobinized area. The source also describes polychromasia.",
+      "ar": "لطاخة دم من فقر الدم المنجلي تظهر خلايا منجلية ممدودة وخلايا هدفية ذات منطقة مركزية تحتوي على الهيموجلوبين. يصف المصدر أيضاً تعدد التصبغ."
+    },
+    "markers": [
+      {
+        "left": "72.2%",
+        "top": "25.4%",
+        "label": {
+          "en": "Sickle cell",
+          "ar": "خلية منجلية"
+        }
+      },
+      {
+        "left": "41.2%",
+        "top": "36.1%",
+        "label": {
+          "en": "Target cell",
+          "ar": "خلية هدفية"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "SpicyMilkBoy",
+      "source": "https://commons.wikimedia.org/wiki/File:Sickle_cell_anemia_smear.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "note": "Original file, unchanged.",
+      "width": 1650,
+      "height": 1797,
+      "sha256": "031438b0595272706c8f4343628b35ca744e848cb5283efe65620e20d41f0614"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775857650245_u7ih1au7oc.jpg",
+    "imgUrl": "assets/recovered/g6pd.jpg",
+    "desc": {
+      "en": "Blood films from confirmed G6PD deficiency with acute hemolysis. Panel A shows blister cells at presentation; panel B shows the following day with polychromasia and nucleated red cells.",
+      "ar": "لطاختا دم من حالة مؤكدة لنقص G6PD مع انحلال حاد. تظهر اللوحة A خلايا فقاعية عند الحضور، وتظهر اللوحة B في اليوم التالي تعدد التصبغ وخلايا حمراء منواة."
+    },
+    "markers": [
+      {
+        "left": "23.6%",
+        "top": "27.5%",
+        "label": {
+          "en": "Blister cell (A)",
+          "ar": "خلية فقاعية (A)"
+        }
+      },
+      {
+        "left": "38.5%",
+        "top": "63%",
+        "label": {
+          "en": "Nucleated red cell (B)",
+          "ar": "خلية حمراء منواة (B)"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Bushra Moiz and Sidra Asad Ali",
+      "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5771941/#ccr31290-fig-0001",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "note": "Figure 1, panels A and B, unchanged.",
+      "width": 709,
+      "height": 1082,
+      "sha256": "c7b4608bcf659afae3a8f69eae078891a4a503e30323f9ff7e157650949541c9"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775867311751_v0a3iyz5gt.jpg",
+    "imgUrl": "assets/recovered/epithelial_cells.jpg",
+    "desc": {
+      "en": "Squamous epithelial cells in fresh, unstained urine sediment, photographed with phase contrast at 400×. Note the broad cytoplasm and visible nuclei. Such cells may enter urine during collection.",
+      "ar": "خلايا طلائية حرشفية في رواسب بول طازجة غير مصبوغة، مصورة بتباين الطور عند ٤٠٠×. لاحظ السيتوبلازم الواسع والأنوية الواضحة. قد تدخل هذه الخلايا البول أثناء جمع العينة."
+    },
+    "markers": [
+      {
+        "left": "27%",
+        "top": "46%",
+        "label": {
+          "en": "Nucleus",
+          "ar": "نواة"
+        }
+      },
+      {
+        "left": "30%",
+        "top": "58%",
+        "label": {
+          "en": "Squamous cell cytoplasm",
+          "ar": "سيتوبلازم خلية حرشفية"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "José Antonio Tesser Poloni and Liane Nanci Rotta; courtesy Controllab",
+      "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7711825/#jof-06-00245-f007",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "note": "Figure 7, unchanged.",
+      "width": 787,
+      "height": 590,
+      "sha256": "b4a5ece622393ec50f7494232e1e5514ffacc43a2788f54ec2007701dec878ad"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775867599918_wcl7g182ef.jpg",
+    "imgUrl": "assets/recovered/urine_bacteria.jpg",
+    "desc": {
+      "en": "Urine microscopy from a bacterial urinary tract infection showing numerous leukocytes and small bacteria between them. The organism cannot be identified as E. coli from this image alone.",
+      "ar": "صورة بول مجهرية من عدوى بولية بكتيرية تظهر خلايا بيضاء عديدة وبكتيريا صغيرة بينها. لا يمكن تحديد الإشريكية القولونية من هذه الصورة وحدها."
+    },
+    "markers": [
+      {
+        "left": "57.5%",
+        "top": "52%",
+        "label": {
+          "en": "Leukocyte",
+          "ar": "خلية دم بيضاء"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Ajay Kumar Chaurasiya",
+      "source": "https://commons.wikimedia.org/wiki/File:Bacterial_UTI_picture_of_urine_microscopy_showing_plenty_of_pus_cells_and_bacteria.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+      "note": "Original file, unchanged.",
+      "width": 3264,
+      "height": 2448,
+      "sha256": "a4de1eb890028126c14860ad4bb97e60581ce4affffc7b4d7d686ca36f57a3f1"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775869561862_duwg0fo1r1r.png",
+    "imgUrl": "assets/recovered/uric_acid.jpg",
+    "desc": {
+      "en": "Uric acid crystals in urine, showing angular plates and clustered crystals. The source specimen was from a patient with leukemia; this image alone does not diagnose gout or stones.",
+      "ar": "بلورات حمض اليوريك في البول تظهر كصفائح زاوية وتجمعات بلورية. عينة المصدر من مريض بابيضاض الدم؛ ولا تشخص الصورة وحدها النقرس أو الحصوات."
+    },
+    "markers": [
+      {
+        "left": "62.4%",
+        "top": "46%",
+        "label": {
+          "en": "Uric acid crystals",
+          "ar": "بلورات حمض اليوريك"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "J3D3",
+      "source": "https://commons.wikimedia.org/wiki/File:UricAcid.jpg",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+      "note": "Original file, unchanged.",
+      "width": 1597,
+      "height": 1536,
+      "sha256": "c2a331f52f3871a14ba1f6fd397257cefa2240527bb6383cf96efae84b0a9cc8"
+    },
+    "mediaRepairVersion": 1
+  },
+  {
+    "legacyUrl": "https://ddaxqnhubrctawppwwzc.supabase.co/storage/v1/object/public/microscope-media/uploads/1775870406644_jooxsoy79b8.png",
+    "imgUrl": "assets/recovered/amorphous_urates.jpg",
+    "desc": {
+      "en": "Amorphous urates in urine sediment: fine brown granules and granular aggregates without a defined geometric crystal shape. This finding alone is nonspecific.",
+      "ar": "يورات غير متبلورة في رواسب البول: حبيبات بنية دقيقة وتجمعات حبيبية بلا شكل بلوري هندسي محدد. هذه النتيجة وحدها غير نوعية."
+    },
+    "markers": [
+      {
+        "left": "46.3%",
+        "top": "30%",
+        "label": {
+          "en": "Amorphous urate aggregate",
+          "ar": "تجمع يورات غير متبلورة"
+        }
+      }
+    ],
+    "mediaCredit": {
+      "author": "Ajay Kumar Chaurasiya",
+      "source": "https://commons.wikimedia.org/wiki/File:Amorphous_urate_crystals_in_Urine.jpg",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "note": "Original file, unchanged.",
+      "width": 3264,
+      "height": 2448,
+      "sha256": "d3ce5649262d07f7385af99f3791b447068ecf077763c9843774146e003f0349"
+    },
+    "mediaRepairVersion": 1
+  }
+]
